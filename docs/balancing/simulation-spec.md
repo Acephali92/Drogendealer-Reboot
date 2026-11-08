@@ -79,13 +79,15 @@ Die zufällige Reihenfolge der Bots pro Tick verhindert einen systematischen Vor
 ```ts
 export default defineScenario({
   id: 'S1-growth',
-  days: 90,
   seeds: 20,
+  days: 365,                                  // keine Resets (R-2) → Langzeit
   population: { casual: 0.40, trader: 0.20, optimizer: 0.05, smuggler: 0.08,
                 raider: 0.07, investor: 0.08, newbie: 0.10, veteran: 0.02 },
-  size: 200,
-  clans: { share: 0.4, sizes: [8, 20] },
-  joinSchedule: [{ day: 0, count: 200 }],   // oder späterer Zustrom
+  size: 30,                                   // anfangs wenige Spieler (R-1)
+  scaleVariants: [10, 100, 300],              // Skalierungsprüfung
+  npc: { traders: 'auto', targets: 'auto' },  // N-1/N-2, Stärke abhängig von der Spielerzahl
+  clans: { share: 0.4, sizes: [3, 8] },
+  joinSchedule: [{ day: 0, count: 30 }],      // oder späterer Zustrom
   overrides: {},                              // Parameter-Overrides
   kpis: ['NW', 'IPH', 'r', 'TTM', 'SFR', 'M', 'basketIndex'],
 });
@@ -98,14 +100,14 @@ als Grid oder `lhs: { samples: 50 }` (Latin Hypercube). Ausgabe ist eine Sensiti
 
 | ID | Frage | Bots | Dauer × Seeds | Läuft |
 |---|---|---|---|---|
-| `S1-growth` | 1 Vermögen, Inflation | Standard-Mix, 200 | 90 d × 20 | nächtlich |
+| `S1-growth` | 1 Vermögen, Inflation | Standard-Mix, 30 (+ Varianten 10/100/300) | 365 d × 20 | nächtlich |
 | `S2a-route-matrix` | 2 Routen (statisch) | keine | – (deterministisch) | jeder PR |
-| `S2b-route-saturation` | 2 Sättigung | N ∈ {1, 5, 10, 25, 50} × T2 | 7 d × 10 | nächtlich |
+| `S2b-route-saturation` | 2 Sättigung | N ∈ {1, 3, 5, 10, 25} × T2, mit/ohne NPC-Händler | 7 d × 10 | nächtlich |
 | `S3a-impact-sweep` | 3 Preis-Impact | keine (Order-Sweep) | 1 d | jeder PR |
 | `S3b-cornering` | 3, 6 Marktmacht | 1 Wal (T3, 10 Mio. €) + 50 × T2 | 14 d × 10 | nächtlich |
 | `S4-progression` | 4 Kapitalbedarf | je 50 × T1, T2, T4, T6, T8, T9 | 120 d × 10 | nächtlich |
-| `S5-raids` | 5 Überfälle | 50 Händler (T1/T2/T6) + 10 × T5 | 30 d × 20, Sweep über `loot_cash_rate` × `alpha` | nächtlich |
-| `S6-late-joiner` | 6 Dominanz | Standard-Mix 200 inkl. T7-Clans, + 50 × T8 ab Tag 90 | 120 d × 10 | wöchentlich |
+| `S5-raids` | 5 Überfälle | 25 Händler (T1/T2/T6) + 5 × T5, mit/ohne NPC-Ziele | 30 d × 20, Sweep über `loot_cash_rate` × `alpha` | nächtlich |
+| `S6-late-joiner` | 6 Dominanz | Standard-Mix 30 inkl. T7-Clans, + je 10 × T8 an Tag 30, 180, 365 | 395 d × 10 | wöchentlich |
 | `S7-roundtrip` | 7 | X1 | 1 d | jeder PR |
 | `S7-pumpdump` | 7 | X2 + 50 × T2 | 14 d × 10 | nächtlich |
 | `S7-multiaccount` | 7 | X3 (k = 1, 3, 5) + Standard-Mix | 30 d × 10 | nächtlich |
@@ -158,4 +160,6 @@ Jede Invariantenverletzung gibt **Szenario, Seed und Tick** aus und ist damit lo
 - Bots bilden menschliches Verhalten nur grob nach (Soziales, Emotionen, Rache). Live-Daten sind deshalb das letzte Wort (P5).
 - Clan-Diplomatie (Bündnisse, Verrat) wird nur stark vereinfacht abgebildet.
 - Die Ergebnisse gelten für die simulierte Spielerzahl. Gewinnpools pro Route skalieren mit der Zahl aktiver Spieler,
-  deshalb laufen die Szenarien zusätzlich mit 0,5× und 2× der Population.
+  deshalb laufen die Szenarien zusätzlich mit 10, 100 und 300 Spielern (Standard: 30, R-1).
+- Bei kleinen Populationen streuen die KPIs stark zwischen den Seeds. Daher ≥ 20 Seeds, und es werden Konfidenzintervalle berichtet.
+- Langzeitläufe über 365+ Tage (R-2: keine Resets) sind mit 30 Bots günstig: ≈ 52.560 Ticks, Ziel < 60 s pro Seed.

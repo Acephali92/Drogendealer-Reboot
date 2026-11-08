@@ -127,6 +127,14 @@ wird nach dem Live-Start mit echten Telemetriedaten kalibriert (Phase P5 in [sim
 | T8 Neuling (laufender Zustrom) | 10 % |
 | T9 Veteran | 2 % |
 
+Standardgröße: **30 Spieler**, weil anfangs nur wenige Spieler erwartet werden (R-1). Skalierungsvarianten: 10 / 100 / 300.
+Bei 30 Spielern ergibt der Mix gerundet 12 / 6 / 2 / 2 / 2 / 2 / 3 / 1.
+
 T7 (Clan) ist eine **Gruppierung** und kein eigener Anteil: ca. 40 % der Bots aus T2 bis T9 sind Clans zugeordnet.
+
+### NPC-Akteure (Vorschlag N-1/N-2, abhängig von R-1)
+Bei wenigen Spielern simuliert die Welt zusätzlich **NPC-Händler**, die profitable Routen abschöpfen, sowie
+**NPC-Kuriere und -Banden** als Ziele und Gegner. Sie sind keine Bots mit Policy, sondern Teil von `applyTick`
+(Spielregel von Agent 2). Ihre Stärke sinkt mit der Zahl aktiver echter Spieler.
 Adversariale Bots laufen **nicht** im Standard-Mix, sondern in eigenen Szenarien (`S7-*`), damit sie die
 Wirtschafts-KPIs nicht verfälschen.

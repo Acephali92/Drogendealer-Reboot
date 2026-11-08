@@ -31,6 +31,15 @@ sind dann neu zu rechnen.
 Alle Beispielzahlen in diesem Dokument sind **illustrativ**. Sie zeigen die Methode und deuten erste Befunde
 an. Verbindlich ist erst das Ergebnis der Simulation.
 
+### 0.3a Rahmenbedingungen des Product Owners (2026-11-08)
+
+| ID | Festlegung | Folge für das Balancing |
+|---|---|---|
+| R-1 | **Anfangs nur wenige Spieler** pro Server | Standard-Szenarien laufen mit **30 Spielern**. Die Skalierung wird mit 10 / 30 / 100 / 300 geprüft. Konkurrenz zwischen Spielern begrenzt den Gewinn kaum, deshalb müssen Markttiefe und NPC-Mechaniken das übernehmen. |
+| R-2 | **Keine Neustarts** der Welt (keine Saisons mit Reset) | Die Welt ist dauerhaft. Inflation und Vorsprung der ersten Spieler wachsen unbegrenzt, wenn die Senken nicht mitwachsen. Jeder spätere Spieler ist ein „Late Joiner“. Die Maßnahmen gegen Dominanz dürfen sich nicht auf Resets stützen. |
+
+Die Abschnitte 1, 2, 5 und 6 enthalten dazu je einen Unterabschnitt **„Bei wenigen Spielern / ohne Reset“**.
+
 ### 0.3 Gliederung jedes Abschnitts
 
 **Fragestellung → Modell → Messgrößen → Zielkorridor → Simulationsszenario → Stellschrauben → Überschlag → Befund.**
@@ -96,8 +105,17 @@ Veteranen bedeutungslos werden. Senken müssen daher mit dem Vermögen mitwachse
 progressiver Unterhalt, Ausbaukosten mit Wachstumsfaktor, Waschgebühren, Clan-Ausbau, Weltraum.
 
 ### Simulationsszenario `S1-growth`
-200 Bots im Standard-Mix ([player-archetypes.md](player-archetypes.md#standard-population)), 90 Tage, 20 Seeds.
-Ausgegeben werden `NW(t)`-Kurven je Typ, Rendite je Phase, `M(t)` und `SFR(t)`.
+30 Bots im Standard-Mix ([player-archetypes.md](player-archetypes.md#standard-population)), 365 Tage, 20 Seeds.
+Zusätzlich laufen Varianten mit 10, 100 und 300 Bots. Ausgegeben werden `NW(t)`-Kurven je Typ, Rendite je Phase,
+`M(t)` und `SFR(t)`.
+
+### Bei wenigen Spielern / ohne Reset
+- Weil die Welt nie zurückgesetzt wird, wird die Geldmenge **über ein Jahr** simuliert und nicht nur über 90 Tage.
+  Ziel: `M(t)` pro aktivem Spieler wächst ab Tag 30 höchstens **logarithmisch** und nicht linear oder exponentiell.
+- Senken, die mit dem Vermögen wachsen, sind ohne Reset **Pflicht** und keine Option mehr (siehe D-6).
+- Mit wenigen Spielern bremst die Konkurrenz um Gewinnpools das Wachstum kaum (siehe Abschnitt 2).
+  Phase III (Markt-Engpass) entsteht dann vor allem durch die **eigene** Slippage des Spielers. Das ist ausreichend,
+  solange `economy.elasticity` und `cover_ticks` die Markttiefe begrenzen.
 
 ### Stellschrauben
 `player.start_cash_black`, `player.backpack_capacity`, `vehicles.*.price/capacity`, `trade.spread_base`,
@@ -179,6 +197,17 @@ München nimmt etwa 13,4 Einheiten Kokain pro Tick auf, also ≈ 1.930 pro Tag. 
 Rotterdam → München beträgt damit ≈ 1.930 × 93 € ≈ **180.000 € pro Tag**, und alle Spieler auf dieser Route teilen ihn.
 Ein einzelner Transporter (1.500 Vol.) würde den Zielbestand Münchens (~970 Einheiten) mehr als verdoppeln.
 Die Route sättigt also früh, und genau das ist gewünscht (siehe Abschnitt 6).
+
+### Bei wenigen Spielern / ohne Reset
+Mit 10–30 Spielern auf 8 Städten und 12 Waren treffen sich Händler selten auf derselben Route. Ein Gewinnpool
+von ≈ 180.000 € pro Tag gehört dann praktisch einem einzigen Spieler. Die Folgen:
+- `S2b-route-saturation` ist anfangs weniger wichtig. Wichtiger ist, dass **ein einzelner Spieler** eine Route
+  durch seine eigene Slippage und die Erholungszeit $T_{1/2}$ selbst sättigt. Wer die Route zu oft fährt, findet
+  schlechtere Preise vor und muss rotieren.
+- **Vorschlag N-1 (an Agent 2): NPC-Händler.** Simulierte Konkurrenten, die profitable Routen mit einer festen Rate
+  abschöpfen. Ihre Rate sinkt, wenn mehr echte Spieler aktiv sind. So bleibt der Markt bei wenigen Spielern
+  lebendig, und die Balance verschiebt sich nicht, wenn die Spielerzahl wächst.
+- Zielkorridor zusätzlich: Gewinn pro Fahrt eines einzelnen Spielers bei 10 Spielern ≤ 1,3 × bei 100 Spielern.
 
 ---
 
@@ -375,6 +404,16 @@ $$
 - ➕ **Beute-Senke**: 10–20 % der Beute verschwinden (Hehlerabschlag). Damit hat PvP keine Geldbilanz von null mehr,
   sondern wird zur Geldsenke, und das Farmen mit Zweitaccounts wird teurer ([E-04](exploit-catalog.md#e-04-multi-account-feeding)).
 
+### Bei wenigen Spielern / ohne Reset
+Mit wenigen Spielern, Vermögensband, Neulingsschutz und Cooldowns gibt es oft **gar kein gültiges Ziel**.
+Rauben wird dann zur Sackgasse, und das Betätigungsfeld Gewalt verliert seinen Sinn. Gleichzeitig trifft jeder
+Angriff einen großen Teil der kleinen Community, und Frust wirkt stärker.
+- KPI zusätzlich: **Ziel-Verfügbarkeit** = Anteil der Online-Ticks eines Räubers, in denen mindestens ein gültiges
+  Ziel existiert. Ziel ≥ 30 % bei 30 Spielern.
+- **Vorschlag N-2 (an Agent 2): NPC-Ziele und NPC-Gegner.** Dazu gehören NPC-Kuriere und rivalisierende Banden als Ziele
+  für Gewalt-Spieler sowie NPC-Überfälle auf Händler als Risiko. Echte PvP-Angriffe bleiben möglich, sind aber nicht die einzige Quelle.
+  NPC-Beute ist eine Geldquelle und muss in der Geldbilanz (I-1) erscheinen.
+
 ### Simulationsszenario `S5-raids`
 50 Händler (verschiedene Schutzprofile) und 10 Räuber-Bots, 30 Tage, Variation über
 `loot_cash_rate` ∈ {0,10; 0,15; 0,25; 0,35} und `alpha` ∈ {1,0; 1,5; 2,0}.
@@ -405,10 +444,10 @@ durch Gewalt noch durch Marktmacht die Grundlage entziehen.
 | D-3 | Neulingsschutz (Zeit **und** Vermögen) | frühe Frustration | ✅ |
 | D-4 | Markt-Fairness: Gewinnpool pro Route, Slippage, `max_trade_share` | Wal kauft Markt leer | ✅ teilweise |
 | D-5 | ➕ Pro-Spieler-Limit pro Markt und Tick (z. B. ≤ 25 % des Zielbestands je Stunde) | Cornering, Ausdünnung | Vorschlag |
-| D-6 | ➕ Progressiver Unterhalt / Vermögens-Senken (Ausbau, Clan, Weltraum) | Inflation, Abheben der Top 1 % | Vorschlag |
-| D-7 | ➕ Aufhol-XP: XP-Bonus, wenn das Level unter dem Server-Median liegt (z. B. +50 %, abnehmend) | dauerhafter Skill-Rückstand | Vorschlag |
+| D-6 | ➕ Progressiver Unterhalt / Vermögens-Senken (Ausbau, Clan, Weltraum) | Inflation, Abheben der Top 1 % | **Pflicht** (R-2) |
+| D-7 | ➕ Aufhol-XP: XP-Bonus, wenn das Level unter dem Server-Median liegt (z. B. +50 %, abnehmend) | dauerhafter Skill-Rückstand | **Pflicht** (R-2) |
 | D-8 | Clan-Größenlimit (`member_base` + `member_per_level`) und Bezirksbegrenzung | Monopol-Clans | ✅ |
-| D-9 | ➕ Saison-Ranglisten (z. B. 90 Tage) zusätzlich zur Allzeit-Liste | Neulinge haben keine Chance auf Ruhm | Vorschlag |
+| D-9 | ➕ Zeitraum-Ranglisten **ohne Welt-Reset**: „Aufsteiger der Woche/des Monats“ (Zuwachs von `NW` oder `IPH` statt Bestand), Ranglisten je Altersklasse des Accounts | Neulinge haben keine Chance auf Ruhm | Vorschlag (R-2: keine Resets) |
 | D-10 | Veteranen-Inhalte (Weltraum) entziehen Veteranen den Erdmärkten | Veteranen besetzen Einsteiger-Routen | ✅ systemisch |
 
 ### Messgrößen
@@ -427,9 +466,20 @@ durch Gewalt noch durch Marktmacht die Grundlage entziehen.
 | Markt-Verdrängung durch Veteranen | ≤ 20 % weniger Gewinn pro Fahrt |
 | Neulings-Bindung | ≥ 90 % |
 
+### Bei wenigen Spielern / ohne Reset
+Ohne Resets ist `S6-late-joiner` das **wichtigste** Szenario. Jeder Spieler, der nach den ersten Wochen kommt,
+trifft auf Veteranen mit Monaten oder Jahren Vorsprung, und das bleibt dauerhaft so.
+- Gini und Top-1 % sind bei 10–30 Spielern statistisch wenig aussagekräftig (1 % von 30 Spielern ist kein Spieler).
+  Bei weniger als 100 Spielern gelten daher **Rangmaße**: Vermögen des reichsten Spielers ÷ Median (Ziel ≤ 20 im ersten Jahr)
+  und `GAP14`.
+- Die Vermögensunterschiede dürfen wachsen, die **Einkommenslücke pro Stunde** (`GAP14`) nicht. Sie wird deshalb an
+  Tag 30, 180 und 365 nach Serverstart gemessen und muss jedes Mal ≥ 0,25 sein.
+- Senken, die mit dem Vermögen wachsen (D-6), und Aufhol-XP (D-7) ersetzen den Reset als Gleichmacher.
+  Ohne sie wäre die Welt nach einem Jahr für Neue kaum attraktiv.
+
 ### Simulationsszenario `S6-late-joiner`
-Ein Server läuft 90 Tage mit 200 Bots. Danach kommen 50 Neulinge hinzu. Gemessen wird deren Entwicklung über 30 Tage
-im Vergleich zu einer Kontrollgruppe, die an Tag 0 auf einem frischen Server startet.
+Ein Server läuft mit 30 Bots. An Tag 30, 180 und 365 kommen jeweils 10 Neulinge hinzu. Gemessen wird deren
+Entwicklung über 30 Tage im Vergleich zu einer Kontrollgruppe, die an Tag 0 auf einem frischen Server startet.
 
 ### Stellschrauben
 `combat.networth_band`, `combat.newbie_protection_*`, `trade.max_trade_share`, `clans.member_*`,
@@ -475,10 +525,13 @@ sind ideale Räuber ([E-04](exploit-catalog.md#e-04-multi-account-feeding), [E-1
 | B-4 | Kapitalrendite von Betrieben liegt unter 1/100 der Rendite von Fahrzeugen | in S4 prüfen, ob Bots Betriebe kaufen. Ggf. Spreizung senken oder Erträge skalieren | Agent 2 |
 | B-5 | Opfer kann bis zu 68 % des Bargelds pro Tag verlieren | Tages-Beutecap und abnehmende Beute ergänzen | Agent 2 |
 | B-6 | Vermögensband schützt Arme, begünstigt aber kleine Zweitaccounts | Schutz an Account-Alter, Level-Summe und Zweitaccount-Erkennung koppeln | Agent 2, 3 |
+| B-7 | Bei wenigen Spielern teilt sich kaum jemand eine Route, und Räuber finden kaum gültige Ziele (R-1) | NPC-Händler (N-1) und NPC-Ziele/-Gegner (N-2) | Agent 2 |
+| B-8 | Ohne Reset wachsen Geldmenge und Vorsprung unbegrenzt (R-2) | Senken, die mit dem Vermögen wachsen (D-6), und Aufhol-XP (D-7) sind Pflicht. Ranglisten für Zeiträume statt Resets (D-9) | Agent 2 |
 
 ## 9. Offene Fragen
 
 1. Endgültige Preis- und Spread-Formeln (A-1, A-2) → Agent 2.
 2. Wird der Bestand pro Order sofort fortgeschrieben (A-3)? → Agent 3.
-3. Gibt es Saisons bzw. Server-Resets? Das beeinflusst D-9 und die Inflationsziele → Product Owner.
-4. Wie viele aktive Spieler werden pro Server erwartet? Die Gewinnpools pro Route skalieren damit → Product Owner.
+3. ~~Gibt es Saisons bzw. Server-Resets?~~ → **Nein** (R-2).
+4. ~~Wie viele aktive Spieler werden pro Server erwartet?~~ → **Anfangs wenige** (R-1). Offen: Ab welcher Spielerzahl
+   sollen NPC-Mechaniken (N-1, N-2) zurückgefahren werden?
