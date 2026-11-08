@@ -1,103 +1,98 @@
 # TASKS.md – Aufgaben-Board
 
-> Gepflegt von Agent 1. Agenten übernehmen Tasks, indem sie sich unter **Zuständig** eintragen
-> und den Status auf `in progress` setzen. Neue Tasks nur nach Abstimmung mit Agent 1.
+> Gepflegt von Agent 1. Revision 2 (2026-11-08): neu aufgesetzt für Echtzeit-Mehrspieler (ADR-006).
+> Die Tasks T-001 bis T-017 aus Revision 1 (Single-Player) sind **verworfen**; T-010 (UI-Technik) ist durch ADR-008 erledigt.
+> Agenten übernehmen Tasks, indem sie Status und Zuständigkeit setzen. Neue Tasks nur nach Abstimmung mit Agent 1.
 
 ## Legende
 
 **Status:** `todo` · `in progress` · `review` · `done` · `blocked`
-**Bereich-Tags:** `[setup]` `[core]` `[content]` `[ui]` `[persistence]` `[qa]` `[docs]`
-**Zuständig:** `unassigned`, bis die Agenten-Rollen definiert sind (PROJECT.md, Q5).
+**Agenten:** A1 Director · A2 Game Design · A3 Backend · A4 Frontend · A5 Datenbank · A6 Balancing/Simulation
 
-## Übersicht
+## M0 – Integration & Fundament
 
-| ID | Titel | Bereich | MS | Status | Zuständig | Abhängig von |
-|----|-------|---------|----|--------|-----------|--------------|
-| T-001 | Vite + TypeScript-Projekt aufsetzen | [setup] | M0 | todo | unassigned | – |
-| T-002 | ESLint, Prettier, Importregeln | [setup] | M0 | todo | unassigned | T-001 |
-| T-003 | Vitest + GitHub-Actions-CI | [setup] [qa] | M0 | todo | unassigned | T-001 |
-| T-004 | Seeded RNG | [core] | M1 | todo | unassigned | T-003 |
-| T-005 | GameState-, Command- & Content-Typen | [core] [content] | M1 | todo | unassigned | T-001 |
-| T-006 | Markt-Preismodell | [core] | M1 | todo | unassigned | T-004, T-005 |
-| T-007 | Commands: Kaufen / Verkaufen | [core] | M1 | todo | unassigned | T-005, T-006 |
-| T-008 | Commands: Reisen, Tageswechsel, Schulden | [core] | M1 | todo | unassigned | T-006, T-007 |
-| T-009 | Zufallsereignisse & Spielende/Scoring | [core] | M1 | blocked (Q3) | unassigned | T-008 |
-| T-010 | UI-Technik evaluieren (ADR) | [ui] | M2 | todo | unassigned | T-001 |
-| T-011 | Platzhalter-Content für MVP | [content] | M2 | todo | unassigned | T-005 |
-| T-012 | Spielbildschirme MVP | [ui] | M2 | todo | unassigned | T-010, T-005 (Mock); Integration: T-008 |
-| T-013 | Finaler Content (Welt, Waren, Events) | [content] | M3 | blocked (Q1, Q2, Q4) | unassigned | T-011 |
-| T-014 | Balancing-Simulationsskript | [core] [qa] | M3 | todo | unassigned | T-009 |
-| T-015 | Speichern/Laden + Migrationen | [persistence] | M4 | todo | unassigned | T-009 |
-| T-016 | Highscores & UX-Polish | [ui] | M4 | todo | unassigned | T-012, T-015 |
-| T-017 | Deployment & Spielanleitung | [setup] [docs] | M5 | todo | unassigned | T-016 |
+| ID | Titel | Zuständig | Status | Abhängig von |
+|----|-------|-----------|--------|--------------|
+| T-001 | GitHub-Schreibzugriff für alle Agenten herstellen | Product Owner | blocked | – |
+| T-002 | Steuerungsdokumente Revision 2 | A1 | review | – |
+| T-003 | Game-Design-Grundlagen (Regeln, Parameterdatei, Prüfskript) | A2 | in progress | – |
+| T-004 | Backend-Fundament: Setup, Prisma-Schema, Auth, `/players/me` | A3 | in progress | – |
+| T-005 | Datenmodell-Review des bestehenden Schemas + Nachvollziehbarkeitskonzept | A5 | todo | T-004 |
+| T-006 | Frontend-Gerüst, API-Vertragsentwurf, UI-Richtlinien | A4 | in progress | – |
+| T-007 | Root-README konsolidieren, Backend-Schnellstart nach `backend/README.md` | A1 + A3 | todo | T-004 |
+| T-008 | Branches integrieren (Reihenfolge siehe unten) | A1 | blocked (T-001) | T-002 – T-007 |
 
----
+## M1 – Wirtschaftskern
 
-## Task-Details
+| ID | Titel | Zuständig | Status | Abhängig von |
+|----|-------|-----------|--------|--------------|
+| T-101 | Parameterdatei im Backend laden und beim Start validieren | A3 | todo | T-003, T-004 |
+| T-102 | Seed-Daten: Städte, Verbindungen, Waren aus Parametern | A3 | todo | T-101 |
+| T-103 | Preisformeln als reine Funktionen + Tests gegen Prüfskript | A3 (Review A2) | todo | T-003 |
+| T-104 | Markt-Tick-Job (idempotent, Tick-Nummer) | A3 | todo | T-103, T-105 |
+| T-105 | Preisänderungsjournal mit Ursache (Schema-Entwurf) | A5 (Umsetzung A3) | todo | T-005 |
+| T-106 | Handels-Endpunkte Kaufen/Verkaufen inkl. Journale | A3 | todo | T-102, T-105 |
+| T-107 | API-Vertrag nach `docs/api/` übernehmen und abgleichen | A3 + A4 | todo | T-006 |
 
-### T-001 – Vite + TypeScript-Projekt aufsetzen
-- **Akzeptanzkriterien:** `package.json` mit Skripten `dev`, `build`, `preview`, `typecheck`; `tsconfig.json` mit `strict: true`; Verzeichnisstruktur gemäß ARCHITECTURE.md §5 (leere Module mit `index.ts`); `.gitignore`.
+## M2 – Reisen & Spielerfortschritt
 
-### T-002 – ESLint, Prettier, Importregeln
-- **Akzeptanzkriterien:** `npm run lint` schlägt fehl, wenn `src/core` aus `src/ui` oder `src/persistence` importiert oder `Math.random`/`Date.now`/`window`/`localStorage` nutzt (ADR-003). Prettier-Konfiguration eingecheckt.
+| ID | Titel | Zuständig | Status | Abhängig von |
+|----|-------|-----------|--------|--------------|
+| T-201 | Reiseregeln und Fahrzeugwerte | A2 | todo | T-003 |
+| T-202 | Reise-Endpunkte + lazy Auflösung + Tick-Auflösung | A3 | todo | T-201, T-106 |
+| T-203 | Spielerstatus-Übergänge (IDLE, TRAVELING, …) | A3 (Review A2) | todo | T-202 |
+| T-204 | Fahrzeugkauf | A3 | todo | T-201 |
 
-### T-003 – Vitest + GitHub-Actions-CI
-- **Akzeptanzkriterien:** `npm test` mit Coverage-Report; Workflow führt `lint`, `typecheck`, `test`, `build` bei Push und PR aus (ADR-005).
+## M3 – MVP spielbar
 
-### T-004 – Seeded RNG
-- **Akzeptanzkriterien:** Reine Funktion `next(rngState) → { value, rngState }` plus Helfer (`int(min,max)`, `pick`, `weighted`). Tests belegen Determinismus und Verteilung grob gleichmäßig.
+| ID | Titel | Zuständig | Status | Abhängig von |
+|----|-------|-----------|--------|--------------|
+| T-301 | Login/Registrierung, Token-Refresh im Client | A4 | todo | T-004, T-107 |
+| T-302 | Markt- und Handelsseite | A4 | todo | T-106 |
+| T-303 | Reise- und Statusanzeige mit Countdown | A4 | todo | T-202 |
+| T-304 | Rangliste (Vermögen) – Endpunkt + Seite | A3 + A4 | todo | T-106 |
 
-### T-005 – GameState-, Command- & Content-Typen
-- **Akzeptanzkriterien:** Typen gemäß ARCHITECTURE.md §3–4 in `src/core/types.ts`, `src/core/commands.ts`, `src/content/types.ts`. Geld als Integer. **Schnittstellen-Freeze** nach Review durch Agent 1 – danach Änderungen nur per Abstimmung.
+## M4 – M6 (Grobplanung, wird bei Erreichen von M3 verfeinert)
 
-### T-006 – Markt-Preismodell
-- **Akzeptanzkriterien:** `generateMarket(location, items, rng)` erzeugt Preise innerhalb `minPrice..maxPrice` abhängig von `volatility`. Tests für Grenzen und Determinismus.
-
-### T-007 – Commands: Kaufen / Verkaufen
-- **Akzeptanzkriterien:** `buy`/`sell` in `reduce`; Fehlercodes für zu wenig Geld, zu wenig Kapazität, nicht vorhandene Ware, ungültige Menge. Positiv- und Negativtests.
-
-### T-008 – Commands: Reisen, Tageswechsel, Schulden
-- **Akzeptanzkriterien:** `travel` erhöht `day`, berechnet Zinsen, generiert neuen Markt; `repayDebt` mit Validierung. `createNewGame(seed, config)` liefert gültigen Startzustand.
-
-### T-009 – Zufallsereignisse & Spielende/Scoring
-- **Blockiert durch:** Q3 (Spieldauer/Siegbedingung).
-- **Akzeptanzkriterien:** Ereignisse gewichtet aus `content`; Status `finished` nach `maxDays`; Scoring-Funktion; End-to-End-Test einer kompletten Partie mit festem Seed (Exit-Kriterium M1).
-
-### T-010 – UI-Technik evaluieren (ADR)
-- **Akzeptanzkriterien:** Kurzer Vergleich (Vanilla DOM vs. z. B. Preact/Lit), Empfehlung als ADR-Entwurf in DECISIONS.md; Entscheidung durch Agent 1.
-
-### T-011 – Platzhalter-Content für MVP
-- **Akzeptanzkriterien:** Neutrale Platzhalter-Orte/Waren/Events, ausreichend für ein spielbares MVP; eindeutig als Platzhalter gekennzeichnet; eigenständige Namen (keine Übernahmen aus bestehenden Spielen).
-
-### T-012 – Spielbildschirme MVP
-- **Akzeptanzkriterien:** Start-, Markt-, Reise- und Endbildschirm; UI leitet alles aus `GameState` ab und sendet nur Commands; Fehlermeldungen aus `CommandError` verständlich angezeigt.
-
-### T-013 – Finaler Content
-- **Blockiert durch:** Q1, Q2, Q4.
-- **Akzeptanzkriterien:** Content gemäß Product-Owner-Vorgaben; alle Texte in `src/content`.
-
-### T-014 – Balancing-Simulationsskript
-- **Akzeptanzkriterien:** Headless-Skript simuliert N Partien mit einfachen Bot-Strategien und gibt Score-Verteilung aus.
-
-### T-015 – Speichern/Laden + Migrationen
-- **Akzeptanzkriterien:** gemäß ADR-004; Tests für korrupte Daten und Migration einer älteren `schemaVersion`.
-
-### T-016 – Highscores & UX-Polish
-- **Akzeptanzkriterien:** Lokale Top-10; responsive Layout; Tastaturbedienung der Hauptaktionen.
-
-### T-017 – Deployment & Spielanleitung
-- **Akzeptanzkriterien:** Automatisches Deployment des Builds als statische Seite; README mit Anleitung.
+| ID | Titel | Zuständig | MS |
+|----|-------|-----------|----|
+| T-401 | Kampfregeln + Ausrüstung | A2 → A3 → A4 | M4 |
+| T-402 | Clans (Gründen, Einladen, Rollen, Clan-Kasse) | A2 → A3 → A4 | M4 |
+| T-403 | Nachrichten | A3 → A4 | M4 |
+| T-404 | Missbrauchs- und Neulingsschutz | A2 + A3 | M4 |
+| T-501 | Immobilien | A2 → A5 → A3 → A4 | M5 |
+| T-502 | Spielereignisse | A2 → A5 → A3 | M5 |
+| T-503 | Simulationswerkzeug auf Basis der Regelfunktionen | A6 | M5 (Start ab T-103) |
+| T-504 | Balancing-Bericht und Parameteranpassung | A6 + A2 | M5 |
+| T-601 | Hosting-Entscheidung (ADR) | A1 + Product Owner | M6 |
+| T-602 | Deployment-Pipeline, Backups, Monitoring | A3 | M6 |
+| T-603 | Impressum, Datenschutzerklärung | Product Owner | M6 |
+| T-604 | Sicherheits-Review | A1 | M6 |
 
 ---
+
+## Integrationsplan (T-008)
+
+Derzeit liegt **kein** Branch auf GitHub: Pushes scheitern mit 403 (T-001). Sobald der Zugriff steht:
+
+1. `claude/tender-mccarthy-dhr8kr` (A1, Steuerungsdokumente) wird Basis des Hauptbranches `main`.
+2. Game Design (A2): `docs/game-design/`.
+3. Backend (A3, `claude/nice-wright-ljm3zq`): `backend/`, `docker-compose.yml`. Root-README nach `backend/README.md` (T-007).
+4. Datenmodell-Änderungen (A5) als PR gegen `backend/prisma/`.
+5. Frontend (A4, `claude/inspiring-ritchie-oaq48s`): `frontend/`, `docs/frontend/`, `.github/workflows/frontend.yml`.
+6. Balancing/Simulation (A6).
+
+Jeder Schritt: PR gegen `main`, Review durch A1 nach dem Prozess unten.
 
 ## Review-Prozess (Agent 1)
 
-Jeder PR wird von Agent 1 geprüft auf:
-1. Erfüllung aller Akzeptanzkriterien des referenzierten Tasks
-2. Einhaltung der Modul- und Importregeln (ARCHITECTURE.md §2)
-3. Unveränderte oder abgestimmte Schnittstellenverträge (ARCHITECTURE.md §7)
-4. Tests vorhanden und CI grün
-5. Migrationsbedarf bei `GameState`-Änderungen (ADR-004)
-6. Aktualisierte Dokumente (TASKS.md-Status, ggf. neuer ADR)
+Jeder PR wird geprüft auf:
+1. Erfüllung der Akzeptanzkriterien bzw. des Task-Ziels
+2. Änderungen nur im eigenen Ordner bzw. mit Zustimmung des Eigentümers (ADR-009)
+3. Schemaänderungen mit Review von A5 (ADR-010); Migration enthalten
+4. API-Änderungen im Vertrag dokumentiert (ADR-011)
+5. Spielwerte aus der Parameterdatei, nicht im Code dupliziert
+6. Tests vorhanden, CI grün, keine Secrets im Repo
+7. Dokumente aktualisiert (TASKS.md-Status, ggf. neuer ADR)
 
 Ergebnis: `approved` → Status `done` · `changes requested` → Status zurück auf `in progress`.
