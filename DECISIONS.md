@@ -92,7 +92,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 ## ADR-011 – API-Vertrag: Eigentum Backend, MSW-Mocks im Frontend
 - **Status:** Akzeptiert · **Datum:** 2026-11-08
 - **Kontext:** Agent 4 hat einen Vertragsentwurf `docs/frontend/API-CONTRACT.md` angelegt, Agent 3 implementiert die Endpunkte. Ohne klaren Eigentümer driften Mocks und Server auseinander.
-- **Entscheidung:** Der API-Vertrag gehört **Agent 3** und liegt unter `docs/api/API-CONTRACT.md`. Agent 4s Entwurf dient als Anforderungsdokument und wird von Agent 3 übernommen bzw. abgeglichen. Mittelfristig wird eine OpenAPI-Spezifikation aus den Fastify-/zod-Schemas generiert. Das Frontend mockt ausschließlich gemäß Vertrag. Prefix `/api/v1`, Fehlerformat `{error:{code,message}}`, Geld als String.
+- **Entscheidung:** Der API-Vertrag gehört **Agent 3** und liegt unter `docs/api/API-CONTRACT.md`. Agent 4s Entwurf dient als Anforderungsdokument und wird von Agent 3 übernommen bzw. abgeglichen. Eine aus den Fastify-/zod-Schemas generierte OpenAPI-Spezifikation ist vorerst zurückgestellt (laut Agent 3 Entscheidung des Product Owners); bis dahin ist das Markdown-Dokument verbindlich. Das Frontend mockt ausschließlich gemäß Vertrag. Prefix `/api/v1`, Fehlerformat `{error:{code,message}}`, Geld als String.
 - **Konsequenzen:** Vertragsänderungen werden von Agent 3 und Agent 4 gemeinsam abgestimmt; Breaking Changes brauchen Freigabe durch Agent 1.
 
 ## ADR-012 – Balancing-Simulation in TypeScript auf Basis der Backend-Regelfunktionen

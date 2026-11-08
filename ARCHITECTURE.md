@@ -76,14 +76,14 @@ ADR-012 (Balancing-Simulation).
 - **Nachvollziehbarkeit (Pflicht):** wirtschaftliche Vorgänge werden in unveränderlichen Journal-Tabellen (append-only) festgehalten:
   - Geldbewegungen (`MoneyTransaction`, mit `balanceAfter` und Grund)
   - Handelsvorgänge (`TradeTransaction`)
-  - **Preisänderungen** mit Ursache (Tick, Handelsvolumen, Ereignis) und Bezug auf den auslösenden Datensatz, sodass jede Preisbewegung rekonstruierbar ist. Ausgearbeitet von Agent 5 in T-105.
+  - **Preisänderungen** (`MarketPriceChange`) mit Ursache (Tick, Handelsvolumen, Ereignis) und Bezug auf den auslösenden Datensatz. Ein DB-Trigger auf `MarketPrice` schreibt das Journal, sodass keine Preisänderung daran vorbeigehen kann (T-105, Review durch Agent 5).
 - Aktuelle Zustände (z. B. `MarketPrice`, `Player.cash`) sind Projektionen und müssen aus den Journalen erklärbar sein.
 
 ## 6. API (Agent 3, siehe ADR-011)
 
 - REST unter `/api/v1`, JSON, einheitliches Fehlerformat `{ "error": { "code": "...", "message": "..." } }`.
 - Auth: Access-JWT (kurzlebig) + rotierender Refresh-Token.
-- Vertrag: `docs/api/API-CONTRACT.md` (Ziel: aus den zod-/Fastify-Schemas generierte OpenAPI-Spezifikation). Breaking Changes nur mit neuer API-Version oder Abstimmung über Agent 1.
+- Vertrag: `docs/api/API-CONTRACT.md` (Markdown, verbindlich; generierte OpenAPI-Spezifikation vorerst zurückgestellt). Breaking Changes nur mit neuer API-Version oder Abstimmung über Agent 1.
 
 ## 7. Qualitätskriterien
 

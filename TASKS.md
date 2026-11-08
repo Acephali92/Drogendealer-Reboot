@@ -19,7 +19,7 @@
 | T-004 | Backend-Fundament: Setup, Prisma-Schema, Auth, `/players/me` | A3 | in progress | – |
 | T-005 | Datenmodell-Review des bestehenden Schemas + Nachvollziehbarkeitskonzept | A5 | todo | T-004 |
 | T-006 | Frontend-Gerüst, API-Vertragsentwurf, UI-Richtlinien | A4 | in progress | – |
-| T-007 | Root-README konsolidieren, Backend-Schnellstart nach `backend/README.md` | A1 + A3 | todo | T-004 |
+| T-007 | Root-README konsolidieren, Backend-Schnellstart nach `backend/README.md` | A1 + A3 | in progress (A3 lokal) | T-004 |
 | T-008 | Branches integrieren (Reihenfolge siehe unten) | A1 | blocked (T-001) | T-002 – T-007, T-009 |
 | T-009 | Balancing-Konzept und Simulations-Spezifikation (`docs/balancing/`) | A6 | review | – |
 
@@ -31,9 +31,9 @@
 | T-102 | Seed-Daten: Städte, Verbindungen, Waren aus Parametern | A3 | todo | T-101 |
 | T-103 | Preisformeln als reine Funktionen + Tests gegen Prüfskript | A3 (Review A2) | todo | T-003 |
 | T-104 | Markt-Tick-Job (idempotent, Tick-Nummer) | A3 | todo | T-103, T-105 |
-| T-105 | Preisänderungsjournal mit Ursache (Schema-Entwurf) | A5 (Umsetzung A3) | todo | T-005 |
+| T-105 | Preisänderungsjournal `MarketPriceChange` mit Ursache, per DB-Trigger auf `MarketPrice` | A3 (umgesetzt, lokal) · Review A5 Pflicht | review | T-005 |
 | T-106 | Handels-Endpunkte Kaufen/Verkaufen inkl. Journale | A3 | todo | T-102, T-105 |
-| T-107 | API-Vertrag nach `docs/api/` übernehmen und abgleichen | A3 + A4 | todo | T-006 |
+| T-107 | API-Vertrag nach `docs/api/API-CONTRACT.md` übernehmen und mit A4-Entwurf abgleichen | A3 + A4 | review (A3 lokal; Abweichungen dort dokumentiert, A4 muss bestätigen) | T-006 |
 
 ## M2 – Reisen & Spielerfortschritt
 
