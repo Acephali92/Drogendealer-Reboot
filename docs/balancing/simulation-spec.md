@@ -15,7 +15,8 @@
 | Entscheidung | Vorschlag | Begründung |
 |---|---|---|
 | Sprache | **TypeScript** (Node.js LTS) | Gleicher Stack wie das Backend (Agent 3). Die Domain-Funktionen werden direkt importiert. |
-| Formel-Quelle | Reine Domain-Funktionen aus `backend/src/domain/` (Name abzustimmen) | Simulation = Live-Logik. Keine Drift. |
+| Preisjournal | Tabelle `MarketPriceChange` (append-only, mit Ursache und `refId`, Agent 3/5) | Live-Preisverläufe für die Kalibrierung (P5) |
+| Formel-Quelle | Reine Domain-Funktionen aus `backend/src/domain/` (mit Agent 3 abgestimmt) | Simulation = Live-Logik. Keine Drift. |
 | Parameter | `docs/game-design/parameters.toml` über einen TOML-Parser (z. B. `smol-toml`) | Single Source of Truth (Agent 2) |
 | Referenz | `docs/game-design/tools/verify.py` (Agent 2) | Die `EX-*`-Beispiele werden als **Golden Vectors** exportiert (JSON) und von Vitest gegen die TS-Domain-Funktionen geprüft. |
 | Tests | Vitest | wie Backend |

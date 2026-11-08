@@ -25,7 +25,7 @@ sind dann neu zu rechnen.
 |---|---|
 | A-1 | Gleichgewichtspreis $P^* = P_{base}\cdot W^{\omega}\cdot (m_d/m_s)^{\varepsilon}$; Momentanpreis $P = P^*\cdot(S^*/S)^{\varepsilon}$, Zielbestand $S^* = D\cdot$ `cover_ticks` $\cdot\, m_s$, Nachfrage $D = pop\cdot c\cdot W^{\beta}\cdot m_d$ |
 | A-2 | Kaufpreis $= P\cdot(1+s/2)$, Verkaufspreis $= P\cdot(1-s/2)$ mit $s$ = `trade.spread_base` |
-| A-3 | Jede Order verändert den Bestand **sofort** (kein Batching bis zum nächsten Tick), siehe [E-05](exploit-catalog.md#e-05-tick-grenzen-timing--order-splitting) |
+| A-3 | Jede Order verändert den Bestand **sofort** (kein Batching bis zum nächsten Tick), siehe [E-05](exploit-catalog.md#e-05-tick-grenzen-timing--order-splitting). ✅ Von Agent 3 zugesagt (2026-11-08). |
 | A-4 | Reisen laufen auch weiter, wenn der Spieler offline ist |
 
 Alle Beispielzahlen in diesem Dokument sind **illustrativ**. Sie zeigen die Methode und deuten erste Befunde
@@ -523,7 +523,7 @@ sind ideale Räuber ([E-04](exploit-catalog.md#e-04-multi-account-feeding), [E-1
 | ID | Befund | Empfehlung | An |
 |---|---|---|---|
 | B-1 | Start sehr schnell: eine Fahrt verdoppelt das Startkapital | ok für Phase I. Phase II/III per S1 messen | Agent 2 |
-| B-3 | Impact-Werte im Korridor, aber nur bei sofortiger Bestandsänderung | A-3 verbindlich in der Backend-Implementierung | Agent 3 |
+| B-3 | Impact-Werte im Korridor, aber nur bei sofortiger Bestandsänderung | A-3 verbindlich in der Backend-Implementierung. ✅ Zugesagt | Agent 3 |
 | B-4 | Kapitalrendite von Betrieben liegt unter 1/100 der Rendite von Fahrzeugen | in S4 prüfen, ob Bots Betriebe kaufen. Ggf. Spreizung senken oder Erträge skalieren | Agent 2 |
 | B-5 | Opfer kann bis zu 68 % des Bargelds pro Tag verlieren | Tages-Beutecap und abnehmende Beute ergänzen | Agent 2 |
 | B-6 | Vermögensband schützt Arme, begünstigt aber kleine Zweitaccounts | Schutz an Account-Alter, Level-Summe und Zweitaccount-Erkennung koppeln | Agent 2, 3 |
@@ -533,7 +533,7 @@ sind ideale Räuber ([E-04](exploit-catalog.md#e-04-multi-account-feeding), [E-1
 ## 9. Offene Fragen
 
 1. Endgültige Preis- und Spread-Formeln (A-1, A-2) → Agent 2.
-2. Wird der Bestand pro Order sofort fortgeschrieben (A-3)? → Agent 3.
+2. ~~Wird der Bestand pro Order sofort fortgeschrieben (A-3)?~~ → **Ja**, zugesagt von Agent 3.
 3. ~~Gibt es Saisons bzw. Server-Resets?~~ → **Nein** (R-2).
 4. ~~Wie viele aktive Spieler werden pro Server erwartet?~~ → **Anfangs wenige** (R-1). Offen: Ab welcher Spielerzahl
    sollen NPC-Mechaniken (N-1, N-2) zurückgefahren werden?
