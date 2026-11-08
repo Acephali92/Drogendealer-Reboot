@@ -24,7 +24,7 @@
 | T-009 | Zufallsereignisse & Spielende/Scoring | [core] | M1 | blocked (Q3) | unassigned | T-008 |
 | T-010 | UI-Technik evaluieren (ADR) | [ui] | M2 | todo | unassigned | T-001 |
 | T-011 | Platzhalter-Content für MVP | [content] | M2 | todo | unassigned | T-005 |
-| T-012 | Spielbildschirme MVP | [ui] | M2 | todo | unassigned | T-010, T-008 |
+| T-012 | Spielbildschirme MVP | [ui] | M2 | todo | unassigned | T-010, T-005 (Mock); Integration: T-008 |
 | T-013 | Finaler Content (Welt, Waren, Events) | [content] | M3 | blocked (Q1, Q2, Q4) | unassigned | T-011 |
 | T-014 | Balancing-Simulationsskript | [core] [qa] | M3 | todo | unassigned | T-009 |
 | T-015 | Speichern/Laden + Migrationen | [persistence] | M4 | todo | unassigned | T-009 |
