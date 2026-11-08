@@ -141,6 +141,8 @@ X11 (`concurrency`) gehört nicht in die In-Memory-Simulation, sondern in die In
 | `balance-check` | nächtlich | alle nächtlichen Szenarien | KPI 🔴. Der Report wird als Artefakt angehängt. |
 | `balance-weekly` | wöchentlich | S6, große Sweeps | nur Report, kein Fehler |
 
+Alle Jobs laufen in **GitHub Actions**, nie auf dem Produktionsserver (VPS, ADR-014).
+
 Jede Invariantenverletzung gibt **Szenario, Seed und Tick** aus und ist damit lokal reproduzierbar:
 `sim run S7-washloop --seed 1234 --until-tick 5021`.
 
