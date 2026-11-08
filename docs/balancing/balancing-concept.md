@@ -228,11 +228,12 @@ wird, entscheiden messbare Kennzahlen, die **nur aus echten Spielern** berechnet
 **Regel:** Die NPC-Intensität $k \in [0{,}1]$ startet bei 1. Sie sinkt **erst**, wenn **alle** Kennzahlen
 **14 Tage am Stück** erfüllt sind, und dann langsam (z. B. −0,1 pro Woche). Sobald eine Kennzahl 7 Tage
 lang verfehlt wird, steigt $k$ wieder (+0,1 pro Woche). Diese Hysterese verhindert ein Hin- und Herspringen,
-etwa bei Urlaubszeiten. Rückbau und Wiederaufbau werden protokolliert.
+etwa bei Urlaubszeiten. Jede Änderung von $k$ ist Weltzustand. Sie wird mit den auslösenden Kennzahlen in einem
+Journal festgehalten (ADR-010, Schema durch Agent 5).
 
 Die Simulation (`S8-npc-handover`) ermittelt, ab welcher Zahl regelmäßig aktiver Spieler die Kennzahlen typischerweise
-erfüllt sind. Das dient nur als **Prognose** für den Betreiber und nicht als Schwelle. Schwellenwerte und Schrittweiten
-sind Parameter von Agent 2 (Schlüssel z. B. `npc.handover_*`).
+erfüllt sind. Das dient nur als **Prognose** für den Betreiber und nicht als Schwelle. **Alle** Zahlen dieser Regel (50 %, 30 %, 60 %, 4 von 7, 14/7 Tage, ±0,1 pro Woche) sind nur Vorschläge.
+Verbindlich werden sie als Parameter in `parameters.toml` (Agent 2, Schlüssel z. B. `npc.handover_*`), nie als Konstanten im Code.
 
 ---
 
