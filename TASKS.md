@@ -71,7 +71,7 @@
 | T-503 | Sim-Engine Phasen P0–P5 laut `docs/balancing/simulation-spec.md` §8 (ADR-012), inkl. CI `sim-fast` und nächtlichem `balance-check` | A6 | ab M1 (Start ab T-103) |
 | T-504 | Balancing-Bericht und Parameteranpassung | A6 + A2 | M5 |
 | T-505 | Vermögensabhängige Geldsenken und Aufhol-Mechaniken (ADR-016) | A2 → A6 → A3 | M1/M5 |
-| T-506 | NPC-Händler/-Gegner (N-1/N-2), skaliert mit Spielerzahl (ADR-016, Q12) | A2 → A6 → A3 | M5 |
+| T-506 | NPC-Händler/-Gegner (N-1/N-2) mit Intensität k, gesteuert über Aktivitätskennzahlen mit Hysterese (ADR-016, R-4); Backend: täglicher Kennzahlen-Job + k als persistenter Weltzustand im Journal; Sim: Szenario S8-npc-handover | A2 → A6 → A5 → A3 | M5 |
 | T-507 | Langzeit-Wachstum der Journale: Partitionierung/Archivierung (ADR-016) | A5 → A3 | M5 |
 | T-508 | Ranglisten für Zeiträume ohne Reset (Woche/Monat) | A2 + A3 + A4 | M5 |
 | T-601 | ~~Hosting-Entscheidung~~ erledigt durch ADR-014; offen: Domain (Q10) | Product Owner | M6 |

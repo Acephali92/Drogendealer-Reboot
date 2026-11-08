@@ -107,4 +107,4 @@ Agent 1 implementiert **keine größeren Features** selbstständig, ohne die zus
 | Q10 | Domain-Name und Absender-Adresse für E-Mails (Passwort-Reset) | Deployment | offen |
 | Q11 | Spielerzahl & Welt-Resets | Balancing, Betrieb | ✅ anfangs wenige Spieler, keine Resets/Saisons (ADR-016) |
 | Q13 | Was passiert mit einem Clan, wenn der Pate sein Konto löscht und noch Mitglieder da sind? | Game Design, Backend | offen (Vorschlag A1: Nachfolge an das dienstälteste ranghöchste Mitglied) – an Agent 2 |
-| Q12 | Ab welcher Spielerzahl sollen NPC-Ausgleichsmechaniken zurückgefahren werden? | Game Design, Balancing | offen (Agent 6 schlägt eine stufenlose Abschwächung vor) |
+| Q12 | Ab welcher Spielerzahl sollen NPC-Ausgleichsmechaniken zurückgefahren werden? | Game Design, Balancing | ✅ „Erst wenn genug Spieler regelmäßig online sind, um die Spielmechanik zu tragen“ (PO gegenüber Agent 6). Umsetzung über Kennzahlen statt fester Zahl, siehe ADR-016 Nachtrag |
