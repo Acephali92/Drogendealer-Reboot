@@ -18,11 +18,12 @@
                                 └──────────┬───────────────┘   │ Datenmodell:     │
                                            │                    │ Agent 5          │
                                            ▼                    └──────────────────┘
-                                tools/simulation/ (Agent 6)
+                                sim/ (Agent 6)
 ```
 
 Grundlegende Entscheidungen: ADR-006 (Spielmodell), ADR-007 (Backend), ADR-008 (Frontend),
-ADR-009 (Repo-Struktur), ADR-010 (Datenmodell & Nachvollziehbarkeit), ADR-011 (API-Vertrag).
+ADR-009 (Repo-Struktur), ADR-010 (Datenmodell & Nachvollziehbarkeit), ADR-011 (API-Vertrag),
+ADR-012 (Balancing-Simulation).
 
 ## 2. Repository-Struktur
 
@@ -30,7 +31,7 @@ ADR-009 (Repo-Struktur), ADR-010 (Datenmodell & Nachvollziehbarkeit), ADR-011 (A
 /
 ├── README.md, PROJECT.md, ARCHITECTURE.md, DECISIONS.md, ROADMAP.md, TASKS.md   # Agent 1
 ├── docker-compose.yml          # Agent 3 (Postgres für Dev/Test)
-├── .github/workflows/          # je Bereich eine Datei: backend.yml, frontend.yml, game-design.yml
+├── .github/workflows/          # je Bereich eine Datei: backend.yml, frontend.yml, game-design.yml, sim.yml
 ├── backend/                    # Agent 3
 │   ├── prisma/schema.prisma    # einziges DB-Schema (fachlich: Agent 5)
 │   ├── prisma/migrations/      # generierte + handergänzte SQL-Migrationen
@@ -38,11 +39,12 @@ ADR-009 (Repo-Struktur), ADR-010 (Datenmodell & Nachvollziehbarkeit), ADR-011 (A
 │   └── test/
 ├── frontend/                   # Agent 4
 ├── docs/
-│   ├── game-design/            # Agent 2: Regeln, Formeln, Parameterdatei, Prüfskript
+│   ├── game-design/            # Agent 2: Regeln, Formeln, parameters.toml, verify.py (Golden Vectors)
+│   ├── balancing/              # Agent 6: Balancing-Konzept, Simulations-Spezifikation
 │   ├── api/                    # Agent 3: API-Vertrag (Ziel: generierte OpenAPI-Spezifikation)
 │   ├── database/               # Agent 5: ER-Diagramm, Nachvollziehbarkeitskonzept
 │   └── frontend/               # Agent 4: UI-Richtlinien
-└── tools/simulation/           # Agent 6 (Vorschlag, zu bestätigen)
+└── sim/                        # Agent 6: Simulation (TypeScript), importiert Backend-Regelfunktionen
 ```
 
 ## 3. Backend (Agent 3)
@@ -51,7 +53,8 @@ ADR-009 (Repo-Struktur), ADR-010 (Datenmodell & Nachvollziehbarkeit), ADR-011 (A
 - Modulstruktur `src/modules/<bereich>/{routes,service,schemas}.ts`. Routen enthalten keine Spiellogik; Logik liegt in Services.
 - **Spielregeln als reine Funktionen** (Preisformeln, Kampfauflösung …) ohne DB-Zugriff, damit sie unit-testbar und vom Simulationswerkzeug (Agent 6) wiederverwendbar sind. Services laden Daten, rufen die Regelfunktion auf, schreiben das Ergebnis in **einer** Transaktion.
 - Zufall in Regelfunktionen nur über einen übergebenen Zufallsgenerator (seedbar für Tests und Simulation).
-- Spielparameter werden aus Agent 2s Parameterdatei geladen (beim Start validiert), nicht im Code dupliziert.
+- Spielparameter werden aus `docs/game-design/parameters.toml` (Agent 2) geladen und beim Start validiert, nicht im Code dupliziert.
+- Regelfunktionen liegen in einem I/O-freien Bereich des Backends (z. B. `backend/src/domain/`), den die Simulation (`sim/`, Agent 6) direkt importiert. Dieser Bereich darf weder Prisma noch Fastify importieren.
 
 ### Zeitmodell
 - **Markt-Ticks:** ein Scheduler im Backend führt pro Tick die Marktaktualisierung aus. Ticks sind idempotent (Tick-Nummer als Schlüssel), damit ein Neustart keinen Tick doppelt ausführt.

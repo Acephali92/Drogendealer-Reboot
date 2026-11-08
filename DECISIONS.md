@@ -18,6 +18,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-009 | Repo-Struktur und Ordner-Eigentum | Akzeptiert | 2026-11-08 |
 | ADR-010 | Ein Datenmodell (Prisma), Journale für Nachvollziehbarkeit | Akzeptiert | 2026-11-08 |
 | ADR-011 | API-Vertrag: Eigentum Backend, MSW-Mocks im Frontend | Akzeptiert | 2026-11-08 |
+| ADR-012 | Balancing-Simulation in TypeScript auf Basis der Backend-Regelfunktionen | Akzeptiert | 2026-11-08 |
 
 ---
 
@@ -89,6 +90,12 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 - **Kontext:** Agent 4 hat einen Vertragsentwurf `docs/frontend/API-CONTRACT.md` angelegt, Agent 3 implementiert die Endpunkte. Ohne klaren Eigentümer driften Mocks und Server auseinander.
 - **Entscheidung:** Der API-Vertrag gehört **Agent 3** und liegt unter `docs/api/API-CONTRACT.md`. Agent 4s Entwurf dient als Anforderungsdokument und wird von Agent 3 übernommen bzw. abgeglichen. Mittelfristig wird eine OpenAPI-Spezifikation aus den Fastify-/zod-Schemas generiert. Das Frontend mockt ausschließlich gemäß Vertrag. Prefix `/api/v1`, Fehlerformat `{error:{code,message}}`, Geld als String.
 - **Konsequenzen:** Vertragsänderungen werden von Agent 3 und Agent 4 gemeinsam abgestimmt; Breaking Changes brauchen Freigabe durch Agent 1.
+
+## ADR-012 – Balancing-Simulation in TypeScript auf Basis der Backend-Regelfunktionen
+- **Status:** Akzeptiert · **Datum:** 2026-11-08 · **Vorgeschlagen von:** Agent 6
+- **Kontext:** Balancing braucht viele simulierte Spielverläufe. Eine eigene Nachimplementierung der Regeln würde vom echten Spiel abweichen.
+- **Entscheidung:** Die Simulation wird in TypeScript im Ordner `sim/` gebaut und importiert die reinen, I/O-freien Regelfunktionen des Backends (seedbarer Zufall). Parameter kommen aus `docs/game-design/parameters.toml`, Referenzwerte (Golden Vectors) aus Agent 2s `verify.py`. CI: schneller Simulationslauf (`sim-fast`) pro PR, ausführlicher `balance-check` nächtlich. Konzept und Spezifikation unter `docs/balancing/`.
+- **Konsequenzen:** Agent 3 muss die Regelfunktionen in einem eigenen Bereich ohne Prisma/Fastify-Abhängigkeit halten (ARCHITECTURE.md §3). Änderungen an deren Signaturen brauchen Abstimmung mit Agent 6. `sim/` hängt vom Backend-Code ab, nicht umgekehrt.
 
 ---
 

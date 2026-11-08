@@ -58,13 +58,11 @@ Einloggen ─► Markt in aktueller Stadt prüfen ─► Kaufen / Verkaufen
 | Agent | Rolle | Eigentum (Ordner/Dokumente) | Session-Titel |
 |-------|-------|------------------------------|---------------|
 | Agent 1 | Project Director / Technical Lead | Root-Steuerungsdokumente, Root-`README.md`, `.github/` (gemeinsam) | „Agent 1 – Projektdirektor/Technischer Lead“ |
-| Agent 2 | Game Designer (Spielregeln & Systemdokumentation) | `docs/game-design/`, Parameterdatei, Prüfskript | „Spielregeln und Systemdokumentation“ |
+| Agent 2 | Game Designer (Spielregeln & Systemdokumentation) | `docs/game-design/` inkl. `parameters.toml` und Prüfskript `verify.py` | „Spielregeln und Systemdokumentation“ |
 | Agent 3 | Backend Developer | `backend/` (außer Datenmodell-Entscheidungen), `docker-compose.yml`, `docs/api/` | „Agent 3 – Backend-Entwickler“ |
 | Agent 4 | Frontend / UI | `frontend/`, `docs/frontend/` | „Frontend-UI für Spieloberfläche“ |
 | Agent 5 | Database Architect | Datenmodell (`backend/prisma/schema.prisma` fachlich), `docs/database/` | „Datenbankarchitektur für Spielwelt“ |
-| Agent 6 ⚠️ | Game Balancing & Simulation Engineer | `tools/simulation/` ⚠️ | „Game Balancing & Simulation Engineer“ |
-
-⚠️ Nummer und Ordner von Agent 6 sind noch zu bestätigen.
+| Agent 6 | Game Balancing & Simulation Engineer | `sim/`, `docs/balancing/` | „Game Balancing & Simulation Engineer“ |
 
 ### Agent 1 – Project Director / Technical Lead
 - Gesamtarchitektur überwachen, Entwicklungsaufgaben definieren und verteilen
@@ -99,7 +97,7 @@ Agent 1 implementiert **keine größeren Features** selbstständig, ohne die zus
 | Q2 | Setting & Tonalität (realistisch, satirisch, fiktiv?) | Content, UI-Stil | offen |
 | Q3 | Zeitmodell | Backend, Game Design | ✅ geklärt: Echtzeit-Ticks (Länge per Parameter) |
 | Q4 | Umfang Städte/Waren im MVP | Content | delegiert an Agent 2 |
-| Q5 | Weitere Agenten-Rollen | Task-Zuweisung | ✅ geklärt: Agenten 2–6 (Nr. von Agent 6 bestätigen) |
+| Q5 | Weitere Agenten-Rollen | Task-Zuweisung | ✅ geklärt: Agenten 2–6 |
 | Q6 | Zielgruppe / Altersfreigabe, Jugendschutz | Content, Texte, Rechtliches | offen |
 | Q7 | Sprache der Oberfläche | UI, i18n | ✅ Deutsch, i18n-vorbereitet |
 | Q8 | Hosting/Betrieb (Server, Domain, Datenbank) | Deployment | offen |

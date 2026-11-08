@@ -20,7 +20,8 @@
 | T-005 | Datenmodell-Review des bestehenden Schemas + Nachvollziehbarkeitskonzept | A5 | todo | T-004 |
 | T-006 | Frontend-Gerüst, API-Vertragsentwurf, UI-Richtlinien | A4 | in progress | – |
 | T-007 | Root-README konsolidieren, Backend-Schnellstart nach `backend/README.md` | A1 + A3 | todo | T-004 |
-| T-008 | Branches integrieren (Reihenfolge siehe unten) | A1 | blocked (T-001) | T-002 – T-007 |
+| T-008 | Branches integrieren (Reihenfolge siehe unten) | A1 | blocked (T-001) | T-002 – T-007, T-009 |
+| T-009 | Balancing-Konzept und Simulations-Spezifikation (`docs/balancing/`) | A6 | review | – |
 
 ## M1 – Wirtschaftskern
 
@@ -62,7 +63,7 @@
 | T-404 | Missbrauchs- und Neulingsschutz | A2 + A3 | M4 |
 | T-501 | Immobilien | A2 → A5 → A3 → A4 | M5 |
 | T-502 | Spielereignisse | A2 → A5 → A3 | M5 |
-| T-503 | Simulationswerkzeug auf Basis der Regelfunktionen | A6 | M5 (Start ab T-103) |
+| T-503 | Sim-Engine Phasen P0–P5 laut `docs/balancing/simulation-spec.md` §8 (ADR-012), inkl. CI `sim-fast` und nächtlichem `balance-check` | A6 | ab M1 (Start ab T-103) |
 | T-504 | Balancing-Bericht und Parameteranpassung | A6 + A2 | M5 |
 | T-601 | Hosting-Entscheidung (ADR) | A1 + Product Owner | M6 |
 | T-602 | Deployment-Pipeline, Backups, Monitoring | A3 | M6 |
@@ -80,7 +81,7 @@ Derzeit liegt **kein** Branch auf GitHub: Pushes scheitern mit 403 (T-001). Soba
 3. Backend (A3, `claude/nice-wright-ljm3zq`): `backend/`, `docker-compose.yml`. Root-README nach `backend/README.md` (T-007).
 4. Datenmodell-Änderungen (A5) als PR gegen `backend/prisma/`.
 5. Frontend (A4, `claude/inspiring-ritchie-oaq48s`): `frontend/`, `docs/frontend/`, `.github/workflows/frontend.yml`.
-6. Balancing/Simulation (A6).
+6. Balancing/Simulation (A6, `claude/confident-bohr-6oed2u`): `docs/balancing/`, später `sim/`.
 
 Jeder Schritt: PR gegen `main`, Review durch A1 nach dem Prozess unten.
 

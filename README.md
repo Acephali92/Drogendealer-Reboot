@@ -13,6 +13,7 @@ Echtzeit-Mehrspieler-Browsergame mit persistenter Welt: Handel, Reisen, Kampf un
 | `docs/database/` | Datenmodell, Nachvollziehbarkeit | Agent 5 |
 | `docs/api/` | API-Vertrag | Agent 3 |
 | `docs/frontend/` | UI-Richtlinien | Agent 4 |
+| `docs/balancing/`, `sim/` | Balancing-Konzept, Simulation | Agent 6 |
 
 Schnellstart je Bereich: `backend/README.md`, `frontend/README.md`.
 
