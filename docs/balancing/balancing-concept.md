@@ -38,8 +38,8 @@ an. Verbindlich ist erst das Ergebnis der Simulation.
 | R-1 | **Anfangs nur wenige Spieler** pro Server | Standard-Szenarien laufen mit **30 Spielern**. Die Skalierung wird mit 10 / 30 / 100 / 300 geprüft. Konkurrenz zwischen Spielern begrenzt den Gewinn kaum, deshalb müssen Markttiefe und NPC-Mechaniken das übernehmen. |
 | R-2 | **Keine Neustarts** der Welt (keine Saisons mit Reset) | Die Welt ist dauerhaft. Inflation und Vorsprung der ersten Spieler wachsen unbegrenzt, wenn die Senken nicht mitwachsen. Jeder spätere Spieler ist ein „Late Joiner“. Die Maßnahmen gegen Dominanz dürfen sich nicht auf Resets stützen. |
 
-| R-4 | NPCs werden **erst zurückgefahren, wenn genug Spieler regelmäßig online sind, um die Spielmechanik zu tragen** (Q12) | Kein fester Schwellenwert. Messbare Kennzahlen aus echten Spielern mit Hysterese, siehe Abschnitt 2 „Rückbau der NPC-Mechaniken“. |
 | R-3 | Nicht kommerziell: **keine Monetarisierung**, keine Werbung, kein Echtgeld (ADR-015) | Keine Premium-Währung und kein Pay-to-win. Das Balancing muss ohne Bezahl-Abkürzungen funktionieren, und jeder Fortschritt entsteht ausschließlich durch Spielen. |
+| R-4 | NPCs werden **erst zurückgefahren, wenn genug Spieler regelmäßig online sind, um die Spielmechanik zu tragen** (Q12) | Kein fester Schwellenwert. Messbare Kennzahlen aus echten Spielern mit Hysterese, siehe Abschnitt 2 „Rückbau der NPC-Mechaniken“. |
 
 Die Abschnitte 1, 2, 5 und 6 enthalten dazu je einen Unterabschnitt **„Bei wenigen Spielern / ohne Reset“**.
 
