@@ -257,6 +257,11 @@ Städte hinweg sind gewolltes Clan-Gameplay.
 
 ## 10. Offene Fragen
 
+- **Pflicht wegen R-1 (wenige Spieler, siehe README):** NPC-Händler, die profitable Routen mit fester Rate
+  abschöpfen (z. B. als zusätzlicher Verbrauch an Billig-Märkten und zusätzliches Angebot an teuren Märkten).
+  Ohne sie hat ein einzelner Spieler bei 10–30 Spielern eine Route wie Rotterdam → München praktisch für
+  sich allein. Die Stärke soll mit wachsender Spielerzahl sinken. Noch nicht spezifiziert.
+
 - Sollen Spielerverkäufe den **Zielbestand** dauerhaft verschieben (Marktsättigung über Tage)?
   Aktuell nein – Märkte vergessen nach ~1 Tag.
 - Saisonale Effekte (Wochenende, Feiertage) als deterministische Party-Ereignisse?

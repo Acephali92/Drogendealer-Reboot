@@ -55,6 +55,20 @@ Gründungsvoraussetzung: Summe aller fünf Level ≥ 15 (`unlocks.clan_gruendung
 | Clan ausbauen | ✔ | ✔ | – | – | – |
 | Präsenzbonus & Schutz | ✔ | ✔ | ✔ | ✔ | ✔ |
 
+#### Rang-Schlüssel (verbindlich für Backend und Frontend)
+
+Die API verwendet ausschließlich diese Werte aus `clans.ranks` (Reihenfolge = Hierarchie, höchster zuerst):
+
+| Schlüssel | Anzeige | Übergangs-Mapping vom aktuellen Backend |
+|---|---|---|
+| `PATE` | Pate | `LEADER` |
+| `CONSIGLIERE` | Consigliere | – (fehlt im Backend, muss ergänzt werden) |
+| `CAPO` | Capo | `OFFICER` |
+| `SOLDAT` | Soldat | `MEMBER` |
+| `MITLAEUFER` | Mitläufer | – (fehlt im Backend, muss ergänzt werden) |
+
+Das Mapping ist nur eine Übergangslösung; Ziel ist, dass Backend und Frontend die fünf Schlüssel direkt nutzen.
+
 Neue Mitglieder starten als **Mitläufer** (Probezeit `clans.probation_ticks` = 144 Ticks), danach kann ein Capo sie zum Soldaten machen.
 Ist der Pate länger als `clans.inactive_pate_ticks` = 1 008 Ticks (7 Tage) inaktiv, wird der Consigliere automatisch Pate (sonst der dienstälteste Capo).
 

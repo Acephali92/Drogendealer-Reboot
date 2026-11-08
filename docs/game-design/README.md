@@ -46,6 +46,26 @@ vollständig, wenn Dokument, `parameters.toml`, `verify.py` und die Beispielwert
 - **Start:** `player.start_cash_black` = 200 000 ct (2 000 €) Schwarzgeld, kein Fahrzeug,
   Rucksack mit `player.backpack_capacity` = 60 Volumeneinheiten.
 
+### 1.1 Server-Rahmen (verbindliche Vorgaben des Product Owners)
+
+| ID | Vorgabe | Folge für das Design |
+|---|---|---|
+| R-1 | Anfangs nur **wenige Spieler** pro Server (≈ 10–30) | Märkte und Kampfziele dürfen nicht von vielen Mitspielern abhängen |
+| R-2 | **Keine Resets** der Welt, keine Saisons | Vermögen und Vorsprung wachsen unbegrenzt, wenn nichts dagegen wirkt |
+
+Daraus folgen **Pflicht-Erweiterungen**, die noch nicht spezifiziert sind (offene Arbeitspakete):
+
+1. **NPC-Händler** schöpfen profitable Routen mit fester Rate ab, damit ein einzelner Spieler eine Route nicht
+   allein ausbeutet ([economy.md](economy.md)). Ihre Stärke sinkt mit der Spielerzahl.
+2. **NPC-Ziele und -Gegner** (Kuriere, Banden, Überfälle) für das Feld Gewalt ([combat.md](combat.md)).
+3. **Mit dem Vermögen wachsende Geldsenken** (progressiver Unterhalt, Ausbau, Clan, Weltraum), damit es ohne
+   Resets nicht zu Inflation kommt.
+4. **Aufhol-XP** für Spieler unter dem Server-Median ([professions.md](professions.md)).
+5. **Ranglisten nach Zuwachs** (z. B. „Aufsteiger der Woche/des Monats“) statt Saisons.
+
+Bereits umgesetzt gegen Ausnutzung bei wenigen Spielern: Beute-Tageslimit und Hehlerabschlag (F-CMB-05),
+Vermögensband mit 7-Tage-Höchstwert (F-CMB-06).
+
 ## 2. Zahlen- und Rundungskonventionen
 
 | Größe | Darstellung | Regel |
@@ -147,12 +167,26 @@ Details in [money-laundering.md](money-laundering.md).
 
 ## 7. Nettovermögen
 
-Wird für Anfängerschutz, Vermögensband (Kampf) und die Weltraum-Freischaltung verwendet:
+Wird für Anfängerschutz, Vermögensband (Kampf) und die Weltraum-Freischaltung verwendet.
 
-$$NW = \text{Schwarzgeld} + \text{Weißgeld} + \sum \text{Kaufpreise Fahrzeuge, Waffen, Rüstung} + \sum \text{Investition Betriebe} + \sum_i q_i \cdot P_{base,i}$$
+**F-GLB-03 – Nettovermögen**
 
-Waren werden mit dem Basispreis bewertet (nicht mit dem Marktpreis), damit Marktbewegungen den Schutzstatus
-nicht flackern lassen.
+```math
+NW = \text{Schwarzgeld} + \text{Weißgeld} + \text{Sachwerte} + \sum_i q_i \cdot P_{base,i} + \Big\lfloor s \cdot \frac{\text{Clankasse}_{schwarz} + \text{Clankasse}_{weiß}}{\text{Mitglieder}} \Big\rfloor
+```
+
+- Sachwerte = Kaufpreise von Fahrzeugen, Raumschiffen, Waffen, Rüstung + Investition in Betriebe (Kaufpreis + Ausbau).
+- Waren werden mit dem Basispreis bewertet (nicht mit dem Marktpreis), damit Marktbewegungen den Schutzstatus
+  nicht flackern lassen.
+- $s$ = `clans.networth_treasury_share` = 1,0: Jedes Mitglied trägt seinen Pro-Kopf-Anteil der Clankasse.
+  So lässt sich Vermögen nicht in die Clankasse auslagern, um „arm“ zu wirken.
+- Für das Vermögensband zählt beim Angreifer der Höchstwert der letzten 7 Tage (F-CMB-06).
+
+**EX-GLB-02 – Nettovermögen**
+
+Schwarzgeld 5 000 €, Weißgeld 20 000 €, Kleinwagen + Transporter (33 000 €), 40 Kokain, Clankasse 300 000 €
+bei 12 Mitgliedern:
+$500\,000 + 2\,000\,000 + 3\,300\,000 + 40 \cdot 8\,000 + 30\,000\,000/12 =$ **8 620 000 ct** (86 200 €).
 
 ## 8. Glossar
 

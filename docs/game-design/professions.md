@@ -174,4 +174,7 @@ Alle Systeme lesen Level über F-PRF-01 und Boni über F-PRF-03; alle Systeme me
 - **Namen der fünf Felder:** Die Bezeichnungen Handel, Schmuggel, Gewalt, Produktion und Finanzen sind ein
   Vorschlag, abgeleitet aus der Systemliste. Falls das Originalspiel andere Namen verwendet, werden nur
   Anzeigenamen und die Schlüssel in `professions.fields` angepasst.
-- Soll ein Feld ab Level 20 „Prestige-Ränge“ für Ranglisten bekommen?
+- **Pflicht wegen R-2 (keine Resets, siehe README):** Aufhol-XP für Spieler unter dem Server-Median
+  (z. B. XP-Multiplikator abhängig vom Abstand zum Median), damit der Vorsprung früher Spieler nicht unbegrenzt
+  wächst. Noch nicht spezifiziert.
+- Soll ein Feld ab Level 20 „Prestige-Ränge“ für Ranglisten bekommen? (Ranglisten nach Zuwachs statt Saisons, R-2)

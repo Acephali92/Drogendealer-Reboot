@@ -104,6 +104,13 @@ def rng_normal(seed: str, tick: int, entity: str, k: int = 0) -> float:
     return math.sqrt(-2.0 * math.log(1.0 - u1)) * math.cos(2.0 * math.pi * u2)
 
 
+def networth(cash_black: int, cash_white: int, assets_ct: int, goods: dict[str, int],
+             clan_treasury: int = 0, clan_members: int = 1) -> int:
+    """F-GLB-03: NW = Schwarz + Weiß + Sachwerte + Σ q·P_base + ⌊s · Clankasse / Mitglieder⌋."""
+    clan_share = floor_ct(P["clans"]["networth_treasury_share"] * clan_treasury / max(1, clan_members))
+    return cash_black + cash_white + assets_ct + sum(q * GOODS[g]["base_price"] for g, q in goods.items()) + clan_share
+
+
 # =============================================================================
 # Wirtschaft (economy.md)
 # =============================================================================
@@ -426,15 +433,29 @@ def losses(K_w: float, K_l: float, crew_w: dict[str, int], crew_l: dict[str, int
     }
 
 
-def loot(cash_black: int, goods: dict[str, int]) -> dict:
-    """F-CMB-05: Beute = ⌊Bargeld_schwarz · r_cash⌋ und ⌊q · r_goods⌋ je Ware (Bank/Weißgeld geschützt)."""
-    return {"cash": floor_ct(cash_black * CMB["loot_cash_rate"]),
-            "goods": {g: math.floor(q * CMB["loot_goods_rate"]) for g, q in goods.items()}}
+def loot(cash_black: int, goods: dict[str, int], looted_window: int = 0, repeat_k: int = 0) -> dict:
+    """F-CMB-05: Beute mit Tageslimit, Wiederholungsabschlag und Hehlerabschlag.
+
+    L = min(⌊B · r_c · d^k⌋, max(0, ⌊cap · (B + L_24h)⌋ − L_24h)); Angreifer erhält ⌊L · (1 − f)⌋.
+    Ware: Verlust ⌊q · r_g · d^k⌋, Angreifer erhält ⌊Verlust · (1 − f)⌋. Bank/Weißgeld geschützt.
+    """
+    decay = CMB["loot_repeat_decay"] ** repeat_k
+    budget = max(0, floor_ct(CMB["loot_daily_cap_rate"] * (cash_black + looted_window)) - looted_window)
+    lost = min(floor_ct(cash_black * CMB["loot_cash_rate"] * decay), budget)
+    goods_lost = {g: math.floor(q * CMB["loot_goods_rate"] * decay + EPS) for g, q in goods.items()}
+    keep = 1 - CMB["loot_fence_rate"]
+    return {"cash_lost": lost, "cash_gained": floor_ct(lost * keep),
+            "goods_lost": goods_lost, "goods_gained": {g: math.floor(q * keep + EPS) for g, q in goods_lost.items()}}
 
 
-def attack_allowed(att_nw: int, def_nw: int, def_age_ticks: int, ticks_since_last_attack_on_target: int,
-                   ticks_since_own_last_attack: int) -> tuple[bool, str]:
-    """F-CMB-06: Zulässigkeit eines Angriffs (Anfängerschutz, Vermögensband, Cooldowns)."""
+def attack_allowed(att_nw_history: list[int], def_nw: int, def_age_ticks: int,
+                   ticks_since_last_attack_on_target: int, ticks_since_own_last_attack: int) -> tuple[bool, str]:
+    """F-CMB-06: Zulässigkeit eines Angriffs (Anfängerschutz, Vermögensband, Cooldowns).
+
+    att_nw_history: Nettovermögen des Angreifers der letzten networth_history_ticks (z. B. 7 Tageshöchstwerte);
+    für das Vermögensband zählt deren Maximum.
+    """
+    att_nw = max(att_nw_history)
     if def_age_ticks < CMB["newbie_protection_ticks"] and def_nw < CMB["newbie_protection_networth"]:
         return False, "Anfängerschutz"
     if def_nw < CMB["networth_band"] * att_nw:
@@ -638,6 +659,10 @@ def ex_glb_01():
             "Z": r(rng_normal("demo-server", 1, "berlin/gras"), 6)}
 
 
+def ex_glb_02():
+    return {"NW": networth(500_000, 2_000_000, 3_300_000, {"kokain": 40}, 30_000_000, 12)}
+
+
 def ex_eco_01():
     a, m = equilibrium_price("amsterdam", "gras"), equilibrium_price("muenchen", "gras")
     return {"P_amsterdam": r(a, 2), "P_muenchen": r(m, 2), "ratio": r(m / a)}
@@ -788,15 +813,40 @@ def ex_cmb_01():
     return {"K_A": r(KA, 3), "K_D": r(KD, 3), "p_win": r(win_chance(KA, KD)),
             "f_winner": r(ls["f_winner"]), "f_loser": r(ls["f_loser"]),
             "lost_att": ls["lost_winner"]["schlaeger"], "lost_def": ls["lost_loser"]["schlaeger"],
-            "loot_cash": lt["cash"], "loot_kokain": lt["goods"]["kokain"],
+            "cash_lost": lt["cash_lost"], "cash_gained": lt["cash_gained"],
+            "kokain_lost": lt["goods_lost"]["kokain"], "kokain_gained": lt["goods_gained"]["kokain"],
             "hp_def": hp_after_fight(80, False)[0]}
 
 
 def ex_cmb_02():
-    return {"a": attack_allowed(10_000_000, 4_000_000, 5_000, 999, 999)[1],
-            "b": attack_allowed(10_000_000, 6_000_000, 5_000, 999, 999)[1],
-            "c": attack_allowed(10_000_000, 6_000_000, 500, 999, 999)[1],
-            "d": attack_allowed(10_000_000, 6_000_000, 5_000, 20, 999)[1]}
+    return {"a": attack_allowed([10_000_000], 4_000_000, 5_000, 999, 999)[1],
+            "b": attack_allowed([10_000_000], 6_000_000, 5_000, 999, 999)[1],
+            "c": attack_allowed([10_000_000], 6_000_000, 500, 999, 999)[1],
+            "d": attack_allowed([10_000_000], 6_000_000, 5_000, 20, 999)[1],
+            "e": attack_allowed([10_000_000, 6_000_000, 3_000_000], 4_000_000, 5_000, 999, 999)[1]}
+
+
+def loot_series(cash: int, attacks: int, interval: int, same_attacker: bool) -> list[int]:
+    """Angriffsserie auf ein Opfer ohne Einnahmen; liefert die Bargeldverluste je Angriff."""
+    window = CMB["loot_cap_window_ticks"]
+    history: list[tuple[int, int]] = []   # (Tick, Verlust)
+    losses_ = []
+    for i in range(attacks):
+        t = i * interval
+        in_window = sum(l for (tt, l) in history if tt > t - window)
+        k = sum(1 for (tt, _) in history if tt > t - CMB["loot_repeat_window_ticks"]) if same_attacker else 0
+        lost = loot(cash, {}, in_window, k)["cash_lost"]
+        cash -= lost
+        history.append((t, lost))
+        losses_.append(lost)
+    return losses_
+
+
+def ex_cmb_03():
+    day = loot_series(1_000_000, 4, CMB["target_cooldown_ticks"], False)
+    second_day = loot(1_000_000 - sum(day), {}, 0, 1)["cash_lost"]
+    return {"loss_1": day[0], "loss_2": day[1], "loss_3": day[2], "loss_4": day[3],
+            "day_total": sum(day), "day_share": r(sum(day) / 1_000_000), "repeat_k1": second_day}
 
 
 def ex_cln_01():
@@ -903,7 +953,7 @@ def ex_spc_05():
 
 
 EXAMPLES = {
-    "EX-GLB-01": ex_glb_01,
+    "EX-GLB-01": ex_glb_01, "EX-GLB-02": ex_glb_02,
     "EX-ECO-01": ex_eco_01, "EX-ECO-02": ex_eco_02, "EX-ECO-03": ex_eco_03,
     "EX-ECO-04": ex_eco_04, "EX-ECO-05": ex_eco_05, "EX-ECO-06": ex_eco_06,
     "EX-TRD-01": ex_trd_01, "EX-TRD-02": ex_trd_02, "EX-TRD-03": ex_trd_03,
@@ -911,7 +961,7 @@ EXAMPLES = {
     "EX-CTY-01": ex_cty_01, "EX-CTY-02": ex_cty_02, "EX-CTY-03": ex_cty_03,
     "EX-TRV-01": ex_trv_01, "EX-TRV-02": ex_trv_02, "EX-TRV-03": ex_trv_03, "EX-TRV-04": ex_trv_04,
     "EX-PRF-01": ex_prf_01, "EX-PRF-02": ex_prf_02, "EX-PRF-03": ex_prf_03,
-    "EX-CMB-01": ex_cmb_01, "EX-CMB-02": ex_cmb_02,
+    "EX-CMB-01": ex_cmb_01, "EX-CMB-02": ex_cmb_02, "EX-CMB-03": ex_cmb_03,
     "EX-CLN-01": ex_cln_01, "EX-CLN-02": ex_cln_02, "EX-CLN-03": ex_cln_03, "EX-CLN-04": ex_cln_04,
     "EX-ML-01": ex_ml_01, "EX-ML-02": ex_ml_02, "EX-ML-03": ex_ml_03, "EX-ML-04": ex_ml_04,
     "EX-RE-01": ex_re_01, "EX-RE-02": ex_re_02, "EX-RE-03": ex_re_03, "EX-RE-04": ex_re_04,
@@ -922,6 +972,7 @@ EXAMPLES = {
 # Erwartete Werte – identisch mit den Beispielrechnungen in den .md-Dateien.
 EXPECTED: dict[str, dict] = {
     'EX-GLB-01': {'U': 0.525072, 'Z': -1.191398},
+    'EX-GLB-02': {'NW': 8620000},
     'EX-ECO-01': {'P_amsterdam': 624.63, 'P_muenchen': 1486.48, 'ratio': 2.3798},
     'EX-ECO-02': {'D': 2.6, 'A': 6.5, 'S_ref': 374.4, 'S_target': 936.0, 'P': 5059.64},
     'EX-ECO-03': {'S0': 736.0, 'P0': 5705.83, 'S34': 835.37, 'P34': 5355.72, 'S144': 925.1, 'P144': 5089.38},
@@ -944,8 +995,9 @@ EXPECTED: dict[str, dict] = {
     'EX-PRF-01': {'L_2500': 5, 'L_9999': 9, 'XP_L10': 10000, 'XP_L20': 40000},
     'EX-PRF-02': {'handel': 112, 'schmuggel': 106, 'finanzen': 8},
     'EX-PRF-03': {'spread_L10': 0.07, 'spread_L20': 0.04, 'control_red_L10': 0.25, 'strength_L10': 0.3, 'fee_red_L10': 0.2},
-    'EX-CMB-01': {'K_A': 87.084, 'K_D': 49.076, 'p_win': 0.7027, 'f_winner': 0.1442, 'f_loser': 0.5117, 'lost_att': 0, 'lost_def': 1, 'loot_cash': 125000, 'loot_kokain': 10, 'hp_def': 50},
-    'EX-CMB-02': {'a': 'Vermögensband', 'b': 'erlaubt', 'c': 'erlaubt', 'd': 'Ziel-Cooldown'},
+    'EX-CMB-01': {'K_A': 87.084, 'K_D': 49.076, 'p_win': 0.7027, 'f_winner': 0.1442, 'f_loser': 0.5117, 'lost_att': 0, 'lost_def': 1, 'cash_lost': 125000, 'cash_gained': 106250, 'kokain_lost': 10, 'kokain_gained': 8, 'hp_def': 50},
+    'EX-CMB-02': {'a': 'Vermögensband', 'b': 'erlaubt', 'c': 'erlaubt', 'd': 'Ziel-Cooldown', 'e': 'Vermögensband'},
+    'EX-CMB-03': {'loss_1': 250000, 'loss_2': 100000, 'loss_3': 0, 'loss_4': 0, 'day_total': 350000, 'day_share': 0.35, 'repeat_k1': 81250},
     'EX-CLN-01': {'limit_1': 12, 'cost_1': 5000000, 'limit_2': 16, 'cost_2': 10000000, 'limit_3': 20, 'cost_3': 20000000, 'limit_4': 24, 'cost_4': 40000000, 'limit_5': 28, 'cost_5': 80000000, 'cost_total': 155000000},
     'EX-CLN-02': {'berlin_tick': 1216, 'berlin_day': 175104, 'muenchen_tick': 1239, 'muenchen_day': 178416},
     'EX-CLN-03': {'equal': 20, 'underdog': 23, 'bully': 14, 'reparation': 3000000},
@@ -1098,6 +1150,24 @@ def inv_space_route():
     return profit > 0, f"Ceres→Frankfurt {q} Sternenstaub: +{profit / 100:.0f} € in {ticks} Ticks"
 
 
+def inv_loot_cap():
+    window = CMB["loot_cap_window_ticks"]
+    for cash in (10_000, 1_000_000, 123_456_789):
+        for same in (False, True):
+            interval = CMB["target_cooldown_ticks"]
+            losses_ = loot_series(cash, 40, interval, same)
+            balance = cash
+            balances = []
+            for l in losses_:
+                balances.append(balance)
+                balance -= l
+            per_window = window // interval
+            for i in range(len(losses_)):
+                if sum(losses_[i:i + per_window]) > CMB["loot_daily_cap_rate"] * balances[i] + 1:
+                    return False, f"Tagesverlust über Limit (Start {cash}, gleicher Angreifer={same})"
+    return True, f"Tagesverlust je Opfer ≤ {CMB['loot_daily_cap_rate']:.0%} des Bargelds"
+
+
 def inv_strawman_expensive():
     fees = [b["wash_fee"] for b in P["businesses"].values() if "wash_fee" in b]
     return LAU["strawman_fee"] > max(fees), "Strohmann teurer als jeder Betrieb"
@@ -1121,6 +1191,7 @@ INVARIANTS = {
     "INV-09 Strohmann-Gebühr": inv_strawman_expensive,
     "INV-10 Freischaltungen": inv_unlocks_reachable,
     "INV-11 Weltraumroute": inv_space_route,
+    "INV-12 Beute-Tageslimit": inv_loot_cap,
 }
 
 

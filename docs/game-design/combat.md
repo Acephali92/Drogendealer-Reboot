@@ -38,7 +38,11 @@ Kämpfe werden **sofort aufgelöst** (eine Aktion, ein Ergebnis); es gibt keine 
 | – | `combat.hp_loss_winner` / `combat.hp_loss_loser` | 10 / 30 | HP-Verlust |
 | – | `combat.hp_regen_per_tick` / `combat.hospital_ticks` | 2 / 18 | Erholung |
 | – | `combat.newbie_protection_ticks` / `combat.newbie_protection_networth` | 1 008 / 50 000 € | Anfängerschutz |
+| $\kappa$ | `combat.loot_daily_cap_rate` / `combat.loot_cap_window_ticks` | 0,35 / 144 | Opfer verliert pro 144 Ticks max. 35 % seines Bargelds |
+| $d$ | `combat.loot_repeat_decay` / `combat.loot_repeat_window_ticks` | 0,5 / 1 008 | Beute halbiert sich je früherem Erfolg desselben Angreifers (7 Tage) |
+| $f_H$ | `combat.loot_fence_rate` | 0,15 | Hehlerabschlag: Anteil der Beute, der das Spiel verlässt |
 | – | `combat.networth_band` | 0,5 | Vermögensband |
+| – | `combat.networth_history_ticks` | 1 008 | Angreifer-Vermögen = Höchstwert der letzten 7 Tage |
 | – | `combat.target_cooldown_ticks` / `combat.attack_cooldown_ticks` | 36 / 3 | Cooldowns |
 | – | `combat.heat_attack` | 15 | Heat für den Angreifer |
 
@@ -99,9 +103,24 @@ Verlorene Crew je Typ: $\operatorname{round}(n \cdot f)$ (kaufmännisch). Knappe
 
 **F-CMB-05 – Beute (nur bei Sieg des Angreifers)**
 
+Mit Bargeld $B$ (Schwarzgeld) des Opfers, $L_{24}$ = dem Opfer in den letzten 144 Ticks bereits geraubtes
+Bargeld (alle Angreifer) und $k$ = Anzahl früherer erfolgreicher Angriffe **desselben** Angreifers auf
+dieses Opfer in den letzten 1 008 Ticks:
+
 ```math
-\text{Beute}_{cash} = \lfloor \text{Schwarzgeld}_{bar} \cdot r_c \rfloor, \qquad \text{Beute}_{g} = \lfloor q_g \cdot r_g \rfloor
+L_{cash} = \min\Big(\big\lfloor B \cdot r_c \cdot d^{\,k} \big\rfloor,\;\; \max\big(0,\; \lfloor \kappa\,(B + L_{24}) \rfloor - L_{24}\big)\Big)
 ```
+
+```math
+L_g = \big\lfloor q_g \cdot r_g \cdot d^{\,k} \big\rfloor, \qquad \text{Gutschrift}_{Angreifer} = \big\lfloor L \cdot (1 - f_H) \big\rfloor \;\text{(Geld und je Ware)}
+```
+
+- **Tageslimit:** $B + L_{24}$ ist das Bargeld des Opfers vor allen Überfällen im Fenster (ohne Einnahmen).
+  Ein Opfer verliert in jedem 144-Tick-Fenster höchstens $\kappa = 35\,\%$ davon, egal wie viele Angreifer es gibt.
+- **Wiederholungsabschlag:** Derselbe Angreifer erhält beim zweiten Erfolg innerhalb von 7 Tagen nur die
+  halbe Rate, beim dritten ein Viertel usw.
+- **Hehlerabschlag:** 15 % der Beute verlassen das Spiel (Geldsenke). Das macht Beuteübertragungen zwischen
+  eigenen Accounts verlustreich.
 
 Weißgeld (Bank), Fahrzeuge, Betriebe und Lagerhaus-Bestände sind **nie** plünderbar. Gewinnt der
 Verteidiger, erhält er keine Beute, aber die XP und der Angreifer trägt die höheren Verluste.
@@ -111,7 +130,11 @@ Verteidiger, erhält er keine Beute, aber die XP und der Angreifer trägt die h�
 Ein Angriff ist nur erlaubt, wenn alle Bedingungen gelten (Prüfung in dieser Reihenfolge):
 
 1. **Anfängerschutz:** Ziel ist ≥ 1 008 Ticks (7 Tage) alt **oder** hat Nettovermögen ≥ 50 000 €.
-2. **Vermögensband:** $NW_{Ziel} \ge 0{,}5 \cdot NW_{Angreifer}$.
+2. **Vermögensband:** $NW_{Ziel} \ge 0{,}5 \cdot \max_{7\,\text{Tage}} NW_{Angreifer}$.
+   Für den Angreifer zählt das höchste Nettovermögen der letzten `combat.networth_history_ticks` = 1 008 Ticks
+   (gespeichert als 7 Tageshöchstwerte, rollierend), für das Ziel das aktuelle. Wer Vermögen kurzfristig
+   auslagert, um als „armer“ Räuber Schwächere anzugreifen, bleibt 7 Tage lang an seinem Höchstwert gemessen.
+   Nettovermögen nach F-GLB-03, inklusive Pro-Kopf-Anteil der Clankasse.
 3. **Ziel-Cooldown:** letzter Angriff (durch irgendwen) auf das Ziel ≥ 36 Ticks her.
 4. **Angriffs-Cooldown:** eigener letzter Angriff ≥ 3 Ticks her.
 5. Beide in derselben Stadt, keiner auf Reise oder im Krankenhaus.
@@ -168,10 +191,12 @@ function attack(att, def):
 - Falls der Angreifer gewinnt:
   - $f_w = 0{,}4 \cdot 49{,}076 / 136{,}16 =$ **0,1442** → $\operatorname{round}(3 \cdot 0{,}1442) =$ **0** Schläger verloren
   - $f_l = 0{,}8 \cdot 87{,}084 / 136{,}16 =$ **0,5117** → $\operatorname{round}(2 \cdot 0{,}5117) =$ **1** Schläger verloren
-  - Beute bei 5 000 € Bargeld und 40 Kokain: **125 000 ct** und **10** Kokain
+  - Beute bei 5 000 € Bargeld und 40 Kokain (erster Überfall des Tages, $k = 0$):
+    Opfer verliert $\min(125\,000;\; 175\,000) =$ **125 000 ct** und **10** Kokain,
+    der Angreifer erhält nach Hehlerabschlag **106 250 ct** und **8** Kokain
   - HP Verteidiger: 80 − 30 = **50**
 
-**EX-CMB-02 – Zulässigkeit** (Angreifer-Nettovermögen 100 000 €)
+**EX-CMB-02 – Zulässigkeit** (Angreifer-Nettovermögen 100 000 €, sofern nicht anders angegeben)
 
 | Fall | Ziel-NW | Ziel-Alter | letzter Angriff auf Ziel | Ergebnis |
 |---|---:|---:|---:|---|
@@ -179,6 +204,24 @@ function attack(att, def):
 | b | 60 000 € | 5 000 Ticks | 999 Ticks | **erlaubt** |
 | c | 60 000 € | 500 Ticks | 999 Ticks | **erlaubt** (Schutz endet durch NW ≥ 50 000 €) |
 | d | 60 000 € | 5 000 Ticks | 20 Ticks | **Ziel-Cooldown** |
+| e | 40 000 € | 5 000 Ticks | 999 Ticks | **Vermögensband** – Angreifer hat aktuell nur 30 000 €, in den letzten 7 Tagen aber bis zu 100 000 € besessen |
+
+**EX-CMB-03 – Tageslimit der Beute**
+
+Ein Opfer mit 10 000 € (1 000 000 ct) Bargeld wird alle 36 Ticks (Ziel-Cooldown) von einem **anderen**
+Angreifer ausgeraubt und nimmt nichts ein:
+
+| Überfall (Tick) | Rate × Bargeld | Restbudget $\lfloor 0{,}35 (B + L_{24}) \rfloor - L_{24}$ | Verlust |
+|---|---:|---:|---:|
+| 1 (0) | 250 000 | 350 000 | **250 000 ct** |
+| 2 (36) | 187 500 | 100 000 | **100 000 ct** |
+| 3 (72) | 162 500 | 0 | **0 ct** |
+| 4 (108) | 162 500 | 0 | **0 ct** |
+| Summe 1 Tag | | | **350 000 ct = 0,35** |
+
+Ohne Limit wären es $1 - 0{,}75^4 = 68{,}4\,\%$ gewesen. Greift am nächsten Tag (Fenster leer) derselbe
+Angreifer wie bei Überfall 1 erneut an ($k = 1$), erhält er nur die halbe Rate:
+$\lfloor 650\,000 \cdot 0{,}25 \cdot 0{,}5 \rfloor =$ **81 250 ct**.
 
 ## 8. Balancing-Ziele & Exploit-Analyse
 
@@ -186,11 +229,14 @@ function attack(att, def):
 |---|---|
 | Stärke zählt, Glück bleibt | $\alpha = 1{,}5$, Band 5–95 % (INV-07) |
 | Verteidigung lohnt sich | Rüstung voll in $K_D$, Heimbonus, Waffe halb |
-| Kein Abfarmen Schwacher | Vermögensband, Anfängerschutz, Ziel-Cooldown |
+| Kein Abfarmen Schwacher | Vermögensband (7-Tage-Höchstwert), Anfängerschutz, Ziel-Cooldown |
+| Kein Ausbluten eines Opfers | Tageslimit 35 %, Wiederholungsabschlag (INV-12) |
+| Beute ist Geldsenke | Hehlerabschlag 15 % |
 | Bargeld tragen ist riskant, Bank ist sicher | nur Schwarzgeld plünderbar → Anreiz zur Geldwäsche |
 | Crew ist laufender Kostenfaktor | Unterhalt pro Tick |
 
-**Multi-Account-Beuteübertragung** (Zweitaccount lässt sich ausrauben): Beute ist auf 25 % begrenzt, das
+**Multi-Account-Beuteübertragung** (Zweitaccount lässt sich ausrauben): Beute ist auf 25 % je Überfall und
+35 % pro Tag begrenzt, 15 % gehen beim Hehler verloren, wiederholte Überfälle bringen immer weniger, und das
 Vermögensband verhindert Transfers von kleinen zu großen Accounts; Kampfprotokolle sind wegen
 deterministischem RNG vollständig auditierbar.
 
@@ -207,4 +253,7 @@ deterministischem RNG vollständig auditierbar.
 ## 10. Offene Fragen
 
 - Soll der Verteidiger einen Teil der Angreifer-Ausrüstung erbeuten können?
+- **Pflicht wegen R-1 (wenige Spieler, siehe README):** NPC-Ziele (Kuriere, Banden) für Gewalt-Spieler und
+  NPC-Überfälle als Risiko, damit es trotz Vermögensband, Anfängerschutz und Cooldowns gültige Ziele gibt.
+  Ihre Häufigkeit soll mit wachsender Spielerzahl sinken. Noch nicht spezifiziert.
 - NPC-Gegner (Polizei-Einsatzkommando bei sehr hohem Heat)?
