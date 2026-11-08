@@ -45,17 +45,17 @@ Die Tests brauchen eine **eigene** Datenbank (`TEST_DATABASE_URL`, Standard `dro
 
 ## API (v1)
 
-Alle Fehler haben das Format `{ "error": { "code": "...", "message": "...", "details"?: [...] } }`.
-Geldbeträge (`BigInt` in der DB) werden als Strings ausgeliefert, zum Beispiel `"cash": "1500"`.
+Die vollständige Referenz mit allen Antwortformaten steht in [`docs/backend/API.md`](docs/backend/API.md).
 
-| Methode | Pfad | Auth | Beschreibung |
-|---|---|---|---|
-| GET | `/api/v1/health` | – | Liveness + Datenbank-Check |
-| POST | `/api/v1/auth/register` | – | `{ email, username, password }` → `201 { accessToken, refreshToken, user }`; legt Konto **und** Spieler an |
-| POST | `/api/v1/auth/login` | – | `{ login, password }` (`login` = E-Mail oder Username) → `{ accessToken, refreshToken, user }` |
-| POST | `/api/v1/auth/refresh` | – | `{ refreshToken }` → neues Token-Paar (Rotation) |
-| POST | `/api/v1/auth/logout` | – | `{ refreshToken }` → `204` |
-| GET | `/api/v1/players/me` | Bearer | Eigenes Spielerprofil |
+- **Öffentlich:** `GET /api/v1/health` und `POST /api/v1/auth/register | login | refresh | logout`.
+- **Mit Bearer-Token:**
+  - Spieler: `/players/me`, `/players/me/transactions`, `/players/online`
+  - Welt und Markt: `/cities`, `/cities/:slug`, `/cities/:slug/market`, `/market/overview`
+  - Besitz: `/inventory`, `/vehicle-types`, `/vehicles`, `/equipment-types`, `/equipment`, `/travel/current`
+  - Clans und Soziales: `/clans`, `/clans/:id`, `/clan-invites`, `/rankings`, `/notifications` (inkl. Gelesen-Markierung), `/ticker`
+
+Bisher gibt es fast nur Lese-Endpunkte. Aktionen wie Handeln, Reisen, Kaufen oder Clan-Verwaltung folgen, sobald die Spielregeln feststehen.
+Fehler kommen immer als `{ "error": { "code": "...", "message": "..." } }`. Geldbeträge sind Strings in **ganzen** Spielwährungs-Einheiten, nicht in Cent.
 
 ### Authentifizierung
 
@@ -70,12 +70,12 @@ Geldbeträge (`BigInt` in der DB) werden als Strings ausgeliefert, zum Beispiel 
 Das Prisma-Schema (`backend/prisma/schema.prisma`) deckt bereits alle Spielbereiche ab:
 
 - **Konten & Auth:** `User`, `RefreshToken`
-- **Spieler & Fortschritt:** `Player` (Geld, Gesundheit, Level, XP, Ruf, Standort, Status mit `statusUntil`)
+- **Spieler & Fortschritt:** `Player` (Geld, Gesundheit, Level, XP, Ruf, Heat, Standort, Status mit `statusUntil`, `lastSeenAt`)
 - **Welt & Wirtschaft:** `City`, `CityConnection`, `Commodity`, `MarketPrice`, `MoneyTransaction` (Kontobuch)
 - **Handel:** `InventoryItem`, `TradeTransaction`
 - **Reisen & Fahrzeuge:** `VehicleType`, `Vehicle`, `Travel` (mit `arrivesAt` für Echtzeit-Reisen)
 - **Kampf:** `EquipmentType`, `PlayerEquipment`, `Combat`
-- **Clans & Soziales:** `Clan`, `ClanMember` (max. 1 Clan pro Spieler), `ClanInvite`, `Message`
+- **Clans & Soziales:** `Clan`, `ClanMember` (max. 1 Clan pro Spieler; Rollen Pate/Consigliere/Capo/Soldat/Mitläufer), `ClanInvite`, `Message`, `Notification`, `TickerEvent`
 
 Zusätzlich in den Migrationen von Hand ergänzt, weil Prisma das nicht abbilden kann:
 

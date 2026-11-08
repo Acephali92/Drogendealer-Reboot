@@ -77,9 +77,13 @@ model Player {
   level         Int          @default(1)
   experience    Int          @default(0)
   reputation    Int          @default(0)
+  /// Fahndungsdruck 0–100 (Mechanik folgt mit dem Game Design).
+  heat          Int          @default(0)
   currentCityId String?
   status        PlayerStatus @default(IDLE)
   statusUntil   DateTime?
+  /// Letzte authentifizierte Anfrage (für \"online\"-Anzeige, max. 1 Update/Minute).
+  lastSeenAt    DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -100,18 +104,24 @@ model Player {
   sentClanInvites   ClanInvite[]       @relation("ClanInviteInviter")
   sentMessages      Message[]          @relation("MessageSender")
   receivedMessages  Message[]          @relation("MessageRecipient")
+  notifications     Notification[]
 
   @@index([currentCityId])
   @@index([status, statusUntil])
+  @@index([lastSeenAt])
 }
 
 // ─────────────────────────── Welt & Wirtschaft ───────────────────────────
 
 model City {
-  id          String  @id @default(cuid())
-  slug        String  @unique
-  name        String
-  description String?
+  id             String  @id @default(cuid())
+  slug           String  @unique
+  name           String
+  description    String?
+  country        String?
+  techLevel      Int     @default(1)
+  policeStrength Int     @default(0)
+  population     Int     @default(0)
 
   connectionsFrom CityConnection[]   @relation("ConnectionFrom")
   connectionsTo   CityConnection[]   @relation("ConnectionTo")
@@ -128,7 +138,7 @@ model CityConnection {
   id         String @id @default(cuid())
   fromCityId String
   toCityId   String
-  distance   Int
+  distanceKm Int
 
   fromCity City @relation("ConnectionFrom", fields: [fromCityId], references: [id], onDelete: Cascade)
   toCity   City @relation("ConnectionTo", fields: [toCityId], references: [id], onDelete: Cascade)
@@ -139,12 +149,16 @@ model CityConnection {
 
 /// Handelbare Ware.
 model Commodity {
-  id        String @id @default(cuid())
-  slug      String @unique
-  name      String
-  basePrice BigInt
-  minPrice  BigInt
-  maxPrice  BigInt
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String?
+  illegal     Boolean @default(true)
+  /// Gewicht einer Einheit in Gramm (für Transportkapazität).
+  unitWeightG Int     @default(1)
+  basePrice   BigInt
+  minPrice    BigInt
+  maxPrice    BigInt
 
   marketPrices MarketPrice[]
   inventory    InventoryItem[]
@@ -201,6 +215,8 @@ model InventoryItem {
   playerId    String
   commodityId String
   quantity    Int    @default(0)
+  /// Gewichteter Durchschnitts-Einkaufspreis pro Einheit.
+  avgBuyPrice BigInt @default(0)
 
   player    Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
   commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
@@ -237,12 +253,14 @@ model TradeTransaction {
 // ─────────────────────────── Reisen & Fahrzeuge ───────────────────────────
 
 model VehicleType {
-  id       String @id @default(cuid())
-  slug     String @unique
-  name     String
-  price    BigInt
-  capacity Int
-  speed    Int
+  id           String  @id @default(cuid())
+  slug         String  @unique
+  name         String
+  price        BigInt
+  /// Ladekapazität in Gramm.
+  capacityG    Int
+  speedKmh     Int
+  licenseClass String?
 
   vehicles Vehicle[]
 }
@@ -299,13 +317,15 @@ enum EquipmentSlot {
 }
 
 model EquipmentType {
-  id      String        @id @default(cuid())
-  slug    String        @unique
-  name    String
-  slot    EquipmentSlot
-  attack  Int           @default(0)
-  defense Int           @default(0)
-  price   BigInt
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String?
+  slot        EquipmentSlot
+  attack      Int           @default(0)
+  defense     Int           @default(0)
+  weightG     Int           @default(0)
+  price       BigInt
 
   owned PlayerEquipment[]
 }
@@ -367,10 +387,13 @@ model Clan {
   invites ClanInvite[]
 }
 
+/// Pate / Consigliere / Capo / Soldat / Mitläufer (Anzeige-Namen macht das Frontend).
 enum ClanRole {
-  LEADER
-  OFFICER
-  MEMBER
+  GODFATHER
+  CONSIGLIERE
+  CAPO
+  SOLDIER
+  ASSOCIATE
 }
 
 model ClanMember {
@@ -378,7 +401,7 @@ model ClanMember {
   clanId   String
   /// Unique: ein Spieler kann höchstens einem Clan angehören.
   playerId String   @unique
-  role     ClanRole @default(MEMBER)
+  role     ClanRole @default(ASSOCIATE)
   joinedAt DateTime @default(now())
 
   clan   Clan   @relation(fields: [clanId], references: [id], onDelete: Cascade)
@@ -424,4 +447,31 @@ model Message {
 
   @@index([recipientId, createdAt])
   @@index([senderId])
+}
+
+/// Persönliche Benachrichtigung eines Spielers (z. B. "Reise beendet", "Clan-Einladung").
+model Notification {
+  id        String    @id @default(cuid())
+  playerId  String
+  type      String
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, readAt, createdAt])
+}
+
+/// Öffentliche Meldung im Live-Ticker (z. B. "X erreicht die Stadt Y").
+model TickerEvent {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

@@ -24,6 +24,8 @@ declare module 'fastify' {
   }
 }
 
+const LAST_SEEN_INTERVAL_MS = 60_000;
+
 export interface AuthPluginOptions {
   secret: string;
   accessTokenTtl: string;
@@ -42,7 +44,25 @@ export default fp<AuthPluginOptions>(
       } catch {
         throw unauthorized('INVALID_ACCESS_TOKEN', 'Access token is missing, invalid or expired');
       }
+      await touchLastSeen(request);
     });
+
+    /** Records player activity for the "online" list – at most one DB write per player per interval. */
+    async function touchLastSeen(request: FastifyRequest) {
+      const now = new Date();
+      try {
+        await app.prisma.player.updateMany({
+          where: {
+            id: request.user.pid,
+            OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: new Date(now.getTime() - LAST_SEEN_INTERVAL_MS) } }],
+          },
+          data: { lastSeenAt: now },
+        });
+      } catch (err) {
+        // Presence tracking must never break a request.
+        request.log.warn({ err }, 'Failed to update lastSeenAt');
+      }
+    }
   },
-  { name: 'auth' },
+  { name: 'auth', dependencies: ['prisma'] },
 );
