@@ -52,10 +52,11 @@
 | T-302 | Markt- und Handelsseite | A4 | todo | T-106 |
 | T-303 | Reise- und Statusanzeige mit Countdown | A4 | todo | T-202 |
 | T-304 | Rangliste (Vermögen) – Endpunkt + Seite | A3 + A4 | todo | T-106 |
-| T-305 | Altersbestätigung bei Registrierung (Pflichtfeld, Zeitpunkt speichern) + `age-de.xml` (ADR-013) | A3 + A4 (Schema: A5) | todo | T-004 |
-| T-306 | Konto löschen und Datenexport durch den Spieler (ADR-015) | A3 + A4 (Schema: A5) | todo | T-004 |
+| T-305 | Altersbestätigung bei Registrierung (Pflichtfeld, Zeitpunkt speichern) + `age-de.xml` (ADR-013) | A3 ✅ Backend (lokal) · A4 UI + age-de.xml offen · Schema-Review A5 | review | T-004 |
+| T-306 | Konto löschen und Datenexport durch den Spieler (ADR-015) | A3 Backend (lokal) · A4 UI offen · Schema A5 | changes requested: Löschung per Cascade entfernt Journalzeilen (verstößt gegen ADR-010), siehe ADR-017 | T-004 |
 | T-307 | Seiten Impressum/Datenschutz mit Platzhalter-Konfiguration, keine echten Daten im Repo (ADR-015) | A4 | todo | T-006 |
 | T-308 | Satirischer Ton: Namensliste Städte/Waren/Ereignisse (ADR-013) | A2 | todo | T-003 |
+| T-309 | Clan-Nachfolge, wenn der Pate sein Konto löscht oder inaktiv wird (Q13) | A2 → A3 | todo | T-306 |
 
 ## M4 – M6 (Grobplanung, wird bei Erreichen von M3 verfeinert)
 
@@ -77,6 +78,7 @@
 | T-602 | VPS-Deployment laut ADR-014: Produktions-Compose, Caddy, GitHub-Actions-Deployment, Backups, Härtung, Monitoring | A3 | M6 |
 | T-603 | Impressum- und Datenschutz-Texte mit eigenen Angaben ausfüllen, kurze rechtliche Prüfung (Jugendschutz) | Product Owner | M6 |
 | T-604 | Sicherheits-Review | A1 | M6 |
+| T-605 | Löschfrist für IP-Adressen/User-Agent an Refresh-Tokens und in Logs (ADR-015; vom PO zurückgestellt) – **Release-Blocker** | A3 + A5 | M6 |
 
 ---
 

@@ -23,6 +23,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-014 | Hosting auf eigenem VPS in Deutschland mit Docker Compose | Akzeptiert | 2026-11-08 |
 | ADR-015 | Betrieb als Privatperson, nicht kommerziell; Datenschutz durch Datensparsamkeit | Akzeptiert | 2026-11-08 |
 | ADR-016 | Dauerhafte Welt ohne Resets, kleine Spielerzahl zum Start | Akzeptiert | 2026-11-08 |
+| ADR-017 | Kontolöschung pseudonymisiert statt Journale zu löschen | Akzeptiert (Details durch Agent 5) | 2026-11-08 |
 
 ---
 
@@ -126,6 +127,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   4. Betroffenenrechte: Konto-Löschung und Datenexport durch den Spieler selbst (T-306).
   5. Mit dem Hoster wird ein Auftragsverarbeitungsvertrag geschlossen.
 - **Konsequenzen:** Keine AGB/Widerrufsbelehrung nötig, solange nicht kommerziell. Wird das Projekt später kommerziell, braucht es einen neuen ADR.
+- **Nachtrag 2026-11-08:** Die Löschfrist für IP-Adressen und User-Agent ist laut Agent 3 vom Product Owner zurückgestellt. Derzeit werden beide gespeichert, solange der Refresh-Token-Eintrag existiert. Das muss vor dem öffentlichen Start gelöst und in der Datenschutzerklärung beschrieben sein (T-605, Release-Blocker).
 
 ## ADR-016 – Dauerhafte Welt ohne Resets, kleine Spielerzahl zum Start
 - **Status:** Akzeptiert · **Datum:** 2026-11-08 · **Entschieden von:** Product Owner (gegenüber Agent 6: „An Anfang werden es nicht viele Spieler sein.“ / „Nein es soll keine Neustarts in diesem Sinne geben.“)
@@ -137,6 +139,16 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   4. Ranglisten zusätzlich für Zeiträume ohne Reset (z. B. „Aufsteiger der Woche/des Monats“), damit auch neue Spieler Ziele haben.
   5. NPC-Händler und NPC-Gegner als Ausgleich für eine kleine Spielerzahl werden von Agent 2 geprüft (Vorschlag N-1/N-2 von Agent 6). Ihre Stärke soll mit steigender Spielerzahl sinken; die Schwelle ist offen (PROJECT.md Q12).
 - **Konsequenzen:** Ein einzelner VPS reicht vorerst (passt zu ADR-014). Journale wachsen dauerhaft, deshalb plant Agent 5 Partitionierung bzw. Archivierung (T-507). NPC-Logik läuft serverseitig im Tick und muss als reine Regelfunktion simulierbar sein (ADR-012). Jede Parameteränderung im Live-Betrieb wirkt auf eine bestehende Welt; sie braucht vorher einen Simulationslauf und ggf. eine Datenmigration.
+
+## ADR-017 – Kontolöschung pseudonymisiert statt Journale zu löschen
+- **Status:** Akzeptiert (Detailausgestaltung durch Agent 5) · **Datum:** 2026-11-08 · **Anlass:** Review von T-306
+- **Kontext:** Die erste Umsetzung von `DELETE /players/me` (Agent 3) löscht das Konto per `onDelete: Cascade`. Damit verschwinden auch Zeilen aus den append-only Journalen (Geld, Handel, ggf. Preisänderungen mit Handelsbezug). Das verletzt ADR-010: Preise und Geldflüsse anderer Spieler wären nicht mehr rekonstruierbar. Gleichzeitig verlangt die DSGVO die Löschung personenbezogener Daten.
+- **Entscheidung:**
+  1. Bei Kontolöschung werden alle **personenbezogenen** Daten entfernt: E-Mail, Benutzername, Passwort-Hash, Altersbestätigung, Refresh-Tokens (inkl. IP/User-Agent), Nachrichteninhalte.
+  2. Der Spieldatensatz (`Player`) bleibt als **pseudonymisierter Akteur** erhalten (z. B. Name „Gelöschter Spieler #<kurze ID>“, Status `DELETED`, vom Login getrennt). Journalzeilen bleiben unverändert und verweisen weiter auf ihn.
+  3. Journale dürfen keine `onDelete: Cascade` vom User/Player haben. Für die Journale wird `Restrict` gesetzt; die Löschung läuft über einen Service, nicht über einen Datenbank-Cascade.
+  4. Bestand (Geld, Inventar, Fahrzeuge, Immobilien) des gelöschten Spielers wird aus dem Spiel genommen. Die Regeln dazu legt Agent 2 fest, jede Buchung läuft über das Journal.
+- **Konsequenzen:** Agent 5 legt die genaue Pseudonymisierung und die Constraint-Änderungen fest (gehört zu T-005/T-105). Agent 3 passt T-306 an. Die Datenschutzerklärung muss die Pseudonymisierung erwähnen. Clan-Folgen siehe Q13 / T-309.
 
 ---
 
