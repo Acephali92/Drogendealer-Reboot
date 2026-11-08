@@ -9,6 +9,7 @@ import errorsPlugin from './plugins/errors.js';
 import healthRoutes from './modules/health/health.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import playerRoutes from './modules/player/player.routes.js';
+import accountRoutes from './modules/account/account.routes.js';
 import worldRoutes from './modules/world/world.routes.js';
 import inventoryRoutes from './modules/inventory/inventory.routes.js';
 import vehicleRoutes from './modules/vehicles/vehicles.routes.js';
@@ -49,6 +50,7 @@ export async function buildApp(env: Env): Promise<FastifyInstance> {
       await api.register(async (game) => {
         game.addHook('onRequest', app.authenticate);
         await game.register(playerRoutes, { prefix: '/players' });
+        await game.register(accountRoutes, { prefix: '/players' });
         await game.register(worldRoutes);
         await game.register(inventoryRoutes);
         await game.register(vehicleRoutes);

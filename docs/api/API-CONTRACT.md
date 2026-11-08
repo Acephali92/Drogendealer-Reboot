@@ -17,10 +17,12 @@ Basis-URL: `/api/v1`. Alle Antworten sind JSON.
 | Methode | Pfad | Body | Antwort |
 |---|---|---|---|
 | GET | `/health` | – | `{ status, database }` |
-| POST | `/auth/register` | `{ email, username, password }` | `201 { accessToken, refreshToken, user: { id, email, username, role, playerId } }` |
+| POST | `/auth/register` | `{ email, username, password, ageConfirmed: true }` | `201 { accessToken, refreshToken, user: { id, email, username, role, playerId } }` |
 | POST | `/auth/login` | `{ login, password }` | wie register (`200`) |
 | POST | `/auth/refresh` | `{ refreshToken }` | wie register (`200`), altes Refresh-Token ist danach ungültig |
 | POST | `/auth/logout` | `{ refreshToken }` | `204` |
+
+`ageConfirmed` ist Pflicht und muss genau `true` sein (Bestätigung „mindestens 18 Jahre“, ADR-013). Fehlt das Feld oder hat es einen anderen Wert, kommt `400 VALIDATION_ERROR`. Der Zeitpunkt der Bestätigung wird als `User.ageConfirmedAt` gespeichert.
 
 ## Spieler
 
@@ -44,6 +46,24 @@ Basis-URL: `/api/v1`. Alle Antworten sind JSON.
 
 ### GET `/players/online`
 `{ count, players: [{ id, name, level, clanTag }] }`. Als online gilt, wer in den letzten 5 Minuten eine authentifizierte Anfrage gestellt hat.
+
+## Konto (Datenschutz, ADR-015 / T-306)
+
+### GET `/players/me/export`
+Liefert alle zum Konto gespeicherten Daten als JSON-Download (`Content-Disposition: attachment`, `Cache-Control: no-store`):
+`{ exportedAt, formatVersion: 1, account: { id, email, username, role, createdAt, updatedAt, lastLoginAt, ageConfirmedAt }, sessions: [{ createdAt, expiresAt, revokedAt, ip, userAgent }], player: { …alle Spielerfelder, inventory, tradeTransactions, moneyTransactions, vehicles, travels, equipment, attacks, defenses, clanMembership, clanInvites, sentClanInvites, sentMessages, receivedMessages, notifications } }`.
+Passwort-Hash und Token-Hashes sind nie enthalten. Erlaubt sind höchstens 5 Aufrufe pro Minute.
+
+### DELETE `/players/me`
+Body `{ password }`. Löscht das Konto endgültig, Antwort `204`. Bei falschem Passwort kommt `403 INVALID_PASSWORD`. Erlaubt sind höchstens 5 Aufrufe pro Minute.
+
+Was dabei passiert:
+- **Gelöscht:** Konto, Spieler, alle Sitzungen, Inventar, Transaktionen, Fahrzeuge, Reisen, Ausrüstung, Benachrichtigungen, empfangene Nachrichten und erhaltene Einladungen.
+- **Kämpfe:** Kämpfe mit diesem Spieler verschwinden auch aus der Historie der Gegner.
+- **Gesendete Nachrichten und Einladungen:** Sie bleiben beim Empfänger erhalten, der Absender wird `null`.
+- **Clans:** Ein Clan ohne verbleibende Mitglieder wird mitgelöscht. Verlässt der Pate einen Clan, in dem noch andere Mitglieder sind, bleibt der Clan vorerst ohne Paten. Die Nachfolge-Regel ist eine offene Game-Design-Frage.
+- **Laufende Access-Tokens:** Ein noch gültiges Access-Token findet danach keinen Spieler mehr. `/players/me` liefert dann `404 PLAYER_NOT_FOUND`.
+- **Name und E-Mail:** Benutzername und E-Mail sind danach wieder frei.
 
 ## Welt & Markt
 

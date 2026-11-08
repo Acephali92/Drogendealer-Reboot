@@ -42,8 +42,10 @@ Die Tests brauchen eine **eigene** Datenbank (`TEST_DATABASE_URL`, Standard `dro
 Die vollständige Referenz mit allen Antwortformaten steht in [`docs/api/API-CONTRACT.md`](../docs/api/API-CONTRACT.md).
 
 - **Öffentlich:** `GET /api/v1/health` und `POST /api/v1/auth/register | login | refresh | logout`.
+  Für `register` ist die Altersbestätigung `ageConfirmed: true` Pflicht.
 - **Mit Bearer-Token:**
   - Spieler: `/players/me`, `/players/me/transactions`, `/players/online`
+  - Konto: `GET /players/me/export` (Datenexport), `DELETE /players/me` (Konto löschen, mit Passwort)
   - Welt und Markt: `/cities`, `/cities/:slug`, `/cities/:slug/market`, `/market/overview`
   - Besitz: `/inventory`, `/vehicle-types`, `/vehicles`, `/equipment-types`, `/equipment`, `/travel/current`
   - Clans und Soziales: `/clans`, `/clans/:id`, `/clan-invites`, `/rankings`, `/notifications` (inkl. Gelesen-Markierung), `/ticker`

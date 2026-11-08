@@ -27,14 +27,16 @@ enum UserRole {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  username     String    @unique
-  passwordHash String
-  role         UserRole  @default(PLAYER)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  lastLoginAt  DateTime?
+  id             String    @id @default(cuid())
+  email          String    @unique
+  username       String    @unique
+  passwordHash   String
+  role           UserRole  @default(PLAYER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLoginAt    DateTime?
+  /// Zeitpunkt der Pflicht-Bestätigung \"ich bin mindestens 18\" bei der Registrierung (ADR-013).
+  ageConfirmedAt DateTime
 
   player        Player?
   refreshTokens RefreshToken[]

@@ -56,6 +56,8 @@ describe('POST /api/v1/auth/register', () => {
       include: { player: true },
     });
     expect(user.passwordHash).not.toContain(validUser.password);
+    expect(user.ageConfirmedAt).toBeInstanceOf(Date);
+    expect(Date.now() - user.ageConfirmedAt.getTime()).toBeLessThan(60_000);
     expect(user.player).toMatchObject({ id: body.user.playerId, name: 'TonyM', status: 'IDLE' });
 
     // Only the hash of the refresh token is persisted.
@@ -82,6 +84,9 @@ describe('POST /api/v1/auth/register', () => {
     ['short password', { ...validUser, password: 'short' }],
     ['invalid username', { ...validUser, username: 'a b' }],
     ['missing fields', {}],
+    ['missing age confirmation', { ...validUser, ageConfirmed: undefined }],
+    ['age not confirmed', { ...validUser, ageConfirmed: false }],
+    ['age confirmation as string', { ...validUser, ageConfirmed: 'true' }],
   ])('rejects %s with 400', async (_name, payload) => {
     const res = await register(app, payload);
     expect(res.statusCode).toBe(400);

@@ -16,6 +16,8 @@ export const registerSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password must be at most 128 characters'),
+  /** Mandatory confirmation that the user is at least 18 years old (ADR-013). */
+  ageConfirmed: z.literal(true, { message: 'You must confirm that you are at least 18 years old' }),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 

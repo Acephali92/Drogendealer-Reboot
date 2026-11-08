@@ -10,7 +10,7 @@ let seq = 0;
 const next = () => ++seq;
 
 export async function createUser(app: FastifyInstance, name = `player_${next()}`) {
-  const res = await register(app, { email: `${name}@example.com`, username: name, password: 'password-123' });
+  const res = await register(app, { email: `${name}@example.com`, username: name, password: 'password-123', ageConfirmed: true });
   if (res.statusCode !== 201) throw new Error(`register failed: ${res.body}`);
   const body = res.json<{ accessToken: string; user: { id: string; playerId: string } }>();
   return { token: body.accessToken, userId: body.user.id, playerId: body.user.playerId, name };

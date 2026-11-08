@@ -106,7 +106,13 @@ export function createAuthService({ prisma, signAccessToken, refreshTokenTtlDays
       try {
         const result = await prisma.$transaction(async (tx) => {
           const user = await tx.user.create({
-            data: { email: input.email, username: input.username, passwordHash, lastLoginAt: new Date() },
+            data: {
+              email: input.email,
+              username: input.username,
+              passwordHash,
+              lastLoginAt: new Date(),
+              ageConfirmedAt: new Date(),
+            },
           });
           const player = await createPlayerForUser(tx, user.id, input.username);
           return issueTokens(tx, { ...user, player }, meta);

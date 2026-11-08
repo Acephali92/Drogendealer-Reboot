@@ -32,6 +32,7 @@ export const validUser = {
   email: 'Dealer@Example.com',
   username: 'TonyM',
   password: 'super-secret-pw',
+  ageConfirmed: true,
 };
 
 export async function register(app: FastifyInstance, body: Record<string, unknown> = validUser) {
