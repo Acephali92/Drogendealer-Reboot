@@ -123,13 +123,14 @@ model City {
   policeStrength Int     @default(0)
   population     Int     @default(0)
 
-  connectionsFrom CityConnection[]   @relation("ConnectionFrom")
-  connectionsTo   CityConnection[]   @relation("ConnectionTo")
+  connectionsFrom CityConnection[]    @relation("ConnectionFrom")
+  connectionsTo   CityConnection[]    @relation("ConnectionTo")
   marketPrices    MarketPrice[]
+  priceChanges    MarketPriceChange[]
   players         Player[]
   trades          TradeTransaction[]
-  travelsFrom     Travel[]           @relation("TravelFrom")
-  travelsTo       Travel[]           @relation("TravelTo")
+  travelsFrom     Travel[]            @relation("TravelFrom")
+  travelsTo       Travel[]            @relation("TravelTo")
   combats         Combat[]
 }
 
@@ -161,6 +162,7 @@ model Commodity {
   maxPrice    BigInt
 
   marketPrices MarketPrice[]
+  priceChanges MarketPriceChange[]
   inventory    InventoryItem[]
   trades       TradeTransaction[]
 }
@@ -180,6 +182,42 @@ model MarketPrice {
 
   @@unique([cityId, commodityId])
   @@index([commodityId])
+}
+
+enum MarketPriceChangeCause {
+  INITIAL
+  TRADE
+  TICK
+  EVENT
+  ADMIN
+  UNSPECIFIED
+}
+
+/// Append-only Journal aller Marktpreis-Änderungen (T-105).
+/// Wird per DB-Trigger auf "MarketPrice" geschrieben – kein Anwendungscode kann es umgehen.
+/// UPDATE/DELETE sind per Trigger verboten. Ursache/Referenz setzt die Anwendung pro
+/// Transaktion über setPriceChangeContext() (src/modules/world/price-journal.ts).
+model MarketPriceChange {
+  id           String                 @id @default(cuid())
+  cityId       String
+  commodityId  String
+  oldBuyPrice  BigInt?
+  newBuyPrice  BigInt
+  oldSellPrice BigInt?
+  newSellPrice BigInt
+  oldSupply    Int?
+  newSupply    Int
+  cause        MarketPriceChangeCause
+  /// Referenz auf den Auslöser, z. B. TradeTransaction-ID oder Tick-Nummer.
+  refId        String?
+  createdAt    DateTime               @default(now())
+
+  city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
+
+  @@index([cityId, commodityId, createdAt])
+  @@index([commodityId, createdAt])
+  @@index([cause, createdAt])
 }
 
 enum MoneyTransactionReason {

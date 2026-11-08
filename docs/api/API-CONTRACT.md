@@ -1,4 +1,4 @@
-# Backend-API v1
+# API-Vertrag v1 (Backend)
 
 Basis-URL: `/api/v1`. Alle Antworten sind JSON.
 
