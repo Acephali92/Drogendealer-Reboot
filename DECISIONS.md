@@ -22,6 +22,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-013 | Satirisches Setting, Zielgruppe ab 18, Jugendschutzmaßnahmen | Akzeptiert | 2026-11-08 |
 | ADR-014 | Hosting auf eigenem VPS in Deutschland mit Docker Compose | Akzeptiert | 2026-11-08 |
 | ADR-015 | Betrieb als Privatperson, nicht kommerziell; Datenschutz durch Datensparsamkeit | Akzeptiert | 2026-11-08 |
+| ADR-016 | Dauerhafte Welt ohne Resets, kleine Spielerzahl zum Start | Akzeptiert | 2026-11-08 |
 
 ---
 
@@ -125,6 +126,17 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   4. Betroffenenrechte: Konto-Löschung und Datenexport durch den Spieler selbst (T-306).
   5. Mit dem Hoster wird ein Auftragsverarbeitungsvertrag geschlossen.
 - **Konsequenzen:** Keine AGB/Widerrufsbelehrung nötig, solange nicht kommerziell. Wird das Projekt später kommerziell, braucht es einen neuen ADR.
+
+## ADR-016 – Dauerhafte Welt ohne Resets, kleine Spielerzahl zum Start
+- **Status:** Akzeptiert · **Datum:** 2026-11-08 · **Entschieden von:** Product Owner (gegenüber Agent 6: „An Anfang werden es nicht viele Spieler sein.“ / „Nein es soll keine Neustarts in diesem Sinne geben.“)
+- **Kontext:** Ohne Resets wachsen Vermögen und Datenbestände unbegrenzt. Neue Spieler treffen auf eine etablierte Elite. Bei wenigen Spielern fehlen Handelspartner, Gegner und Marktbewegung.
+- **Entscheidung:**
+  1. Die Welt ist dauerhaft: keine Neustarts, keine Saisons mit Reset.
+  2. Auslegung für eine kleine Spielerzahl. Standard-Simulation: 30 Spieler über 365 Tage, Varianten mit 10/100/300 (Agent 6).
+  3. Gegen Inflation und Abhängen von Neulingen: Geldsenken, die mit dem Vermögen wachsen, und Aufhol-Mechaniken für neue Spieler (Ausgestaltung: Agent 2, Prüfung: Agent 6).
+  4. Ranglisten zusätzlich für Zeiträume ohne Reset (z. B. „Aufsteiger der Woche/des Monats“), damit auch neue Spieler Ziele haben.
+  5. NPC-Händler und NPC-Gegner als Ausgleich für eine kleine Spielerzahl werden von Agent 2 geprüft (Vorschlag N-1/N-2 von Agent 6). Ihre Stärke soll mit steigender Spielerzahl sinken; die Schwelle ist offen (PROJECT.md Q12).
+- **Konsequenzen:** Ein einzelner VPS reicht vorerst (passt zu ADR-014). Journale wachsen dauerhaft, deshalb plant Agent 5 Partitionierung bzw. Archivierung (T-507). NPC-Logik läuft serverseitig im Tick und muss als reine Regelfunktion simulierbar sein (ADR-012). Jede Parameteränderung im Live-Betrieb wirkt auf eine bestehende Welt; sie braucht vorher einen Simulationslauf und ggf. eine Datenmigration.
 
 ---
 

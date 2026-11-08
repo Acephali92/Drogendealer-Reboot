@@ -26,6 +26,7 @@ Einloggen ─► Markt in aktueller Stadt prüfen ─► Kaufen / Verkaufen
 
 - Zeitmodell: serverseitige **Echtzeit-Ticks** (Tick-Länge laut Parameterdatei von Agent 2; aktueller Entwurf: 10 min).
 - Aktionen mit Dauer (Reisen, Krankenhaus, Haft …) speichern Endzeitpunkte und werden lazy aufgelöst.
+- **Dauerhafte Welt:** keine Neustarts, keine Saisons mit Reset. Anfangs nur wenige Spieler pro Server (ADR-016).
 
 ## 3. Zielplattform & Technik
 
@@ -104,3 +105,5 @@ Agent 1 implementiert **keine größeren Features** selbstständig, ohne die zus
 | Q8 | Hosting/Betrieb (Server, Domain, Datenbank) | Deployment | ✅ eigener VPS in Deutschland, Docker Compose (ADR-014); Domain offen |
 | Q9 | Rechtliches: Impressum, Datenschutzerklärung | Release | ✅ Privatperson, nicht kommerziell (ADR-015); Angaben trägt der Product Owner selbst ein |
 | Q10 | Domain-Name und Absender-Adresse für E-Mails (Passwort-Reset) | Deployment | offen |
+| Q11 | Spielerzahl & Welt-Resets | Balancing, Betrieb | ✅ anfangs wenige Spieler, keine Resets/Saisons (ADR-016) |
+| Q12 | Ab welcher Spielerzahl sollen NPC-Ausgleichsmechaniken zurückgefahren werden? | Game Design, Balancing | offen (Agent 6 schlägt eine stufenlose Abschwächung vor) |
