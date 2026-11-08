@@ -109,6 +109,7 @@ als Grid oder `lhs: { samples: 50 }` (Latin Hypercube). Ausgabe ist eine Sensiti
 | `S4-progression` | 4 Kapitalbedarf | je 50 × T1, T2, T4, T6, T8, T9 | 120 d × 10 | nächtlich |
 | `S5-raids` | 5 Überfälle | 25 Händler (T1/T2/T6) + 5 × T5, mit/ohne NPC-Ziele | 30 d × 20, Sweep über `loot_cash_rate` × `alpha` | nächtlich |
 | `S6-late-joiner` | 6 Dominanz | Standard-Mix 30 inkl. T7-Clans, + je 10 × T8 an Tag 30, 180, 365 | 395 d × 10 | wöchentlich |
+| `S8-npc-handover` | 2, 5, 6 (R-4) | Standard-Mix mit wachsendem Zustrom von 10 auf 300 Spieler, NPC-Rückbau laut Regel | 365 d × 10 | wöchentlich |
 | `S7-roundtrip` | 7 | X1 | 1 d | jeder PR |
 | `S7-pumpdump` | 7 | X2 + 50 × T2 | 14 d × 10 | nächtlich |
 | `S7-multiaccount` | 7 | X3 (k = 1, 3, 5) + Standard-Mix | 30 d × 10 | nächtlich |

@@ -135,6 +135,7 @@ T7 (Clan) ist eine **Gruppierung** und kein eigener Anteil: ca. 40 % der Bots au
 ### NPC-Akteure (Vorschlag N-1/N-2, abhängig von R-1)
 Bei wenigen Spielern simuliert die Welt zusätzlich **NPC-Händler**, die profitable Routen abschöpfen, sowie
 **NPC-Kuriere und -Banden** als Ziele und Gegner. Sie sind keine Bots mit Policy, sondern Teil von `applyTick`
-(Spielregel von Agent 2). Ihre Stärke sinkt mit der Zahl aktiver echter Spieler.
+(Spielregel von Agent 2). Ihre Stärke sinkt erst, wenn echte Spieler die Mechanik messbar tragen (R-4, siehe
+[balancing-concept.md §2](balancing-concept.md#rückbau-der-npc-mechaniken-q12-r-4)).
 Adversariale Bots laufen **nicht** im Standard-Mix, sondern in eigenen Szenarien (`S7-*`), damit sie die
 Wirtschafts-KPIs nicht verfälschen.

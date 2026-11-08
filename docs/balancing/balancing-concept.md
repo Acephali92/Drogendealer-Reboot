@@ -38,6 +38,7 @@ an. Verbindlich ist erst das Ergebnis der Simulation.
 | R-1 | **Anfangs nur wenige Spieler** pro Server | Standard-Szenarien laufen mit **30 Spielern**. Die Skalierung wird mit 10 / 30 / 100 / 300 geprüft. Konkurrenz zwischen Spielern begrenzt den Gewinn kaum, deshalb müssen Markttiefe und NPC-Mechaniken das übernehmen. |
 | R-2 | **Keine Neustarts** der Welt (keine Saisons mit Reset) | Die Welt ist dauerhaft. Inflation und Vorsprung der ersten Spieler wachsen unbegrenzt, wenn die Senken nicht mitwachsen. Jeder spätere Spieler ist ein „Late Joiner“. Die Maßnahmen gegen Dominanz dürfen sich nicht auf Resets stützen. |
 
+| R-4 | NPCs werden **erst zurückgefahren, wenn genug Spieler regelmäßig online sind, um die Spielmechanik zu tragen** (Q12) | Kein fester Schwellenwert. Messbare Kennzahlen aus echten Spielern mit Hysterese, siehe Abschnitt 2 „Rückbau der NPC-Mechaniken“. |
 | R-3 | Nicht kommerziell: **keine Monetarisierung**, keine Werbung, kein Echtgeld (ADR-015) | Keine Premium-Währung und kein Pay-to-win. Das Balancing muss ohne Bezahl-Abkürzungen funktionieren, und jeder Fortschritt entsteht ausschließlich durch Spielen. |
 
 Die Abschnitte 1, 2, 5 und 6 enthalten dazu je einen Unterabschnitt **„Bei wenigen Spielern / ohne Reset“**.
@@ -210,6 +211,28 @@ von ≈ 180.000 € pro Tag gehört dann praktisch einem einzigen Spieler. Die F
   abschöpfen. Ihre Rate sinkt, wenn mehr echte Spieler aktiv sind. So bleibt der Markt bei wenigen Spielern
   lebendig, und die Balance verschiebt sich nicht, wenn die Spielerzahl wächst.
 - Zielkorridor zusätzlich: Gewinn pro Fahrt eines einzelnen Spielers bei 10 Spielern ≤ 1,3 × bei 100 Spielern.
+
+### Rückbau der NPC-Mechaniken (Q12, R-4)
+Vorgabe des Product Owners: Die NPCs werden **erst zurückgefahren, wenn genug Spieler regelmäßig online sind,
+um die Spielmechanik zu tragen**. Eine feste Spielerzahl wird bewusst nicht festgelegt. Ob die Mechanik „getragen“
+wird, entscheiden messbare Kennzahlen, die **nur aus echten Spielern** berechnet werden:
+
+| Kennzahl (nur echte Spieler) | „Getragen“, wenn |
+|---|---|
+| **Regelmäßig aktiv**: Spieler mit Login an ≥ 4 von 7 Tagen | – (Bezugsgröße) |
+| Routen-Konkurrenz: Anteil der Top-10-Routen, die pro Tag von ≥ 2 verschiedenen Spielern gefahren werden | ≥ 50 % |
+| Ziel-Verfügbarkeit für Räuber (Abschnitt 5) **ohne** NPC-Ziele | ≥ 30 % |
+| Marktaktivität: Anteil der Märkte mit Spieler-Orders an ≥ 1 Tick pro 6 h | ≥ 60 % |
+| Gleichzeitig online zur Abendspitze (Median über 7 Tage) | ≥ 2 Spieler je Stadt mit Raumhafen bzw. Großstadt |
+
+**Regel:** Die NPC-Intensität $k \in [0{,}1]$ startet bei 1. Sie sinkt **erst**, wenn **alle** Kennzahlen
+**14 Tage am Stück** erfüllt sind, und dann langsam (z. B. −0,1 pro Woche). Sobald eine Kennzahl 7 Tage
+lang verfehlt wird, steigt $k$ wieder (+0,1 pro Woche). Diese Hysterese verhindert ein Hin- und Herspringen,
+etwa bei Urlaubszeiten. Rückbau und Wiederaufbau werden protokolliert.
+
+Die Simulation (`S8-npc-handover`) ermittelt, ab welcher Zahl regelmäßig aktiver Spieler die Kennzahlen typischerweise
+erfüllt sind. Das dient nur als **Prognose** für den Betreiber und nicht als Schwelle. Schwellenwerte und Schrittweiten
+sind Parameter von Agent 2 (Schlüssel z. B. `npc.handover_*`).
 
 ---
 
@@ -535,5 +558,6 @@ sind ideale Räuber ([E-04](exploit-catalog.md#e-04-multi-account-feeding), [E-1
 1. ~~Endgültige Preisformel (A-1)~~ → ✅ F-ECO-07. Spread-Formel (A-2) noch gegen `economy.md` prüfen → Agent 2.
 2. ~~Wird der Bestand pro Order sofort fortgeschrieben (A-3)?~~ → **Ja**, zugesagt von Agent 3.
 3. ~~Gibt es Saisons bzw. Server-Resets?~~ → **Nein** (R-2).
-4. ~~Wie viele aktive Spieler werden pro Server erwartet?~~ → **Anfangs wenige** (R-1). Offen: Ab welcher Spielerzahl
-   sollen NPC-Mechaniken (N-1, N-2) zurückgefahren werden?
+4. ~~Wie viele aktive Spieler werden pro Server erwartet?~~ → **Anfangs wenige** (R-1).
+5. ~~Q12: Ab welcher Spielerzahl werden die NPC-Mechaniken zurückgefahren?~~ → **Erst wenn genug Spieler regelmäßig
+   online sind, um die Spielmechanik zu tragen** (R-4). Umsetzung über messbare Kennzahlen, siehe Abschnitt 2.
