@@ -56,7 +56,7 @@
 | T-306 | Konto löschen und Datenexport durch den Spieler (ADR-015) | A3 Backend (lokal) · A4 UI offen · Schema A5 | changes requested: Löschung per Cascade entfernt Journalzeilen (verstößt gegen ADR-010), siehe ADR-017 | T-004 |
 | T-307 | Seiten Impressum/Datenschutz mit Platzhalter-Konfiguration, keine echten Daten im Repo (ADR-015) | A4 | todo | T-006 |
 | T-308 | Satirischer Ton: Namensliste Städte/Waren/Ereignisse (ADR-013) | A2 | todo | T-003 |
-| T-309 | Clan-Nachfolge, wenn der Pate sein Konto löscht oder inaktiv wird (Q13) | A2 → A3 | todo | T-306 |
+| T-309 | Clan-Kasse mit Journal + Wahl eines neuen Paten (ADR-018): Wahlregeln A2, Schema A5, API A3, UI A4 | A2 → A5 → A3 → A4 | todo | T-306 |
 
 ## M4 – M6 (Grobplanung, wird bei Erreichen von M3 verfeinert)
 

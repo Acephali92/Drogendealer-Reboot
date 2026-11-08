@@ -24,6 +24,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-015 | Betrieb als Privatperson, nicht kommerziell; Datenschutz durch Datensparsamkeit | Akzeptiert | 2026-11-08 |
 | ADR-016 | Dauerhafte Welt ohne Resets, kleine Spielerzahl zum Start | Akzeptiert | 2026-11-08 |
 | ADR-017 | Kontolöschung pseudonymisiert statt Journale zu löschen | Akzeptiert (Details durch Agent 5) | 2026-11-08 |
+| ADR-018 | Gemeinsames Clan-Guthaben, Wahl eines neuen Paten | Akzeptiert (Wahlverfahren durch Agent 2) | 2026-11-08 |
 
 ---
 
@@ -150,6 +151,17 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   3. Journale dürfen keine `onDelete: Cascade` vom User/Player haben. Für die Journale wird `Restrict` gesetzt; die Löschung läuft über einen Service, nicht über einen Datenbank-Cascade.
   4. Bestand (Geld, Inventar, Fahrzeuge, Immobilien) des gelöschten Spielers wird aus dem Spiel genommen. Die Regeln dazu legt Agent 2 fest, jede Buchung läuft über das Journal.
 - **Konsequenzen:** Agent 5 legt die genaue Pseudonymisierung und die Constraint-Änderungen fest (gehört zu T-005/T-105). Agent 3 passt T-306 an. Die Datenschutzerklärung muss die Pseudonymisierung erwähnen. Clan-Folgen siehe Q13 / T-309.
+
+## ADR-018 – Gemeinsames Clan-Guthaben, Wahl eines neuen Paten
+- **Status:** Akzeptiert (Wahlverfahren im Detail durch Agent 2) · **Datum:** 2026-11-08 · **Entschieden von:** Product Owner (Q13)
+- **Kontext:** Bei einer Kontolöschung (ADR-017) kann ein Clan ohne Paten zurückbleiben. Clans brauchen außerdem gemeinsame Mittel.
+- **Entscheidung:**
+  1. Jeder Clan hat ein **gemeinsames Clan-Guthaben** (Clan-Kasse). Ein- und Auszahlungen laufen wie alle Geldbewegungen über ein append-only Journal mit Akteur, Betrag, Saldo danach und Grund (ADR-010). Spieler- und Clanseite einer Buchung erscheinen beide im Journal.
+  2. Löscht der Pate sein Konto, wählen die verbleibenden Mitglieder **innerhalb des Clans einen neuen Paten**.
+  3. Bis zum Ende der Wahl ist der Clan ohne Paten. Auszahlungen aus der Clan-Kasse sind in dieser Zeit gesperrt, Einzahlungen bleiben möglich (Schutz vor Plünderung).
+  4. Wahlverfahren (wer wählen und gewählt werden darf, Dauer, Mehrheit, Gleichstand, keine Stimmabgabe, einziges verbleibendes Mitglied) legt Agent 2 als Regel mit Parametern in `parameters.toml` fest. Fallback-Vorschlag von Agent 1, falls die Wahl ergebnislos endet: das dienstälteste ranghöchste Mitglied.
+  5. Verlässt das letzte Mitglied den Clan, wird der Clan aufgelöst. Was mit dem Restguthaben geschieht, regelt Agent 2 inflationsneutral (ADR-016).
+- **Konsequenzen:** Agent 5 modelliert Clan-Journal und Wahl (Wahl, Stimmen, Ergebnis nachvollziehbar). Agent 3 setzt Wahl-Endpunkte und die Auflösung per Tick bzw. lazy um. Agent 4 baut die Wahl-Oberfläche. Die bestehende Löschlogik (Clan bleibt ohne Paten) ist bis dahin korrekt.
 
 ---
 

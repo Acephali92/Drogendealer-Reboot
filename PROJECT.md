@@ -106,5 +106,5 @@ Agent 1 implementiert **keine größeren Features** selbstständig, ohne die zus
 | Q9 | Rechtliches: Impressum, Datenschutzerklärung | Release | ✅ Privatperson, nicht kommerziell (ADR-015); Angaben trägt der Product Owner selbst ein |
 | Q10 | Domain-Name und Absender-Adresse für E-Mails (Passwort-Reset) | Deployment | offen |
 | Q11 | Spielerzahl & Welt-Resets | Balancing, Betrieb | ✅ anfangs wenige Spieler, keine Resets/Saisons (ADR-016) |
-| Q13 | Was passiert mit einem Clan, wenn der Pate sein Konto löscht und noch Mitglieder da sind? | Game Design, Backend | offen (Vorschlag A1: Nachfolge an das dienstälteste ranghöchste Mitglied) – an Agent 2 |
+| Q13 | Was passiert mit einem Clan, wenn der Pate sein Konto löscht und noch Mitglieder da sind? | Game Design, Backend | ✅ Gemeinsames Clan-Guthaben; neuer Pate wird innerhalb des Clans gewählt (ADR-018). Wahlverfahren im Detail: Agent 2 |
 | Q12 | Ab welcher Spielerzahl sollen NPC-Ausgleichsmechaniken zurückgefahren werden? | Game Design, Balancing | ✅ „Erst wenn genug Spieler regelmäßig online sind, um die Spielmechanik zu tragen“ (PO gegenüber Agent 6). Umsetzung über Kennzahlen statt fester Zahl, siehe ADR-016 Nachtrag |
