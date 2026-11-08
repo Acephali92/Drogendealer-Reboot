@@ -23,7 +23,7 @@ sind dann neu zu rechnen.
 
 | ID | Annahme |
 |---|---|
-| A-1 | Gleichgewichtspreis $P^* = P_{base}\cdot W^{\omega}\cdot (m_d/m_s)^{\varepsilon}$; Momentanpreis $P = P^*\cdot(S^*/S)^{\varepsilon}$, Zielbestand $S^* = D\cdot$ `cover_ticks` $\cdot\, m_s$, Nachfrage $D = pop\cdot c\cdot W^{\beta}\cdot m_d$ |
+| A-1 | Gleichgewichtspreis $P^* = P_{base}\cdot W^{\omega}\cdot (m_d/m_s)^{\varepsilon}$; Momentanpreis $P = P^*\cdot(S^*/S)^{\varepsilon}$, Zielbestand $S^* = D\cdot$ `cover_ticks` $\cdot\, m_s$, Nachfrage $D = pop\cdot c\cdot W^{\beta}\cdot m_d$. ✅ $P^*$ entspricht F-ECO-07 (bestätigt von Agent 2). |
 | A-2 | Kaufpreis $= P\cdot(1+s/2)$, Verkaufspreis $= P\cdot(1-s/2)$ mit $s$ = `trade.spread_base` |
 | A-3 | Jede Order verändert den Bestand **sofort** (kein Batching bis zum nächsten Tick), siehe [E-05](exploit-catalog.md#e-05-tick-grenzen-timing--order-splitting). ✅ Von Agent 3 zugesagt (2026-11-08). |
 | A-4 | Reisen laufen auch weiter, wenn der Spieler offline ist |
@@ -400,10 +400,10 @@ $$
 - ✅ Vermögensband: Das Ziel muss mindestens 50 % des Angreifer-Vermögens besitzen (`networth_band`).
 - ✅ Ziel-Cooldown 6 h, Angriffs-Cooldown 30 min, Heat für den Angreifer.
 - ✅ Neulingsschutz: 7 Tage bzw. 50.000 € Nettovermögen.
-- ➕ **Tages-Beutecap pro Opfer**: Die Summe aller Verluste eines Opfers durch PvP in 24 h ≤ 35 % seines Bargelds zu Beginn
+- ✅ (F-CMB-05, `combat.loot_daily_cap_rate` = 0,35) **Tages-Beutecap pro Opfer**: Die Summe aller Verluste eines Opfers durch PvP in 24 h ≤ 35 % seines Bargelds zu Beginn
   des Zeitfensters. Ohne diese Grenze verliert ein Opfer bei 4 Angriffen bis zu 68 % (1 − 0,75⁴).
-- ➕ **Abnehmende Beute** für denselben Angreifer gegen dasselbe Opfer: 100 % / 50 % / 25 % innerhalb von 72 h.
-- ➕ **Beute-Senke**: 10–20 % der Beute verschwinden (Hehlerabschlag). Damit hat PvP keine Geldbilanz von null mehr,
+- ✅ (`combat.loot_repeat_decay` = 0,5, Fenster `loot_repeat_window_ticks` = 1008) **Abnehmende Beute** für denselben Angreifer gegen dasselbe Opfer: 100 % / 50 % / 25 % innerhalb von 72 h.
+- ✅ (`combat.loot_fence_rate` = 0,15) **Beute-Senke**: 10–20 % der Beute verschwinden (Hehlerabschlag). Damit hat PvP keine Geldbilanz von null mehr,
   sondern wird zur Geldsenke, und das Farmen mit Zweitaccounts wird teurer ([E-04](exploit-catalog.md#e-04-multi-account-feeding)).
 
 ### Bei wenigen Spielern / ohne Reset
@@ -524,15 +524,15 @@ sind ideale Räuber ([E-04](exploit-catalog.md#e-04-multi-account-feeding), [E-1
 |---|---|---|---|
 | B-1 | Start sehr schnell: eine Fahrt verdoppelt das Startkapital | ok für Phase I. Phase II/III per S1 messen | Agent 2 |
 | B-3 | Impact-Werte im Korridor, aber nur bei sofortiger Bestandsänderung | A-3 verbindlich in der Backend-Implementierung. ✅ Zugesagt | Agent 3 |
-| B-4 | Kapitalrendite von Betrieben liegt unter 1/100 der Rendite von Fahrzeugen | in S4 prüfen, ob Bots Betriebe kaufen. Ggf. Spreizung senken oder Erträge skalieren | Agent 2 |
-| B-5 | Opfer kann bis zu 68 % des Bargelds pro Tag verlieren | Tages-Beutecap und abnehmende Beute ergänzen | Agent 2 |
-| B-6 | Vermögensband schützt Arme, begünstigt aber kleine Zweitaccounts | Schutz an Account-Alter, Level-Summe und Zweitaccount-Erkennung koppeln | Agent 2, 3 |
+| B-4 | Kapitalrendite von Betrieben liegt unter 1/100 der Rendite von Fahrzeugen | **Gewollt** (Agent 2): Engpass ist Weißgeld, Betriebe dienen als Waschkapazität. S4 prüft, ob Bots trotzdem Betriebe kaufen | Agent 2 |
+| B-5 | Opfer kann bis zu 68 % des Bargelds pro Tag verlieren | ✅ Übernommen (F-CMB-05, EX-CMB-03: 35 % statt 68,4 %, INV-12) | Agent 2 |
+| B-6 | Vermögensband schützt Arme, begünstigt aber kleine Zweitaccounts | ✅ Hysterese übernommen (F-CMB-06: höchstes NW der letzten 1008 Ticks) und Clankasse im NW (F-GLB-03). Erkennung von Zweitaccounts noch offen | Agent 2, 3 |
 | B-7 | Bei wenigen Spielern teilt sich kaum jemand eine Route, und Räuber finden kaum gültige Ziele (R-1) | NPC-Händler (N-1) und NPC-Ziele/-Gegner (N-2) | Agent 2 |
 | B-8 | Ohne Reset wachsen Geldmenge und Vorsprung unbegrenzt (R-2) | Senken, die mit dem Vermögen wachsen (D-6), und Aufhol-XP (D-7) sind Pflicht. Ranglisten für Zeiträume statt Resets (D-9) | Agent 2 |
 
 ## 9. Offene Fragen
 
-1. Endgültige Preis- und Spread-Formeln (A-1, A-2) → Agent 2.
+1. ~~Endgültige Preisformel (A-1)~~ → ✅ F-ECO-07. Spread-Formel (A-2) noch gegen `economy.md` prüfen → Agent 2.
 2. ~~Wird der Bestand pro Order sofort fortgeschrieben (A-3)?~~ → **Ja**, zugesagt von Agent 3.
 3. ~~Gibt es Saisons bzw. Server-Resets?~~ → **Nein** (R-2).
 4. ~~Wie viele aktive Spieler werden pro Server erwartet?~~ → **Anfangs wenige** (R-1). Offen: Ab welcher Spielerzahl
