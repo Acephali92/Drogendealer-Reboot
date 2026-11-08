@@ -6,7 +6,7 @@
 
 ## 1. Vision
 
-Ein **Echtzeit-Mehrspieler-Browsergame mit persistenter Welt**. Spieler handeln mit Waren zwischen
+Ein **satirisch-überzeichnetes Echtzeit-Mehrspieler-Browsergame mit persistenter Welt** für Erwachsene (ab 18). Spieler handeln mit Waren zwischen
 Städten, reisen mit Fahrzeugen, kämpfen gegeneinander, schließen sich zu Clans zusammen und
 konkurrieren in Ranglisten. Märkte reagieren serverseitig in festen Zeitschritten (Ticks) auf
 Angebot, Nachfrage und Ereignisse. Jede wirtschaftliche Veränderung ist nachvollziehbar.
@@ -50,7 +50,8 @@ Einloggen ─► Markt in aktueller Stadt prüfen ─► Kaufen / Verkaufen
 - Spielereignisse, Balancing-Werkzeuge, Admin-Werkzeuge
 
 ### Nicht-Ziele (vorerst)
-- Native Apps, Echtgeld-Monetarisierung
+- Native Apps, Echtgeld-Monetarisierung, Werbung (nicht kommerzielles Projekt, ADR-015)
+- Realistische Darstellung oder Verherrlichung von Drogenkonsum; echte Städte und reale Personen (ADR-013)
 - Übernahme geschützter Inhalte aus bestehenden Spielen
 
 ## 5. Rollenmodell (Agenten)
@@ -94,11 +95,12 @@ Agent 1 implementiert **keine größeren Features** selbstständig, ohne die zus
 | # | Frage | Auswirkung | Status |
 |---|-------|-----------|--------|
 | Q1 | Spielkonzept | alles | ✅ geklärt: Echtzeit-Mehrspieler-Browsergame (ADR-006) |
-| Q2 | Setting & Tonalität (realistisch, satirisch, fiktiv?) | Content, UI-Stil | offen |
+| Q2 | Setting & Tonalität | Content, UI-Stil | ✅ satirisch-überzeichnet, fiktive Städte (ADR-013) |
 | Q3 | Zeitmodell | Backend, Game Design | ✅ geklärt: Echtzeit-Ticks (Länge per Parameter) |
 | Q4 | Umfang Städte/Waren im MVP | Content | delegiert an Agent 2 |
 | Q5 | Weitere Agenten-Rollen | Task-Zuweisung | ✅ geklärt: Agenten 2–6 |
-| Q6 | Zielgruppe / Altersfreigabe, Jugendschutz | Content, Texte, Rechtliches | offen |
+| Q6 | Zielgruppe / Altersfreigabe, Jugendschutz | Content, Texte, Rechtliches | ✅ ab 18, Altersbestätigung + Alterskennzeichnung (ADR-013) |
 | Q7 | Sprache der Oberfläche | UI, i18n | ✅ Deutsch, i18n-vorbereitet |
-| Q8 | Hosting/Betrieb (Server, Domain, Datenbank) | Deployment | offen |
-| Q9 | Rechtliches: Impressum, Datenschutzerklärung (DSGVO, Konten und E-Mail-Adressen werden gespeichert) | Release | offen |
+| Q8 | Hosting/Betrieb (Server, Domain, Datenbank) | Deployment | ✅ eigener VPS in Deutschland, Docker Compose (ADR-014); Domain offen |
+| Q9 | Rechtliches: Impressum, Datenschutzerklärung | Release | ✅ Privatperson, nicht kommerziell (ADR-015); Angaben trägt der Product Owner selbst ein |
+| Q10 | Domain-Name und Absender-Adresse für E-Mails (Passwort-Reset) | Deployment | offen |

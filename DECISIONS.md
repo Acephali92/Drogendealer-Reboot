@@ -19,6 +19,9 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-010 | Ein Datenmodell (Prisma), Journale für Nachvollziehbarkeit | Akzeptiert | 2026-11-08 |
 | ADR-011 | API-Vertrag: Eigentum Backend, MSW-Mocks im Frontend | Akzeptiert | 2026-11-08 |
 | ADR-012 | Balancing-Simulation in TypeScript auf Basis der Backend-Regelfunktionen | Akzeptiert | 2026-11-08 |
+| ADR-013 | Satirisches Setting, Zielgruppe ab 18, Jugendschutzmaßnahmen | Akzeptiert | 2026-11-08 |
+| ADR-014 | Hosting auf eigenem VPS in Deutschland mit Docker Compose | Akzeptiert | 2026-11-08 |
+| ADR-015 | Betrieb als Privatperson, nicht kommerziell; Datenschutz durch Datensparsamkeit | Akzeptiert | 2026-11-08 |
 
 ---
 
@@ -96,6 +99,32 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 - **Kontext:** Balancing braucht viele simulierte Spielverläufe. Eine eigene Nachimplementierung der Regeln würde vom echten Spiel abweichen.
 - **Entscheidung:** Die Simulation wird in TypeScript im Ordner `sim/` gebaut und importiert die reinen, I/O-freien Regelfunktionen des Backends (seedbarer Zufall). Parameter kommen aus `docs/game-design/parameters.toml`, Referenzwerte (Golden Vectors) aus Agent 2s `verify.py`. CI: schneller Simulationslauf (`sim-fast`) pro PR, ausführlicher `balance-check` nächtlich. Konzept und Spezifikation unter `docs/balancing/`.
 - **Konsequenzen:** Agent 3 muss die Regelfunktionen in einem eigenen Bereich ohne Prisma/Fastify-Abhängigkeit halten (ARCHITECTURE.md §3). Änderungen an deren Signaturen brauchen Abstimmung mit Agent 6. `sim/` hängt vom Backend-Code ab, nicht umgekehrt.
+
+## ADR-013 – Satirisches Setting, Zielgruppe ab 18, Jugendschutzmaßnahmen
+- **Status:** Akzeptiert · **Datum:** 2026-11-08 · **Entschieden von:** Product Owner (Q2, Q6)
+- **Kontext:** Drogenhandel und Kampf sind jugendschutzrelevant (JMStV). Setting und Ton bestimmen Texte, Namen, Grafik und Ereignisse.
+- **Entscheidung:**
+  1. **Ton:** satirisch-überzeichnet, schwarzer Humor. Fiktive Städte, fiktive Figuren, überzeichnete Waren- und Ereignisnamen. Keine realen Personen oder Marken, keine Anleitungen und keine realistischen Details zu Herstellung oder Konsum, keine Verherrlichung.
+  2. **Zielgruppe:** Erwachsene ab 18.
+  3. **Maßnahmen:** Pflicht-Checkbox „Ich bin mindestens 18 Jahre alt“ bei der Registrierung (Zeitpunkt der Bestätigung wird gespeichert); Alterskennzeichnung der Website für Jugendschutzprogramme (`age-de.xml`, Stufe 18); Hinweis auf Startseite und im Impressum; keine Werbung oder Social-Media-Ansprache, die sich an Minderjährige richtet.
+- **Konsequenzen:** Agent 2 richtet Texte und Ereignisse am satirischen Ton aus; Agent 4 am Grafikstil (Comic/überzeichnet). Agent 3 und Agent 4 setzen die Altersbestätigung um (T-305). Eine reine Selbstauskunft ist rechtlich die schwächste Variante. Vor dem öffentlichen Release ist eine kurze rechtliche Prüfung empfohlen (T-603).
+
+## ADR-014 – Hosting auf eigenem VPS in Deutschland mit Docker Compose
+- **Status:** Akzeptiert · **Datum:** 2026-11-08 · **Entschieden von:** Product Owner (Q8)
+- **Kontext:** Das Backend braucht Node.js und PostgreSQL. Gewünscht ist ein eigener, günstiger Server (z. B. Hetzner) in Deutschland.
+- **Entscheidung:** Ein VPS mit Docker Compose: Container für Backend, PostgreSQL und Reverse Proxy (Caddy mit automatischem TLS); Caddy liefert auch den statischen Frontend-Build aus. Deployment per GitHub Actions (Image bauen, per SSH ausrollen, Migrationen ausführen). Tägliches `pg_dump` mit externer Kopie und getesteter Wiederherstellung. Firewall (nur 22/80/443), SSH nur per Schlüssel, automatische Sicherheitsupdates. Secrets nur als Umgebungsvariablen auf dem Server bzw. als GitHub-Secrets.
+- **Konsequenzen:** Updates, Backups und Sicherheit liegen beim Projekt. Agent 3 verantwortet Deployment und Betriebsdokumentation (T-602). Die bestehende `docker-compose.yml` (Dev) bekommt ein Produktions-Gegenstück. Domain noch offen (Q10).
+
+## ADR-015 – Betrieb als Privatperson, nicht kommerziell; Datenschutz durch Datensparsamkeit
+- **Status:** Akzeptiert · **Datum:** 2026-11-08 · **Entschieden von:** Product Owner (Q9)
+- **Kontext:** Das Spiel speichert Konten (E-Mail, Benutzername, Passwort-Hash, IP-Adressen in Refresh-Tokens/Logs) und ist öffentlich erreichbar.
+- **Entscheidung:**
+  1. Betreiber ist eine Privatperson, keine Einnahmen, keine Werbung, keine In-App-Käufe.
+  2. Impressum und Datenschutzerklärung werden als Seiten im Frontend bereitgestellt. Die persönlichen Angaben trägt der Product Owner selbst in eine Konfigurationsdatei ein; **Agenten erfinden oder committen keine Betreiberdaten**.
+  3. Datensparsamkeit: nur E-Mail, Benutzername, Passwort-Hash und Altersbestätigung; IP-Adressen nur so kurz wie nötig (Missbrauchsschutz, Löschfrist in der Datenschutzerklärung); keine Tracker, keine Analyse-Dienste von Dritten, Schriften und Assets selbst gehostet.
+  4. Betroffenenrechte: Konto-Löschung und Datenexport durch den Spieler selbst (T-306).
+  5. Mit dem Hoster wird ein Auftragsverarbeitungsvertrag geschlossen.
+- **Konsequenzen:** Keine AGB/Widerrufsbelehrung nötig, solange nicht kommerziell. Wird das Projekt später kommerziell, braucht es einen neuen ADR.
 
 ---
 

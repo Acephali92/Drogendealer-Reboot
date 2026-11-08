@@ -52,6 +52,10 @@
 | T-302 | Markt- und Handelsseite | A4 | todo | T-106 |
 | T-303 | Reise- und Statusanzeige mit Countdown | A4 | todo | T-202 |
 | T-304 | Rangliste (Vermögen) – Endpunkt + Seite | A3 + A4 | todo | T-106 |
+| T-305 | Altersbestätigung bei Registrierung (Pflichtfeld, Zeitpunkt speichern) + `age-de.xml` (ADR-013) | A3 + A4 (Schema: A5) | todo | T-004 |
+| T-306 | Konto löschen und Datenexport durch den Spieler (ADR-015) | A3 + A4 (Schema: A5) | todo | T-004 |
+| T-307 | Seiten Impressum/Datenschutz mit Platzhalter-Konfiguration, keine echten Daten im Repo (ADR-015) | A4 | todo | T-006 |
+| T-308 | Satirischer Ton: Namensliste Städte/Waren/Ereignisse (ADR-013) | A2 | todo | T-003 |
 
 ## M4 – M6 (Grobplanung, wird bei Erreichen von M3 verfeinert)
 
@@ -65,9 +69,9 @@
 | T-502 | Spielereignisse | A2 → A5 → A3 | M5 |
 | T-503 | Sim-Engine Phasen P0–P5 laut `docs/balancing/simulation-spec.md` §8 (ADR-012), inkl. CI `sim-fast` und nächtlichem `balance-check` | A6 | ab M1 (Start ab T-103) |
 | T-504 | Balancing-Bericht und Parameteranpassung | A6 + A2 | M5 |
-| T-601 | Hosting-Entscheidung (ADR) | A1 + Product Owner | M6 |
-| T-602 | Deployment-Pipeline, Backups, Monitoring | A3 | M6 |
-| T-603 | Impressum, Datenschutzerklärung | Product Owner | M6 |
+| T-601 | ~~Hosting-Entscheidung~~ erledigt durch ADR-014; offen: Domain (Q10) | Product Owner | M6 |
+| T-602 | VPS-Deployment laut ADR-014: Produktions-Compose, Caddy, GitHub-Actions-Deployment, Backups, Härtung, Monitoring | A3 | M6 |
+| T-603 | Impressum- und Datenschutz-Texte mit eigenen Angaben ausfüllen, kurze rechtliche Prüfung (Jugendschutz) | Product Owner | M6 |
 | T-604 | Sicherheits-Review | A1 | M6 |
 
 ---
