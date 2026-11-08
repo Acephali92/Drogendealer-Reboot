@@ -1,0 +1,744 @@
+# =============================================================================
+# Drogendealer-Reboot – zentrale Spielparameter (Single Source of Truth)
+# =============================================================================
+# Konventionen (siehe README.md):
+#   * Geldbeträge sind IMMER Integer in Cent (ct). 100 ct = 1,00 €.
+#   * Raten ohne Zusatz gelten PRO TICK. 1 Tick = 10 Minuten, 144 Ticks = 1 Tag.
+#   * Wahrscheinlichkeiten sind Floats in [0, 1].
+#   * Bevölkerung (`pop`) in Tausend Einwohnern.
+#   * Distanzen auf der Erde in km, im Weltraum in Tausend km (Tkm).
+# Jeder Wert wird von docs/game-design/tools/verify.py gelesen und geprüft.
+# =============================================================================
+
+[meta]
+version = "0.1.0"
+tick_minutes = 10
+ticks_per_day = 144
+currency = "EUR"
+
+[player]
+start_cash_black = 200_000        # 2 000 € Schwarzgeld zum Start
+start_cash_white = 0
+backpack_capacity = 60            # Volumeneinheiten ohne Fahrzeug
+hp_max = 100
+
+[heat]
+max = 100.0                       # Heat pro (Spieler, Stadt) in [0, 100]
+decay_base = 0.01                 # Grundzerfall pro Tick
+police_decay_damping = 0.5        # Polizei bremst den Zerfall
+trade_heat_per_keur = 0.5         # Heat pro 1 000 € Handelsvolumen × Heat-Faktor der Ware
+
+# -----------------------------------------------------------------------------
+# Wirtschaft
+# -----------------------------------------------------------------------------
+[economy]
+elasticity = 0.5                  # ε: Preiselastizität bzgl. Knappheit
+wealth_price_exponent = 0.3       # ω: Wohlstand hebt das Preisniveau
+cover_ticks = 144                 # Lager reicht im Gleichgewicht für 1 Tag Nachfrage
+reversion_rate = 0.02             # λ: Rückkehr des Bestands zum Ziel pro Tick
+noise_rho = 0.95                  # ρ: Autokorrelation des Preisrauschens
+price_min_factor = 0.25           # P_min = 0,25 · P_base
+price_max_factor = 4.0            # P_max = 4,00 · P_base
+min_stock = 1.0                   # Bestand fällt nie unter 1 Einheit
+
+[cities]
+demand_wealth_exponent = 1.0      # β: reiche Städte konsumieren mehr
+
+# Warenkatalog --------------------------------------------------------------
+# base_price  ct pro Einheit        consumption  Einheiten pro 1 000 Einw. und Tick
+# volatility  σ des Log-Rauschens   volume       Lagereinheiten pro Einheit
+# spoil_rate  Verderb pro Tick      heat         Heat-Faktor (Fahndungsrelevanz)
+# realm       "earth" | "space"     (Herkunftswelt, bestimmt Standardmärkte)
+
+[goods.gras]
+name = "Gras"
+realm = "earth"
+base_price = 1_000
+consumption = 0.020
+volatility = 0.015
+volume = 2
+spoil_rate = 0.0001
+heat = 0.5
+
+[goods.haschisch]
+name = "Haschisch"
+realm = "earth"
+base_price = 1_200
+consumption = 0.010
+volatility = 0.015
+volume = 1
+spoil_rate = 0.0
+heat = 0.6
+
+[goods.pilze]
+name = "Pilze"
+realm = "earth"
+base_price = 1_500
+consumption = 0.004
+volatility = 0.020
+volume = 2
+spoil_rate = 0.002
+heat = 0.7
+
+[goods.speed]
+name = "Speed"
+realm = "earth"
+base_price = 2_000
+consumption = 0.008
+volatility = 0.020
+volume = 1
+spoil_rate = 0.0
+heat = 1.0
+
+[goods.ecstasy]
+name = "Ecstasy"
+realm = "earth"
+base_price = 1_000
+consumption = 0.008
+volatility = 0.020
+volume = 1
+spoil_rate = 0.0
+heat = 1.0
+
+[goods.lsd]
+name = "LSD"
+realm = "earth"
+base_price = 1_500
+consumption = 0.003
+volatility = 0.025
+volume = 1
+spoil_rate = 0.0
+heat = 1.0
+
+[goods.kokain]
+name = "Kokain"
+realm = "earth"
+base_price = 8_000
+consumption = 0.004
+volatility = 0.020
+volume = 1
+spoil_rate = 0.0
+heat = 1.5
+
+[goods.heroin]
+name = "Heroin"
+realm = "earth"
+base_price = 6_000
+consumption = 0.002
+volatility = 0.025
+volume = 1
+spoil_rate = 0.0
+heat = 2.0
+
+[goods.sternenstaub]
+name = "Sternenstaub"
+realm = "space"
+base_price = 50_000
+consumption = 0.010
+volatility = 0.040
+volume = 1
+spoil_rate = 0.0
+heat = 3.0
+
+[goods.mondkristall]
+name = "Mondkristall"
+realm = "space"
+base_price = 30_000
+consumption = 0.010
+volatility = 0.030
+volume = 1
+spoil_rate = 0.0
+heat = 1.0
+
+[goods.marsmoos]
+name = "Marsmoos"
+realm = "space"
+base_price = 20_000
+consumption = 0.015
+volatility = 0.035
+volume = 2
+spoil_rate = 0.001
+heat = 1.5
+
+[goods.nullgrav]
+name = "Nullgrav-Kapseln"
+realm = "space"
+base_price = 80_000
+consumption = 0.005
+volatility = 0.040
+volume = 1
+spoil_rate = 0.0
+heat = 2.5
+
+# Marktereignisse (pro Stadt und Ware, höchstens eines gleichzeitig aktiv) ----
+[events.razzia]
+name = "Razzia"
+probability = 0.0005              # pro Tick und Markt
+duration = 36                     # Ticks (6 h)
+stock_shock = 0.5                 # Bestand wird sofort halbiert
+supply_mult = 0.5                 # Zielbestand während der Dauer
+demand_mult = 1.0
+
+[events.lieferung]
+name = "Große Lieferung"
+probability = 0.0005
+duration = 36
+stock_shock = 2.0
+supply_mult = 1.5
+demand_mult = 1.0
+
+[events.party]
+name = "Festival / Partywochenende"
+probability = 0.0003
+duration = 72
+stock_shock = 1.0
+supply_mult = 1.0
+demand_mult = 1.8
+
+# -----------------------------------------------------------------------------
+# Städte (Erde)
+# supply/demand: Multiplikatoren m_s / m_d je Ware, fehlend = 1.0 für Erdwaren.
+# Weltraumwaren sind nur dort handelbar, wo sie explizit in supply UND demand stehen.
+# -----------------------------------------------------------------------------
+[city.berlin]
+name = "Berlin"
+pop = 3_700
+wealth = 1.0
+police = 0.55
+fuel_price = 185                  # ct pro Liter
+spaceport = false
+supply = { speed = 1.5, ecstasy = 1.5 }
+demand = { speed = 1.4, ecstasy = 1.6 }
+
+[city.hamburg]
+name = "Hamburg"
+pop = 1_850
+wealth = 1.2
+police = 0.65
+fuel_price = 185
+spaceport = false
+supply = { kokain = 2.0, heroin = 1.5 }
+demand = {}
+
+[city.muenchen]
+name = "München"
+pop = 1_500
+wealth = 1.6
+police = 0.8
+fuel_price = 190
+spaceport = false
+supply = { kokain = 0.5, gras = 0.6, haschisch = 0.7 }
+demand = { kokain = 1.4 }
+
+[city.koeln]
+name = "Köln"
+pop = 1_080
+wealth = 1.1
+police = 0.6
+fuel_price = 185
+spaceport = false
+supply = {}
+demand = { gras = 1.3 }
+
+[city.frankfurt]
+name = "Frankfurt"
+pop = 770
+wealth = 1.5
+police = 0.7
+fuel_price = 185
+spaceport = true
+supply = { heroin = 1.3, sternenstaub = 0.2, mondkristall = 0.2, marsmoos = 0.2, nullgrav = 0.2 }
+demand = { kokain = 1.5, sternenstaub = 1.0, mondkristall = 1.0, marsmoos = 1.0, nullgrav = 1.0 }
+
+[city.leipzig]
+name = "Leipzig"
+pop = 620
+wealth = 0.8
+police = 0.5
+fuel_price = 180
+spaceport = false
+supply = { speed = 2.5 }
+demand = {}
+
+[city.amsterdam]
+name = "Amsterdam"
+pop = 900
+wealth = 1.3
+police = 0.3
+fuel_price = 200
+spaceport = false
+supply = { gras = 3.0, haschisch = 3.0, pilze = 3.0, ecstasy = 2.0 }
+demand = {}
+
+[city.rotterdam]
+name = "Rotterdam"
+pop = 650
+wealth = 1.0
+police = 0.45
+fuel_price = 200
+spaceport = false
+supply = { kokain = 2.5, heroin = 1.8 }
+demand = {}
+
+# Straßendistanzen in km (Schlüssel alphabetisch sortiert, "a-b") ------------
+[distances]
+"amsterdam-berlin" = 655
+"amsterdam-frankfurt" = 440
+"amsterdam-hamburg" = 465
+"amsterdam-koeln" = 260
+"amsterdam-leipzig" = 650
+"amsterdam-muenchen" = 830
+"amsterdam-rotterdam" = 80
+"berlin-frankfurt" = 545
+"berlin-hamburg" = 289
+"berlin-koeln" = 575
+"berlin-leipzig" = 190
+"berlin-muenchen" = 585
+"berlin-rotterdam" = 700
+"frankfurt-hamburg" = 490
+"frankfurt-koeln" = 190
+"frankfurt-leipzig" = 395
+"frankfurt-muenchen" = 395
+"frankfurt-rotterdam" = 440
+"hamburg-koeln" = 425
+"hamburg-leipzig" = 395
+"hamburg-muenchen" = 775
+"hamburg-rotterdam" = 490
+"koeln-leipzig" = 500
+"koeln-muenchen" = 575
+"koeln-rotterdam" = 250
+"leipzig-muenchen" = 430
+"leipzig-rotterdam" = 680
+"muenchen-rotterdam" = 820
+
+# -----------------------------------------------------------------------------
+# Reisen
+# -----------------------------------------------------------------------------
+[travel]
+train_speed = 120                 # km/h
+train_price_per_km = 15           # ct pro km
+segment_km = 100                  # Kontrollsegment
+control_base = 0.02               # Grundwahrscheinlichkeit pro Segment
+control_segment_max = 0.5
+cargo_heat_half = 50.0            # Halbwertsladung für g(Ladung)
+fine_rate = 0.20                  # Strafe in Anteil des Ladungs-Basiswerts
+heat_on_bust = 30.0
+bribe_cost_rate = 0.5             # Bestechung kostet 50 % · (1 + Polizei) des Basiswerts
+bribe_base_success = 0.6
+bribe_police_penalty = 0.5
+bribe_success_min = 0.05
+bribe_success_max = 0.9
+control_decision_timeout_ticks = 3 # danach automatisch "Kooperieren"
+debt_repayment_rate = 0.5         # Anteil künftiger Verkaufserlöse zur Schuldtilgung
+vehicle_resale_rate = 0.6
+
+[vehicles.kleinwagen]
+name = "Kleinwagen"
+price = 800_000
+speed = 100                       # km/h
+consumption = 6.0                 # Liter / 100 km
+capacity = 300
+hide = 0.10                       # Versteckbonus gegen Kontrollen
+
+[vehicles.transporter]
+name = "Transporter"
+price = 2_500_000
+speed = 85
+consumption = 10.0
+capacity = 1_500
+hide = 0.0
+
+[vehicles.sportwagen]
+name = "Sportwagen"
+price = 6_000_000
+speed = 150
+consumption = 12.0
+capacity = 150
+hide = 0.20
+
+[vehicles.lkw]
+name = "LKW mit Schmuggelversteck"
+price = 9_000_000
+speed = 75
+consumption = 30.0
+capacity = 6_000
+hide = 0.30
+
+# -----------------------------------------------------------------------------
+# Betätigungsfelder ("Berufe") – keine Klassen, jeder kann alles
+# -----------------------------------------------------------------------------
+[professions]
+fields = ["handel", "schmuggel", "gewalt", "produktion", "finanzen"]
+xp_per_level_k = 100              # XP(L) = k · L²
+level_max = 20
+# XP-Quellen
+handel_xp_per_eur = 0.01          # 1 XP je 100 € Handelsvolumen
+schmuggel_xp_per_km = 0.1         # 1 XP je 10 km mit illegaler Ladung
+schmuggel_xp_per_cargo_heat = 1.0 # + 1 XP je Ladungsheat-Punkt (hv)
+gewalt_xp_win = 50
+gewalt_xp_loss = 10
+produktion_xp_per_unit = 0.1
+finanzen_xp_per_eur = 0.001       # 1 XP je 1 000 € gewaschen
+# Boni pro Level (rate) und Obergrenze (cap)
+handel_spread_reduction = 0.03
+handel_spread_reduction_cap = 0.6
+schmuggel_control_reduction = 0.025
+schmuggel_control_reduction_cap = 0.5
+schmuggel_bribe_bonus = 0.015
+gewalt_strength_bonus = 0.03
+gewalt_strength_bonus_cap = 0.6
+produktion_yield_bonus = 0.025
+produktion_yield_bonus_cap = 0.5
+finanzen_fee_reduction = 0.02
+finanzen_fee_reduction_cap = 0.4
+finanzen_risk_reduction = 0.02
+finanzen_risk_reduction_cap = 0.4
+
+# Freischaltungen: Level-, Kapital- und Ausrüstungsbedingungen ----------------
+[unlocks.lkw]
+field = "schmuggel"
+level = 5
+[unlocks.mp]
+field = "gewalt"
+level = 5
+[unlocks.sturmgewehr]
+field = "gewalt"
+level = 10
+[unlocks.profi]
+field = "gewalt"
+level = 8
+[unlocks.spielhalle]
+field = "finanzen"
+level = 3
+[unlocks.bordell]
+field = "finanzen"
+level = 5
+[unlocks.labor]
+field = "produktion"
+level = 3
+[unlocks.plantage]
+field = "produktion"
+level = 1
+[unlocks.clan_gruendung]
+level_sum = 15                    # Summe aller fünf Level
+white_cash = 5_000_000
+[unlocks.weltraum]
+field = "schmuggel"
+level = 10
+networth = 500_000_000            # 5 Mio. € Nettovermögen
+requires_spaceport = true
+
+# -----------------------------------------------------------------------------
+# Handel
+# -----------------------------------------------------------------------------
+[trade]
+spread_base = 0.10                # Differenz Kauf-/Verkaufspreis relativ
+max_trade_share = 0.9             # max. 90 % des Bestands in einer Order
+slippage_tolerance = 0.02         # Standard-Toleranz zwischen Anzeige und Ausführung
+
+# -----------------------------------------------------------------------------
+# Kampf
+# -----------------------------------------------------------------------------
+[combat]
+base_strength = 10.0
+armor_attack_weight = 0.5         # Rüstung zählt im Angriff halb
+weapon_defense_weight = 0.5       # Waffe zählt in der Verteidigung halb
+morale_min = 0.8                  # Moral = min + span · HP/HP_max
+morale_span = 0.4
+alpha = 1.5                       # Schärfe der Siegchance
+win_chance_min = 0.05
+win_chance_max = 0.95
+home_defense_bonus = 1.2          # Verteidiger besitzt Betrieb in der Stadt
+loss_coeff_winner = 0.4
+loss_max_winner = 0.5
+loss_coeff_loser = 0.8
+loss_max_loser = 0.8
+loot_cash_rate = 0.25             # nur Schwarzgeld in bar
+loot_goods_rate = 0.25
+hp_loss_winner = 10
+hp_loss_loser = 30
+hp_regen_per_tick = 2
+hospital_ticks = 18
+newbie_protection_ticks = 1_008   # 7 Tage
+newbie_protection_networth = 5_000_000
+networth_band = 0.5               # Ziel muss ≥ 50 % des Angreifer-Vermögens haben
+target_cooldown_ticks = 36
+attack_cooldown_ticks = 3
+heat_attack = 15.0
+
+[weapons.messer]
+strength = 5
+price = 50_000
+[weapons.pistole]
+strength = 20
+price = 300_000
+[weapons.mp]
+strength = 45
+price = 1_500_000
+[weapons.sturmgewehr]
+strength = 80
+price = 4_000_000
+
+[armor.lederjacke]
+strength = 5
+price = 30_000
+[armor.weste]
+strength = 15
+price = 250_000
+[armor.plattenweste]
+strength = 35
+price = 1_200_000
+
+[crew.schlaeger]
+strength = 8
+hire = 100_000
+upkeep = 150                      # ct pro Tick
+[crew.profi]
+strength = 20
+hire = 500_000
+upkeep = 400
+
+# -----------------------------------------------------------------------------
+# Clans
+# -----------------------------------------------------------------------------
+[clans]
+founding_cost = 5_000_000         # Weißgeld
+max_level = 5
+member_base = 8                   # Limit = base + per_level · Stufe
+member_per_level = 4
+upgrade_base_cost = 10_000_000    # Stufe n kostet base · growth^(n-2)
+upgrade_growth = 2.0
+tax_max = 0.10
+presence_bonus_per_member = 0.05
+presence_bonus_max = 0.25
+districts_per_city = 4
+district_income_base = 20         # ct pro Tick · W · sqrt(pop)
+district_claim_cost = 2_000_000
+war_declaration_cost = 1_000_000
+war_lead_ticks = 36
+war_duration_ticks = 1_008
+war_points_base = 10.0
+war_points_upset = 10.0
+war_reparation_rate = 0.10
+leave_cooldown_ticks = 432
+leave_cooldown_war_ticks = 1_008
+capo_daily_payout_limit = 0.05
+consigliere_max = 1
+capo_per_members = 8              # 1 Capo je angefangene 8 Mitglieder
+probation_ticks = 144             # Mitläufer-Probezeit
+inactive_pate_ticks = 1_008       # danach Nachfolge
+district_min_members = 3          # Anwesende zum Beanspruchen
+district_abandon_ticks = 1_008    # ohne Präsenz wird ein Viertel frei
+
+# -----------------------------------------------------------------------------
+# Geldwäsche
+# -----------------------------------------------------------------------------
+[laundering]
+fee_min = 0.05
+risk_base = 0.001
+risk_exponent = 2.0
+risk_max_per_tick = 0.5
+max_ratio = 3.0                   # max. Waschbetrag = 3 × legaler Umsatz pro Tick
+lookback_ticks = 144
+penalty_fine_rate = 0.5
+closure_ticks = 144
+heat_on_detection = 40.0
+strawman_fee = 0.30
+strawman_daily_cap = 1_000_000    # 10 000 € pro Tag
+
+# -----------------------------------------------------------------------------
+# Immobilien / Betriebe
+# -----------------------------------------------------------------------------
+[real_estate]
+wealth_exponent = 0.5
+upgrade_income_bonus = 0.20
+upgrade_upkeep_bonus = 0.10
+upgrade_cost_factor = 0.20        # Ausbau auf Stufe n kostet 0,2 · n · Kaufpreis
+max_upgrade = 5
+raid_fine_rate = 0.05
+raid_closure_ticks = 72
+roi_target_min_days = 20
+roi_target_max_days = 120
+production_max_ticks = 288        # Produktion stoppt ohne Einsammeln
+max_per_type_city = 3
+resale_rate = 0.7
+foreclosure_rate = 0.5
+unpaid_upkeep_ticks = 144
+
+[businesses.waschsalon]
+name = "Waschsalon"
+price = 6_000_000
+income = 1_500                    # legaler Umsatz ct/Tick bei W = 1, Stufe 0
+upkeep = 900
+wash_fee = 0.20
+raid_risk = 0.0001
+
+[businesses.bar]
+name = "Bar"
+price = 15_000_000
+income = 3_000
+upkeep = 1_700
+wash_fee = 0.15
+raid_risk = 0.0002
+
+[businesses.spielhalle]
+name = "Spielhalle"
+price = 30_000_000
+income = 6_000
+upkeep = 3_200
+wash_fee = 0.10
+raid_risk = 0.0003
+
+[businesses.bordell]
+name = "Bordell"
+price = 50_000_000
+income = 10_000
+upkeep = 5_500
+wash_fee = 0.12
+raid_risk = 0.0005
+
+[businesses.autowerkstatt]
+name = "Autowerkstatt"
+price = 20_000_000
+income = 3_500
+upkeep = 2_000
+wash_fee = 0.18
+raid_risk = 0.0002
+hide_bonus = 0.10                 # Schmuggelumbau für eigene Fahrzeuge
+
+[businesses.lagerhaus]
+name = "Lagerhaus"
+price = 8_000_000
+income = 0
+upkeep = 300
+raid_risk = 0.0001
+capacity = 5_000
+
+[businesses.labor]
+name = "Labor"
+price = 25_000_000
+income = 0
+upkeep = 1_500
+raid_risk = 0.0008
+produces = ["speed", "ecstasy"]
+output_per_tick = 3.0
+material_cost_ratio = 0.30
+
+[businesses.plantage]
+name = "Plantage"
+price = 12_000_000
+income = 0
+upkeep = 600
+raid_risk = 0.0006
+produces = ["gras"]
+output_per_tick = 4.0
+material_cost_ratio = 0.15
+
+# -----------------------------------------------------------------------------
+# Weltraum
+# -----------------------------------------------------------------------------
+[space]
+launch_ticks = 3                  # Erde (Raumhafen) ↔ Orbit, fest
+launch_fee = 500_000
+piracy_base = 0.03                # pro Segment
+piracy_segment_ticks = 24         # ein Segment je 4 h Flugzeit
+pirate_strength = 120.0           # × Gefahr der Route
+pirate_loot_rate = 0.5
+
+[space_location.orbit]
+name = "Orbitalstation Hafen Eins"
+pop = 200
+wealth = 1.5
+police = 0.1
+fuel_price = 1_500                # ct pro Einheit Deuterium
+danger = 0.1
+supply = { nullgrav = 2.0, kokain = 0.5 }
+demand = { sternenstaub = 3.0, mondkristall = 2.0, marsmoos = 2.0, kokain = 4.0 }
+
+[space_location.mond]
+name = "Selene-Basis"
+pop = 300
+wealth = 1.2
+police = 0.05
+fuel_price = 1_800
+danger = 0.3
+supply = { mondkristall = 3.0, gras = 0.5 }
+demand = { sternenstaub = 2.0, gras = 4.0 }
+
+[space_location.mars]
+name = "Ares-Kolonie"
+pop = 1_000
+wealth = 1.2
+police = 0.05
+fuel_price = 2_000
+danger = 0.5
+supply = { marsmoos = 3.0, kokain = 0.5 }
+demand = { sternenstaub = 3.0, nullgrav = 2.0, kokain = 4.0 }
+
+[space_location.ceres]
+name = "Ceres-Depot"
+pop = 150
+wealth = 0.8
+police = 0.0
+fuel_price = 2_500
+danger = 1.0
+supply = { sternenstaub = 3.0 }
+demand = { marsmoos = 3.0, nullgrav = 2.0 }
+
+# Distanzen im All in Tkm (1 000 km)
+[space_distances]
+"mond-orbit" = 384
+"mars-orbit" = 78_000
+"ceres-orbit" = 263_000
+"mars-mond" = 78_000
+"ceres-mond" = 263_000
+"ceres-mars" = 190_000
+
+[ships.shuttle]
+name = "Shuttle"
+price = 50_000_000
+speed = 200.0                     # Tkm/h
+consumption = 2.0                 # Deuterium pro 100 Tkm
+capacity = 200
+strength = 20.0
+range = 500                       # max. Distanz pro Flug in Tkm
+
+[ships.frachter]
+name = "Frachter"
+price = 300_000_000
+speed = 10_000.0
+consumption = 0.2
+capacity = 5_000
+strength = 40.0
+range = 300_000
+
+[ships.kreuzer]
+name = "Kreuzer"
+price = 800_000_000
+speed = 20_000.0
+consumption = 0.4
+capacity = 1_500
+strength = 200.0
+range = 300_000
+
+# -----------------------------------------------------------------------------
+# Wertebereiche für die Invariantenprüfung: "abschnitt.schluessel" = [min, max]
+# -----------------------------------------------------------------------------
+[bounds]
+"economy.elasticity" = [0.2, 1.0]
+"economy.wealth_price_exponent" = [0.0, 1.0]
+"economy.reversion_rate" = [0.001, 0.2]
+"economy.noise_rho" = [0.0, 0.99]
+"economy.price_min_factor" = [0.05, 1.0]
+"economy.price_max_factor" = [1.0, 10.0]
+"heat.decay_base" = [0.001, 0.1]
+"trade.spread_base" = [0.02, 0.3]
+"trade.max_trade_share" = [0.1, 1.0]
+"travel.control_base" = [0.0, 0.1]
+"combat.alpha" = [0.5, 3.0]
+"combat.loot_cash_rate" = [0.0, 0.5]
+"clans.tax_max" = [0.0, 0.25]
+"laundering.risk_base" = [0.0, 0.01]
+"laundering.strawman_fee" = [0.1, 0.5]
+"real_estate.upgrade_cost_factor" = [0.05, 1.0]
+"space.piracy_base" = [0.0, 0.2]
