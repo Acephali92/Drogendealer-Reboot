@@ -38,9 +38,12 @@
 | T-110 | Frontend-Nacharbeiten aus PR #3: Schriften selbst hosten (ADR-015), Mock-Default `off` in Production, CI `frontend.yml`, `UI-GUIDE.md` | A4 | todo | T-006 |
 | T-111 | Production-Start verweigern, wenn `JWT_SECRET` dem Platzhalter aus `.env.example` entspricht | A3 | todo | T-004 |
 | T-112 | Interne Schlüssel (`city.berlin`, Warenschlüssel) nie in der UI anzeigen, nur `name` (ADR-013) | A3 + A4 | todo | T-003 |
-| T-113 | `image`-Felder und `[images]`-Fallbacks in `parameters.toml`, Pfadprüfung in `verify.py` (ADR-020) | A2 | todo | – |
-| T-114 | API liefert `image` für Waren, Fahrzeuge, Ausrüstung, Schiffe aus `parameters.toml` (ADR-020) | A3 | todo | T-101, T-113 |
-| T-115 | `GameImage`-Komponente mit Fallback-Kette, Kategorie-Platzhalter `_fallback.svg`, Mocks aus `parameters.toml` (ADR-020) | A4 | todo | T-113 |
+| T-114a | Parameter-Schema: `image` (optional) und `[images]` zulassen, damit T-113 das Backend nicht bricht (ADR-020) | A3 | todo | T-101 |
+| T-113 | `image`-Felder und `[images]`-Fallbacks in `parameters.toml`, Pfadprüfung in `verify.py` (ADR-020) | A2 | todo | T-114a |
+| T-114 | API liefert `image` für Waren, Fahrzeuge, Ausrüstung, Schiffe aus `parameters.toml` (ADR-020) | A3 | todo | T-113 |
+| T-115 | `GameImage`-Komponente mit Fallback-Kette, Kategorie-Platzhalter `_fallback.svg`, Mocks aus `parameters.toml` (ADR-020) | A4 | done ([PR #15](https://github.com/Acephali92/Drogendealer-Reboot/pull/15), 46 Tests) | – |
+| T-117 | Clan-Ränge im Game Design auf technische Werte `GODFATHER…ASSOCIATE` umstellen (ADR-021) | A2 | todo | – |
+| T-118 | Offene Fragen von A4 aus PR #13: Laderaum in Gramm oder Volumen, Kapazität ohne Fahrzeug, `durationSeconds`/`cost` an Verbindungen, Rechte-Matrix der Clan-Ränge | A2 → A3 | todo | – |
 | T-116 | Bilder für Waren, Fahrzeuge, Waffen usw. einstellen (`frontend/public/images/`) | Product Owner | jederzeit | – |
 
 ## M2 – Reisen & Spielerfortschritt
