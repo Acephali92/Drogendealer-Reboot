@@ -19,7 +19,8 @@
     "db:reset": "prisma migrate reset --force",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.4.1",

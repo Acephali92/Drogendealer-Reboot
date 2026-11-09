@@ -34,10 +34,10 @@ describe('GET /api/v1/players/me/export', () => {
 
   it('exports all own data as a downloadable JSON without secrets', async () => {
     const me = await createUser(app, 'exporter');
-    const city = await createCity(app, { slug: 'berlin', name: 'Berlin' });
-    const weed = await createCommodity(app, 'weed');
+    const city = await createCity(app, { slug: 'nebelstadt', name: 'Nebelstadt' });
+    const kraut = await createCommodity(app, 'kraut');
     await app.prisma.inventoryItem.create({
-      data: { playerId: me.playerId, commodityId: weed.id, quantity: 3, avgBuyPrice: 50n },
+      data: { playerId: me.playerId, commodityId: kraut.id, quantity: 3, avgBuyPrice: 50n },
     });
     await app.prisma.moneyTransaction.create({
       data: { playerId: me.playerId, amount: -150n, balanceAfter: 0n, reason: 'TRADE' },
@@ -64,7 +64,7 @@ describe('GET /api/v1/players/me/export', () => {
     expect(body.player.inventory[0]).toMatchObject({
       quantity: 3,
       avgBuyPrice: '50',
-      commodity: { slug: 'weed' },
+      commodity: { slug: 'kraut' },
     });
     expect(body.player.moneyTransactions[0]).toMatchObject({ amount: '-150', reason: 'TRADE' });
     expect(body.player.notifications).toHaveLength(1);

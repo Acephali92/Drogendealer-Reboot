@@ -29,18 +29,18 @@ beforeEach(async () => {
 const get = (url: string) => app.inject({ method: 'GET', url: `/api/v1${url}`, headers: auth(token) });
 
 async function seedWorld() {
-  const berlin = await createCity(app, { slug: 'berlin', name: 'Berlin', policeStrength: 60 });
-  const hamburg = await createCity(app, { slug: 'hamburg', name: 'Hamburg' });
-  const munich = await createCity(app, { slug: 'muenchen', name: 'München' });
-  await connectCities(app, berlin.id, hamburg.id, 290);
-  await connectCities(app, berlin.id, munich.id, 585);
-  const weed = await createCommodity(app, 'weed', 2);
-  const coke = await createCommodity(app, 'coke', 5);
-  await setPrice(app, berlin.id, weed.id, 100n, 90n);
-  await setPrice(app, hamburg.id, weed.id, 80n, 70n);
-  await setPrice(app, munich.id, weed.id, 150n, 140n);
-  await setPrice(app, berlin.id, coke.id, 9_000_000_000n, 8_000_000_000n); // > 2^31 to check BigInt
-  return { berlin, hamburg, munich, weed, coke };
+  const nebelstadt = await createCity(app, { slug: 'nebelstadt', name: 'Nebelstadt', policeStrength: 60 });
+  const rostkueste = await createCity(app, { slug: 'rostkueste', name: 'Rostküste' });
+  const munich = await createCity(app, { slug: 'schattental', name: 'Schattental' });
+  await connectCities(app, nebelstadt.id, rostkueste.id, 290);
+  await connectCities(app, nebelstadt.id, munich.id, 585);
+  const kraut = await createCommodity(app, 'kraut', 2);
+  const pulver = await createCommodity(app, 'pulver', 5);
+  await setPrice(app, nebelstadt.id, kraut.id, 100n, 90n);
+  await setPrice(app, rostkueste.id, kraut.id, 80n, 70n);
+  await setPrice(app, munich.id, kraut.id, 150n, 140n);
+  await setPrice(app, nebelstadt.id, pulver.id, 9_000_000_000n, 8_000_000_000n); // > 2^31 to check BigInt
+  return { nebelstadt, rostkueste, munich, kraut, pulver };
 }
 
 describe('cities', () => {
@@ -49,9 +49,9 @@ describe('cities', () => {
     const res = await get('/cities');
     expect(res.statusCode).toBe(200);
     const { cities } = res.json();
-    expect(cities.map((c: { slug: string }) => c.slug)).toEqual(['berlin', 'hamburg', 'muenchen']);
+    expect(cities.map((c: { slug: string }) => c.slug)).toEqual(['nebelstadt', 'rostkueste', 'schattental']);
     expect(cities[0]).toMatchObject({
-      name: 'Berlin',
+      name: 'Nebelstadt',
       country: 'Testland',
       techLevel: 2,
       policeStrength: 60,
@@ -60,12 +60,16 @@ describe('cities', () => {
   });
 
   it('returns city details with connections sorted by distance', async () => {
-    const { hamburg } = await seedWorld();
-    const res = await get('/cities/berlin');
+    const { rostkueste } = await seedWorld();
+    const res = await get('/cities/nebelstadt');
     expect(res.statusCode).toBe(200);
     const { city } = res.json();
     expect(city.connections).toEqual([
-      { toCityId: hamburg.id, distanceKm: 290, toCity: { id: hamburg.id, slug: 'hamburg', name: 'Hamburg' } },
+      {
+        toCityId: rostkueste.id,
+        distanceKm: 290,
+        toCity: { id: rostkueste.id, slug: 'rostkueste', name: 'Rostküste' },
+      },
       expect.objectContaining({ distanceKm: 585 }),
     ]);
   });
@@ -82,25 +86,25 @@ describe('cities', () => {
 describe('market', () => {
   it('returns the market of a city with prices as strings', async () => {
     await seedWorld();
-    const res = await get('/cities/berlin/market');
+    const res = await get('/cities/nebelstadt/market');
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.city.slug).toBe('berlin');
+    expect(body.city.slug).toBe('nebelstadt');
     expect(body.prices).toHaveLength(2);
-    const coke = body.prices.find((p: { commodity: { slug: string } }) => p.commodity.slug === 'coke');
-    expect(coke).toMatchObject({ buyPrice: '9000000000', sellPrice: '8000000000', supply: 50 });
-    expect(coke.commodity).toMatchObject({ illegal: true, unitWeightG: 5, basePrice: '100' });
+    const pulver = body.prices.find((p: { commodity: { slug: string } }) => p.commodity.slug === 'pulver');
+    expect(pulver).toMatchObject({ buyPrice: '9000000000', sellPrice: '8000000000', supply: 50 });
+    expect(pulver.commodity).toMatchObject({ illegal: true, unitWeightG: 5, basePrice: '100' });
   });
 
   it('finds the cheapest buy and best sell city per commodity', async () => {
     await seedWorld();
     const res = await get('/market/overview');
     expect(res.statusCode).toBe(200);
-    const weed = res
+    const kraut = res
       .json()
-      .commodities.find((c: { commodity: { slug: string } }) => c.commodity.slug === 'weed');
-    expect(weed.lowestBuy).toMatchObject({ price: '80', city: { slug: 'hamburg' } });
-    expect(weed.highestSell).toMatchObject({ price: '140', city: { slug: 'muenchen' } });
+      .commodities.find((c: { commodity: { slug: string } }) => c.commodity.slug === 'kraut');
+    expect(kraut.lowestBuy).toMatchObject({ price: '80', city: { slug: 'rostkueste' } });
+    expect(kraut.highestSell).toMatchObject({ price: '140', city: { slug: 'schattental' } });
   });
 });
 
@@ -112,11 +116,11 @@ describe('inventory', () => {
   });
 
   it('sums weight and uses the active vehicle capacity', async () => {
-    const { weed, coke } = await seedWorld();
+    const { kraut, pulver } = await seedWorld();
     await app.prisma.inventoryItem.createMany({
       data: [
-        { playerId, commodityId: weed.id, quantity: 10, avgBuyPrice: 95n },
-        { playerId, commodityId: coke.id, quantity: 3, avgBuyPrice: 1000n },
+        { playerId, commodityId: kraut.id, quantity: 10, avgBuyPrice: 95n },
+        { playerId, commodityId: pulver.id, quantity: 3, avgBuyPrice: 1000n },
       ],
     });
     const van = await createVehicleType(app, 'van', 50_000);
@@ -127,7 +131,9 @@ describe('inventory', () => {
     const body = (await get('/inventory')).json();
     expect(body.capacityG).toBe(50_000);
     expect(body.usedG).toBe(10 * 2 + 3 * 5);
-    expect(body.items[1]).toMatchObject({ quantity: 10, avgBuyPrice: '95', commodity: { slug: 'weed' } });
+    expect(
+      body.items.find((i: { commodity: { slug: string } }) => i.commodity.slug === 'kraut'),
+    ).toMatchObject({ quantity: 10, avgBuyPrice: '95', commodity: { slug: 'kraut' } });
   });
 });
 
@@ -162,17 +168,17 @@ describe('travel', () => {
   it('returns null without an active travel and the travel otherwise', async () => {
     expect((await get('/travel/current')).json()).toEqual({ travel: null });
 
-    const { berlin, hamburg } = await seedWorld();
+    const { nebelstadt, rostkueste } = await seedWorld();
     const arrivesAt = new Date(Date.now() + 60_000);
     await app.prisma.travel.create({
-      data: { playerId, fromCityId: berlin.id, toCityId: hamburg.id, arrivesAt },
+      data: { playerId, fromCityId: nebelstadt.id, toCityId: rostkueste.id, arrivesAt },
     });
     const { travel } = (await get('/travel/current')).json();
     expect(travel).toMatchObject({
       status: 'IN_PROGRESS',
       arrivesAt: arrivesAt.toISOString(),
-      fromCity: { slug: 'berlin' },
-      toCity: { slug: 'hamburg' },
+      fromCity: { slug: 'nebelstadt' },
+      toCity: { slug: 'rostkueste' },
       vehicle: null,
     });
   });
