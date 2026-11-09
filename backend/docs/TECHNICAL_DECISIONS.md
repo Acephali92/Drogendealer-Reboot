@@ -19,6 +19,8 @@
 
 ## TD-003 – Geld als BigInt, im JSON als String
 
+> **Teilweise ersetzt durch TD-012:** Die Einheit ist seit ADR-019 Cent, nicht mehr ganze Einheiten.
+
 - **Kontext:** Die Welt läuft dauerhaft (ADR-016), Vermögen können über 2⁵³ wachsen.
 - **Entscheidung:** `BigInt` in DB und Domain. Ausgabe über `serialize()` als Dezimalstring in ganzen Einheiten (keine Cent).
 - **Konsequenzen:** Das Frontend rechnet mit Strings oder BigInt. Raw-SQL-Ergebnisse (`$queryRaw`) liefern BigInt, sie müssen ebenfalls serialisiert werden.
@@ -87,3 +89,9 @@
 - **Kontext:** ADR-014: Hosting auf eigenem Server mit Docker Compose, Secrets nur als ENV.
 - **Entscheidung:** `src/config/env.ts` ist die einzige Stelle, die `process.env` liest (zod-validiert). Der Rest bekommt die Werte übergeben.
 - **Konsequenzen:** Container-Images sind umgebungsneutral. Spielparameter sind keine ENV-Werte, sie kommen aus `parameters.toml` (T-101).
+
+## TD-012 – Geldeinheit Cent (Umsetzung von ADR-019, T-109)
+
+- **Kontext:** Game Design (`parameters.toml`) und Frontend rechnen in Cent, der Backend-Vertrag lief in ganzen Einheiten. Agent 1 hat mit ADR-019 Cent für das ganze System festgelegt.
+- **Entscheidung:** Alle Geldfelder in DB, Domain und API sind ganzzahlige Cent (`BigInt`, im JSON als String). Code und Schema bleiben unverändert, weil bisher keine Rechnung eine Einheit angenommen hat und es keine Spieler gibt. Geändert wurden Vertrag, Kommentare und Dokumentation.
+- **Konsequenzen:** Parameterwerte aus `parameters.toml` werden ohne Umrechnung übernommen (T-101). Faktor-Berechnungen runden auf ganze Cent (`domain/money.ts`, TD-008).

@@ -6,7 +6,7 @@
 //
 // Konventionen:
 // - IDs: cuid() Strings
-// - Geldbeträge: BigInt (ganze Spielwährungs-Einheiten, kein Überlauf im Late-Game)
+// - Geldbeträge: BigInt in ganzzahligen Cent (ADR-019; reicht bis ca. 9,2 · 10^16 €)
 // - Zeitbasierte Echtzeit-Aktionen speichern Endzeitpunkte (arrivesAt, statusUntil),
 //   damit sie später "lazy" beim nächsten Zugriff aufgelöst werden können.
 

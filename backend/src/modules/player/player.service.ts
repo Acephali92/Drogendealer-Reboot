@@ -4,9 +4,10 @@ import type { Pagination } from '../../lib/pagination.js';
 import { serialize } from '../../lib/serialize.js';
 
 /**
- * Start values for newly registered players.
- * PLACEHOLDER: the concrete numbers are a game-design decision and will be
- * replaced once the game designer has defined the starting conditions.
+ * Start values for newly registered players. Money in cents (ADR-019).
+ * PLACEHOLDER until T-101: the start capital comes from docs/game-design/parameters.toml
+ * (`start_cash_black`, `start_cash_white`) and must not be duplicated here. The data model
+ * does not yet distinguish black and white money (see BACKEND_ARCHITECTURE.md, B-9).
  */
 export const PLAYER_START_VALUES = {
   cash: 0n,
