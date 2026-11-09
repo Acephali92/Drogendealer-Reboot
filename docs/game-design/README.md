@@ -246,3 +246,37 @@ Vermögensübertragung missbraucht werden können.
 3. `python3 docs/game-design/tools/verify.py --print` ausführen und die betroffenen Beispielwerte
    in Dokument **und** `EXPECTED` in `verify.py` aktualisieren.
 4. `python3 docs/game-design/tools/verify.py` muss mit „ALLE PRÜFUNGEN BESTANDEN“ enden.
+
+## 10. Bilder (ADR-020)
+
+Welches Bild zu welchem Spielobjekt gehört, steht ausschließlich in `parameters.toml`. Das Frontend liest die
+Zuordnung von dort; im Code gibt es keine Bildpfade.
+
+| Kategorie | Abschnitte | Beispiel | Platzhalter |
+|---|---|---|---|
+| Waren | `[goods.<schlüssel>]` | `goods.gras.image` = `goods/gras.webp` | `images.fallback.goods` |
+| Fahrzeuge | `[vehicles.<schlüssel>]` | `vehicles.sportwagen.image` = `vehicles/sportwagen.webp` | `images.fallback.vehicles` |
+| Waffen | `[weapons.<schlüssel>]` | `weapons.pistole.image` = `weapons/pistole.webp` | `images.fallback.weapons` |
+| Schutzausrüstung | `[armor.<schlüssel>]` | `armor.weste.image` = `armor/weste.webp` | `images.fallback.armor` |
+| Crew | `[crew.<schlüssel>]` | `crew.profi.image` = `crew/profi.webp` | `images.fallback.crew` |
+| Raumschiffe | `[ships.<schlüssel>]` | `ships.shuttle.image` = `ships/shuttle.webp` | `images.fallback.ships` |
+
+- Pfade sind relativ zu `images.base_dir` = `frontend/public/images/`.
+- **Dateiname = Schlüssel** (nur `a–z`, `0–9`, `_`, `-`). Erlaubte Endungen: `images.allowed_extensions`
+  (`.webp`, `.png`, `.svg`).
+- `image` ist optional. Fehlt das Feld oder die Datei, oder lässt sich das Bild nicht laden, zeigt das Frontend den
+  Platzhalter der Kategorie (`_fallback.svg`; Dateien mit `_` am Anfang gehören dem Frontend).
+- Anzeigename (`name`) und Bild sind nur über den Schlüssel verknüpft; Schlüssel erscheinen nie in der Oberfläche (T-112).
+
+**Prüfung DOC-03** in `verify.py`:
+
+| Regel | Ergebnis bei Verstoß |
+|---|---|
+| Pfad relativ, ohne `..`, `.`, leere Segmente oder Backslash | Fehler |
+| erstes Segment = Kategorie, Endung erlaubt | Fehler |
+| Dateiname = Schlüssel (Platzhalter: beginnt mit `_`) | Fehler |
+| Platzhalter für jede der sechs Kategorien eingetragen | Fehler |
+| Datei existiert nicht unter `frontend/public/images/` | nur Warnung (`[WARN]`), weil der Platzhalter greift |
+
+Neue Bilder: Datei nach den Regeln in `frontend/public/images/README.md` hochladen; ist der Pfad nach der
+Konvention bereits eingetragen, erscheint das Bild ohne weitere Änderung.
