@@ -24,16 +24,29 @@ npm run dev
 
 Der Server läuft dann unter `http://localhost:3000/api/v1`.
 
+### Dokumentation
+
+| Dokument                                                     | Inhalt                                                                                  |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md) | Schichten, Module, Zeitmodell, **Bestandsaufnahme**                                     |
+| [docs/DATA_MODELS.md](docs/DATA_MODELS.md)                   | Tabellen, Constraints, Trigger, Migrations-Ablauf                                       |
+| [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)       | API-Konventionen; Vertrag: [`../docs/api/API-CONTRACT.md`](../docs/api/API-CONTRACT.md) |
+| [docs/SYSTEM_DEPENDENCIES.md](docs/SYSTEM_DEPENDENCIES.md)   | Abhängigkeiten zwischen Spielsystemen und Agents                                        |
+| [docs/BACKEND_TESTING.md](docs/BACKEND_TESTING.md)           | Testarten, Test-DB, Pflicht-Testfälle                                                   |
+| [docs/TECHNICAL_DECISIONS.md](docs/TECHNICAL_DECISIONS.md)   | Backend-interne Entscheidungen (TD-xxx)                                                 |
+
 ### Scripts
 
-| Script                        | Zweck                                                                  |
-| ----------------------------- | ---------------------------------------------------------------------- |
-| `npm run dev`                 | Dev-Server mit Hot-Reload (tsx)                                        |
-| `npm run build` / `npm start` | Kompilieren nach `dist/` bzw. starten                                  |
-| `npm run typecheck`           | TypeScript-Prüfung (inkl. Tests)                                       |
-| `npm test`                    | Unit- und Integrationstests (nutzt `TEST_DATABASE_URL`)                |
-| `npm run db:migrate`          | Neue Migration aus `schema.prisma` erzeugen und anwenden (Entwicklung) |
-| `npm run db:deploy`           | Vorhandene Migrationen anwenden (CI/Produktion)                        |
+| Script                            | Zweck                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| `npm run dev`                     | Dev-Server mit Hot-Reload (tsx)                                        |
+| `npm run build` / `npm start`     | Kompilieren nach `dist/` bzw. starten                                  |
+| `npm run typecheck`               | TypeScript-Prüfung (inkl. Tests)                                       |
+| `npm run lint` / `npm run format` | ESLint (inkl. Importsperre für `src/domain/`) / Prettier               |
+| `npm run test:unit`               | nur Domain-Tests, ohne Datenbank                                       |
+| `npm test`                        | Unit- und Integrationstests (nutzt `TEST_DATABASE_URL`)                |
+| `npm run db:migrate`              | Neue Migration aus `schema.prisma` erzeugen und anwenden (Entwicklung) |
+| `npm run db:deploy`               | Vorhandene Migrationen anwenden (CI/Produktion)                        |
 
 Die Tests brauchen eine **eigene** Datenbank (`TEST_DATABASE_URL`, Standard `drogendealer_test`). Deren Tabellen werden vor jedem Test geleert. Der Docker-Container legt sie beim ersten Start automatisch an.
 
