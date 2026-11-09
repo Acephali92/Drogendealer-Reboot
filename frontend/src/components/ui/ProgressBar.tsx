@@ -28,7 +28,10 @@ export function ProgressBar({ value, tone = 'brass', size = 'sm', label, classNa
     >
       <div
         className={cn('h-full rounded-full transition-[width] duration-500 ease-out', tones[resolved])}
-        style={{ width: `${v * 100}%`, boxShadow: `0 0 12px rgb(var(--${resolved === 'brass' ? 'brass' : resolved}) / 0.6)` }}
+        style={{
+          width: `${v * 100}%`,
+          boxShadow: `0 0 12px rgb(var(--${resolved === 'brass' ? 'brass' : resolved}) / 0.6)`,
+        }}
       />
     </div>
   );

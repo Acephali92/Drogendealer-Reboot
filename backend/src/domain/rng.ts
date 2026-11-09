@@ -1,75 +1,85 @@
 /**
- * Deterministic, seedable pseudo random number generator for game rules.
+ * Deterministic, auditable randomness for game rules – exactly as specified by the game design
+ * (docs/game-design/README.md §3) and its reference implementation (tools/verify.py):
  *
- * - Pure TypeScript, no platform APIs: identical sequences on server, in tests and in the
- *   balancing simulation (ADR-012).
- * - Seeding: cyrb128 string hash → 128-bit state. Generator: sfc32 (Small Fast Counter),
- *   period ≈ 2^128, passes PractRand; NOT cryptographically secure (never use for tokens).
- * - Per-entity streams via deriveRng(serverSeed, tick, entityId), so the order in which
- *   entities are processed does not change their random outcomes.
+ *   F-GLB-01  U(seed, t, e, k) = int64_be(SHA256("seed:t:e:k")[0..8]) / 2^64   ∈ [0, 1)
+ *   F-GLB-02  Z = sqrt(-2 ln(1 - U_2k)) · cos(2π · U_2k+1)                     (Box–Muller)
+ *
+ * There is no global RNG state: every decision hashes (server seed, tick, entity, k). Results
+ * are reproducible for support, cheat analysis, replays and the balancing simulation (ADR-012),
+ * independent of the order in which entities are processed.
+ * Test vector EX-GLB-01: U("demo-server", 1, "berlin/gras", 0) = 0.525072, Z = -1.191398.
+ *
+ * Not cryptographically secret on its own – the server seed must stay secret.
  */
+import { sha256, utf8Bytes } from './sha256.js';
 
-export type RngState = readonly [number, number, number, number];
+const TWO_POW_64 = 2 ** 64;
 
+function assertTick(tick: number): void {
+  if (!Number.isSafeInteger(tick) || tick < 0) throw new RangeError(`invalid tick ${tick}`);
+}
+
+function assertIndex(k: number): void {
+  if (!Number.isSafeInteger(k) || k < 0) throw new RangeError(`invalid random index k=${k}`);
+}
+
+/** F-GLB-01: uniform float in [0, 1). */
+export function uniform(seed: string, tick: number, entity: string, k = 0): number {
+  assertTick(tick);
+  assertIndex(k);
+  const digest = sha256(utf8Bytes(`${seed}:${tick}:${entity}:${k}`));
+  let x = 0n;
+  for (let i = 0; i < 8; i++) x = (x << 8n) | BigInt(digest[i] as number);
+  // Number(x) rounds to nearest like Python's int/float conversion; dividing by a power of two
+  // is exact, so the result matches Python's `int / 2**64` bit for bit.
+  return Number(x) / TWO_POW_64;
+}
+
+/** F-GLB-02: standard normal value from U_2k and U_2k+1. */
+export function normal(seed: string, tick: number, entity: string, k = 0): number {
+  assertIndex(k);
+  const u1 = uniform(seed, tick, entity, 2 * k);
+  const u2 = uniform(seed, tick, entity, 2 * k + 1);
+  return Math.sqrt(-2 * Math.log(1 - u1)) * Math.cos(2 * Math.PI * u2);
+}
+
+/**
+ * Convenience stream for one decision context (seed, tick, entity): each call consumes the next
+ * index k. Rules that need several random numbers for the same entity use one stream.
+ */
 export interface Rng {
-  /** Uniform float in [0, 1). */
+  /** Next uniform float in [0, 1) (F-GLB-01 with the next k). */
   next(): number;
+  /** Next standard normal value (F-GLB-02); consumes two indices. */
+  normal(): number;
   /** Uniform integer in [min, max] (both inclusive). */
   int(min: number, max: number): number;
-  /** true with probability p (0 ≤ p ≤ 1). */
+  /** Event with probability p happens if U < p (game design README §2). */
   chance(p: number): boolean;
   /** Uniformly chosen element of a non-empty array. */
   pick<T>(items: readonly T[]): T;
-  /** New array with the elements in random order (Fisher–Yates). */
+  /** New array in random order (Fisher–Yates). */
   shuffle<T>(items: readonly T[]): T[];
-  /** Snapshot of the internal state, e.g. to persist or replay a stream. */
-  state(): RngState;
+  /** Next unused index k (to persist or resume a stream). */
+  state(): number;
 }
 
-/** cyrb128: fast 128-bit string hash used only for seeding. */
-export function hashSeed(seed: string): RngState {
-  let h1 = 1779033703;
-  let h2 = 3144134277;
-  let h3 = 1013904242;
-  let h4 = 2773480762;
-  for (let i = 0; i < seed.length; i++) {
-    const k = seed.charCodeAt(i);
-    h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
-    h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
-    h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
-    h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
-  }
-  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
-  h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
-  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
-  h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
-  h1 ^= h2 ^ h3 ^ h4;
-  h2 ^= h1;
-  h3 ^= h1;
-  h4 ^= h1;
-  return [h1 >>> 0, h2 >>> 0, h3 >>> 0, h4 >>> 0];
-}
+export function deriveRng(serverSeed: string, tick: number, entityId: string, startK = 0): Rng {
+  assertTick(tick);
+  assertIndex(startK);
+  let k = startK;
+  const next = (): number => uniform(serverSeed, tick, entityId, k++);
 
-const WARM_UP_ROUNDS = 15;
-
-/** Creates a generator from an explicit 128-bit state (see Rng.state()). */
-export function rngFromState(initial: RngState): Rng {
-  let [a, b, c, d] = initial;
-
-  const nextUint32 = (): number => {
-    const t = (((a + b) | 0) + d) | 0;
-    d = (d + 1) | 0;
-    a = b ^ (b >>> 9);
-    b = (c + (c << 3)) | 0;
-    c = (c << 21) | (c >>> 11);
-    c = (c + t) | 0;
-    return t >>> 0;
-  };
-
-  const next = (): number => nextUint32() / 4294967296;
-
-  const rng: Rng = {
+  return {
     next,
+    normal() {
+      // F-GLB-02 uses an even/odd index pair; align to the next even index.
+      if (k % 2 === 1) k++;
+      const z = normal(serverSeed, tick, entityId, k / 2);
+      k += 2;
+      return z;
+    },
     int(min, max) {
       if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || max < min) {
         throw new RangeError(`Rng.int: invalid range [${min}, ${max}]`);
@@ -92,23 +102,6 @@ export function rngFromState(initial: RngState): Rng {
       }
       return out;
     },
-    state: () => [a >>> 0, b >>> 0, c >>> 0, d >>> 0],
+    state: () => k,
   };
-  return rng;
-}
-
-/** Creates a generator from a string seed. Same seed → same sequence, on every platform. */
-export function createRng(seed: string): Rng {
-  const rng = rngFromState(hashSeed(seed));
-  for (let i = 0; i < WARM_UP_ROUNDS; i++) rng.next();
-  return rng;
-}
-
-/**
- * Independent stream for one entity in one tick: derive(serverSeed, tick, entityId).
- * Components are length-prefixed so that ("a|b", 1, "c") and ("a", 1, "b|c") never collide.
- */
-export function deriveRng(serverSeed: string, tick: number, entityId: string): Rng {
-  if (!Number.isSafeInteger(tick) || tick < 0) throw new RangeError(`deriveRng: invalid tick ${tick}`);
-  return createRng(`${serverSeed.length}:${serverSeed}|${tick}|${entityId.length}:${entityId}`);
 }

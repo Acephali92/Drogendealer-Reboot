@@ -1,88 +1,72 @@
 import { describe, expect, it } from 'vitest';
-import { createRng, deriveRng, hashSeed, rngFromState } from '../../src/domain/index.js';
+import { deriveRng, normal, uniform } from '../../src/domain/index.js';
+import { golden } from './golden.js';
 
-const take = (n: number, f: () => number) => Array.from({ length: n }, f);
-
-describe('createRng', () => {
-  it('is deterministic for the same seed', () => {
-    const a = createRng('server-seed');
-    const b = createRng('server-seed');
-    expect(take(100, a.next)).toEqual(take(100, b.next));
+describe('F-GLB-01 / F-GLB-02 against verify.py', () => {
+  it('matches test vector EX-GLB-01 from the game design', () => {
+    const ex = golden.examples['EX-GLB-01'] as { U: number; Z: number };
+    expect(Number(uniform('demo-server', 1, 'berlin/gras', 0).toFixed(6))).toBe(ex.U);
+    expect(Number(normal('demo-server', 1, 'berlin/gras', 0).toFixed(6))).toBe(ex.Z);
+    expect(ex).toEqual({ U: 0.525072, Z: -1.191398 }); // values printed in README §3
   });
 
-  it('produces different sequences for different seeds', () => {
-    expect(take(5, createRng('a').next)).not.toEqual(take(5, createRng('b').next));
-  });
+  it.each(golden.rng.map((r) => [`${r.seed}:${r.tick}:${r.entity}:${r.k}`, r] as const))(
+    'uniform is bit-identical to Python for %s',
+    (_label, row) => {
+      expect(uniform(row.seed, row.tick, row.entity, row.k)).toBe(row.uniform);
+    },
+  );
 
-  it('has a stable sequence across versions (golden values)', () => {
-    // If this fails, every replay and simulation result changes: do not "fix" by updating the
-    // numbers without agreeing with Agent 6.
-    const rng = createRng('golden');
-    expect(take(3, () => rng.int(0, 1_000_000))).toEqual([572740, 533538, 531634]);
-  });
+  it.each(golden.rng.map((r) => [`${r.seed}:${r.tick}:${r.entity}:${r.k}`, r] as const))(
+    'normal matches Python within 4 ULP for %s',
+    (_label, row) => {
+      // log/cos/sqrt are not guaranteed to be correctly rounded on every platform (V8 vs. libm),
+      // so F-GLB-02 may differ in the last bit (TD-013). F-GLB-01 above is exact.
+      const z = normal(row.seed, row.tick, row.entity, row.k);
+      expect(Math.abs(z - row.normal)).toBeLessThanOrEqual(
+        4 * Number.EPSILON * Math.max(1, Math.abs(row.normal)),
+      );
+    },
+  );
 
-  it('returns floats in [0, 1) with a roughly uniform distribution', () => {
-    const rng = createRng('uniform');
-    const buckets = new Array<number>(10).fill(0);
-    const n = 100_000;
-    for (let i = 0; i < n; i++) {
-      const x = rng.next();
-      expect(x).toBeGreaterThanOrEqual(0);
-      expect(x).toBeLessThan(1);
-      buckets[Math.floor(x * 10)]! += 1;
+  it('returns values in [0, 1)', () => {
+    for (let k = 0; k < 2000; k++) {
+      const u = uniform('range', 7, 'e', k);
+      expect(u).toBeGreaterThanOrEqual(0);
+      expect(u).toBeLessThan(1);
     }
-    for (const count of buckets) expect(Math.abs(count - n / 10)).toBeLessThan(n / 100); // ±10 %
   });
 
-  it('int() covers the inclusive range and validates its arguments', () => {
-    const rng = createRng('int');
-    const seen = new Set(take(1000, () => rng.int(1, 6)));
-    expect([...seen].sort()).toEqual([1, 2, 3, 4, 5, 6]);
-    expect(rng.int(7, 7)).toBe(7);
-    expect(() => rng.int(5, 1)).toThrow(RangeError);
-    expect(() => rng.int(0.5, 2)).toThrow(RangeError);
-  });
-
-  it('chance() respects the edge probabilities and rejects invalid ones', () => {
-    const rng = createRng('chance');
-    expect(take(100, () => (rng.chance(0) ? 1 : 0)).every((v) => v === 0)).toBe(true);
-    expect(take(100, () => (rng.chance(1) ? 1 : 0)).every((v) => v === 1)).toBe(true);
-    const hits = take(10_000, () => (rng.chance(0.3) ? 1 : 0)).reduce((s, v) => s + v, 0);
-    expect(hits).toBeGreaterThan(2_700);
-    expect(hits).toBeLessThan(3_300);
-    expect(() => rng.chance(-0.1)).toThrow(RangeError);
-    expect(() => rng.chance(1.1)).toThrow(RangeError);
-    expect(() => rng.chance(Number.NaN)).toThrow(RangeError);
-  });
-
-  it('pick() and shuffle() work without mutating the input', () => {
-    const rng = createRng('pick');
-    const items = Object.freeze(['a', 'b', 'c', 'd']);
-    expect(items).toContain(rng.pick(items));
-    expect(() => rng.pick([])).toThrow(RangeError);
-    const shuffled = rng.shuffle(items);
-    expect([...shuffled].sort()).toEqual(['a', 'b', 'c', 'd']);
-    expect(items).toEqual(['a', 'b', 'c', 'd']);
-  });
-
-  it('can be snapshotted and resumed via state()', () => {
-    const rng = createRng('resume');
-    rng.next();
-    const resumed = rngFromState(rng.state());
-    expect(take(20, resumed.next)).toEqual(take(20, rng.next));
+  it('rejects invalid ticks and indices', () => {
+    expect(() => uniform('s', -1, 'e')).toThrow(RangeError);
+    expect(() => uniform('s', 1.5, 'e')).toThrow(RangeError);
+    expect(() => uniform('s', 1, 'e', -1)).toThrow(RangeError);
+    expect(() => normal('s', 1, 'e', 0.5)).toThrow(RangeError);
   });
 });
 
-describe('deriveRng', () => {
-  it('gives each (tick, entity) its own reproducible stream', () => {
-    expect(deriveRng('s', 1, 'p1').next()).toBe(deriveRng('s', 1, 'p1').next());
-    const values = new Set([
-      deriveRng('s', 1, 'p1').next(),
-      deriveRng('s', 2, 'p1').next(),
-      deriveRng('s', 1, 'p2').next(),
-      deriveRng('t', 1, 'p1').next(),
-    ]);
-    expect(values.size).toBe(4);
+describe('deriveRng stream', () => {
+  it('consumes consecutive indices k = 0, 1, 2 …', () => {
+    const rng = deriveRng('seed', 3, 'player/1');
+    expect([rng.next(), rng.next(), rng.next()]).toEqual(
+      [0, 1, 2].map((k) => uniform('seed', 3, 'player/1', k)),
+    );
+    expect(rng.state()).toBe(3);
+  });
+
+  it('can resume from a stored index', () => {
+    const a = deriveRng('seed', 3, 'x');
+    a.next();
+    a.next();
+    const b = deriveRng('seed', 3, 'x', a.state());
+    expect(b.next()).toBe(a.next());
+  });
+
+  it('normal() uses an even/odd index pair as in F-GLB-02', () => {
+    const rng = deriveRng('seed', 9, 'fight/1');
+    rng.next(); // k = 0 used → next normal uses pair (2, 3) = F-GLB-02 index 1
+    expect(rng.normal()).toBe(normal('seed', 9, 'fight/1', 1));
+    expect(rng.state()).toBe(4);
   });
 
   it('is independent of processing order', () => {
@@ -91,13 +75,32 @@ describe('deriveRng', () => {
     expect(forward).toEqual(backward);
   });
 
-  it('does not collide when separators appear inside the components', () => {
-    expect(hashSeed('a|b') === hashSeed('a')).toBe(false);
-    expect(deriveRng('a|1', 1, 'b').next()).not.toBe(deriveRng('a', 1, '1|b').next());
+  it('int() covers the inclusive range and validates its arguments', () => {
+    const rng = deriveRng('int', 1, 'e');
+    const seen = new Set(Array.from({ length: 1000 }, () => rng.int(1, 6)));
+    expect([...seen].sort()).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(rng.int(7, 7)).toBe(7);
+    expect(() => rng.int(5, 1)).toThrow(RangeError);
+    expect(() => rng.int(0.5, 2)).toThrow(RangeError);
   });
 
-  it('rejects invalid ticks', () => {
-    expect(() => deriveRng('s', -1, 'p')).toThrow(RangeError);
-    expect(() => deriveRng('s', 1.5, 'p')).toThrow(RangeError);
+  it('chance() follows "event if U < p" and validates p', () => {
+    const rng = deriveRng('chance', 1, 'e');
+    expect(Array.from({ length: 100 }, () => rng.chance(0)).some(Boolean)).toBe(false);
+    expect(Array.from({ length: 100 }, () => rng.chance(1)).every(Boolean)).toBe(true);
+    const hits = Array.from({ length: 10_000 }, () => rng.chance(0.3)).filter(Boolean).length;
+    expect(hits).toBeGreaterThan(2_700);
+    expect(hits).toBeLessThan(3_300);
+    expect(() => rng.chance(-0.1)).toThrow(RangeError);
+    expect(() => rng.chance(Number.NaN)).toThrow(RangeError);
+  });
+
+  it('pick() and shuffle() do not mutate the input', () => {
+    const rng = deriveRng('pick', 1, 'e');
+    const items = Object.freeze(['a', 'b', 'c', 'd']);
+    expect(items).toContain(rng.pick(items));
+    expect(() => rng.pick([])).toThrow(RangeError);
+    expect([...rng.shuffle(items)].sort()).toEqual(['a', 'b', 'c', 'd']);
+    expect(items).toEqual(['a', 'b', 'c', 'd']);
   });
 });

@@ -54,6 +54,8 @@
 
 ## TD-007 – RNG: cyrb128-Seed + sfc32, abgeleitete Streams pro Entität
 
+> **Ersetzt durch TD-013.** Die Spezifikation von Agent 2 (F-GLB-01) schreibt einen anderen Algorithmus vor.
+
 - **Kontext:** Agent 6 verlangt `derive(serverSeed, tick, entityId)` und keinen `Math.random`.
 - **Entscheidung:**
   - sfc32 (128-Bit-Zustand, schnell, besteht PractRand), Seed über cyrb128, 15 Aufwärmrunden.
@@ -62,6 +64,8 @@
 - **Konsequenzen:** Der Generator ist nicht kryptografisch sicher und wird nie für Tokens verwendet (dafür `node:crypto` in `src/lib/tokens.ts`). Die Golden Values im Test frieren die Zahlenfolge ein.
 
 ## TD-008 – Rundung: Gutschriften abrunden, Belastungen aufrunden
+
+> **Ergänzt durch TD-014** (Float-Formeln laut Game-Design-README §2).
 
 - **Kontext:** Exploit-Katalog von Agent 6: Rundungsgewinne durch das Aufteilen von Orders.
 - **Entscheidung:**
@@ -95,3 +99,35 @@
 - **Kontext:** Game Design (`parameters.toml`) und Frontend rechnen in Cent, der Backend-Vertrag lief in ganzen Einheiten. Agent 1 hat mit ADR-019 Cent für das ganze System festgelegt.
 - **Entscheidung:** Alle Geldfelder in DB, Domain und API sind ganzzahlige Cent (`BigInt`, im JSON als String). Code und Schema bleiben unverändert, weil bisher keine Rechnung eine Einheit angenommen hat und es keine Spieler gibt. Geändert wurden Vertrag, Kommentare und Dokumentation.
 - **Konsequenzen:** Parameterwerte aus `parameters.toml` werden ohne Umrechnung übernommen (T-101). Faktor-Berechnungen runden auf ganze Cent (`domain/money.ts`, TD-008).
+
+## TD-013 – Zufall nach F-GLB-01/02 (SHA-256), reine TypeScript-Implementierung
+
+- **Kontext:** Das Game Design (README §3, `verify.py`) legt den Zufall verbindlich fest: U = erste 8 Byte von `SHA256("seed:t:e:k")` / 2⁶⁴, Normalverteilung per Box-Muller (F-GLB-02). Testvektor EX-GLB-01: U = 0,525072, Z = −1,191398. Mein früherer RNG (TD-007) lieferte andere Zahlen.
+- **Entscheidung:**
+  - `src/domain/sha256.ts` implementiert SHA-256 (FIPS 180-4) ohne `node:crypto`, damit die Domain-Schicht plattformunabhängig bleibt.
+  - `uniform()`/`normal()` in `src/domain/rng.ts` setzen F-GLB-01/02 um. `deriveRng(seed, tick, entity)` liefert einen Strom mit fortlaufendem `k`.
+- **Konsequenzen:**
+  - `uniform` ist **bitgenau** gleich `verify.py` (72 Referenzwerte, geprüft in der CI).
+  - `normal` weicht in Einzelfällen um höchstens 1 ULP (≈ 2·10⁻¹⁶ relativ) ab, weil `log`/`cos`/`sqrt` in V8 und in Pythons libm nicht garantiert gleich gerundet sind. Spielentscheidungen (`U < p`) nutzen die exakte Gleichverteilung, und Geld wird mit 10⁻⁹ Toleranz gerundet. Die Abweichung ist deshalb spielrelevant nicht sichtbar. Innerhalb einer Plattform bleibt `normal` deterministisch.
+  - Die alten Golden Values (TD-007) sind ungültig. Agent 6 ist informiert.
+
+## TD-014 – Float-Formeln, Rundung erst am Ende (Game-Design-README §2)
+
+- **Kontext:** Die Formeln von Agent 2 rechnen intern in `float64` und runden erst das Endergebnis, mit einer Toleranz von 10⁻⁹ gegen Gleitkomma-Rauschen (`ceil_ct`/`floor_ct`/`round_half_up` in `verify.py`).
+- **Entscheidung:** `ceilCt`, `floorCt` und `roundHalfUp` in `src/domain/money.ts` bilden diese Helfer exakt nach und geben `bigint`-Cent zurück. Werte außerhalb des sicheren Ganzzahlbereichs (> 2⁵³) werfen einen Fehler. Für reine Ganzzahl-Rechnungen bleibt das exakte `mulDiv` (TD-008).
+- **Konsequenzen:** Domain-Formeln werden 1:1 nach `verify.py` gebaut und gegen dessen Beispielwerte (EX-*) getestet (T-103).
+
+## TD-015 – Spielparameter: Laden beim Start, vollständige Validierung, Fail-fast
+
+- **Kontext:** `docs/game-design/parameters.toml` ist die einzige Quelle für Spielwerte (ARCHITECTURE §3, T-101).
+- **Entscheidung:**
+  - **Parsen:** smol-toml mit `integersAsBigInt`. So bleiben Ganzzahl- und Gleitkomma-Literale unterscheidbar, und ein Geldbetrag wie `10.5` fällt auf.
+  - **Schema:** zod-Schema für die ganze Datei (`src/domain/parameters/schema.ts`) mit `.strict()` gegen Tippfehler. Geld wird zu `bigint`-Cent.
+  - **Querprüfungen** (`validate.ts`): `[bounds]`, Distanztabellen, Verweise auf Waren, Berufe und Ränge, Tick-Zeit, Ordnungsbeziehungen.
+  - **Laden:** `src/config/parameters.ts` lädt die Datei einmal beim Start, gibt sie tief eingefroren als `app.gameParams` weiter und bricht bei jedem Fehler mit der vollständigen Fehlerliste ab.
+  - **Pfad:** per ENV `GAME_PARAMETERS_PATH`. Standard ist die Datei im Repo.
+- **Konsequenzen:**
+  - Eine fehlerhafte Parameterdatei kann keinen Server starten.
+  - Für das Deployment (T-602) muss die Datei ins Container-Image kopiert werden.
+  - Ändert Agent 2 die Parameter, schlägt die Backend-CI fehl, bis `test/golden/golden-vectors.json` neu erzeugt ist. Das ist gewollt: Jede Parameteränderung wird im Backend bewusst übernommen.
+  - Parameteränderungen im Live-Betrieb treffen eine dauerhafte Welt (ADR-016). Eine Versionierung der Parameter wird später nötig.

@@ -58,11 +58,21 @@ export function LoginPage() {
           required
         />
         {error && (
-          <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger ring-1 ring-danger/30">
+          <p
+            role="alert"
+            className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger ring-1 ring-danger/30"
+          >
             {error}
           </p>
         )}
-        <Button type="submit" variant="primary" size="lg" className="w-full" loading={busy} disabled={!login || !password}>
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          className="w-full"
+          loading={busy}
+          disabled={!login || !password}
+        >
           {t('auth.submitLogin')}
         </Button>
       </form>

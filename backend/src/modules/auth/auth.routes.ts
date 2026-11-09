@@ -17,6 +17,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opts) => {
     prisma: app.prisma,
     signAccessToken: (payload) => app.jwt.sign(payload),
     refreshTokenTtlDays: opts.refreshTokenTtlDays,
+    gameParams: app.gameParams,
   });
 
   // Brute-force protection for every auth endpoint (per client IP).

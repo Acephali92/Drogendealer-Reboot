@@ -20,7 +20,11 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         {label}
       </label>
       <div className="relative">
-        {icon && <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint">{icon}</span>}
+        {icon && (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint">
+            {icon}
+          </span>
+        )}
         <input
           ref={ref}
           id={fid}

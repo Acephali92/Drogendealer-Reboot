@@ -11,7 +11,15 @@ interface PanelProps {
   padded?: boolean;
 }
 
-export function Panel({ title, icon, actions, children, className, bodyClassName, padded = true }: PanelProps) {
+export function Panel({
+  title,
+  icon,
+  actions,
+  children,
+  className,
+  bodyClassName,
+  padded = true,
+}: PanelProps) {
   return (
     <section className={cn('panel overflow-hidden animate-fade-up', className)}>
       {(title || actions) && (

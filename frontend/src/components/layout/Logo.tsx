@@ -13,7 +13,9 @@ export function Logo({ compact, className }: { compact?: boolean; className?: st
           <span className="block font-display text-lg font-bold tracking-tight text-ink">
             Drogen<span className="text-brass">dealer</span>
           </span>
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.3em] text-ink-faint">Reboot</span>
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.3em] text-ink-faint">
+            Reboot
+          </span>
         </span>
       )}
     </span>

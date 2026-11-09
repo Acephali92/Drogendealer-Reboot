@@ -11,6 +11,9 @@ describe('tradeLimit', () => {
   it('begrenzt Kauf durch Angebot', () => {
     expect(tradeLimit('BUY', { ...base, supply: 3 })).toEqual({ max: 3, reason: 'limitSupply' });
   });
+  it('ignoriert unbekannte Kapazität (prüft der Server)', () => {
+    expect(tradeLimit('BUY', { ...base, freeG: null })).toEqual({ max: 100, reason: 'limitCash' });
+  });
   it('begrenzt Verkauf durch Bestand', () => {
     expect(tradeLimit('SELL', base)).toEqual({ max: 7, reason: 'limitOwned' });
   });

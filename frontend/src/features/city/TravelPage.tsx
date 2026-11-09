@@ -85,7 +85,7 @@ export function TravelPage() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {detail.isPending && Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-36" />)}
         {list.map(({ c, city: dest }, i) => {
-          const tooExpensive = toCents(c.cost) > toCents(player.cash);
+          const tooExpensive = c.cost !== null && toCents(c.cost) > toCents(player.cash);
           return (
             <button
               key={c.toCityId}
@@ -95,9 +95,14 @@ export function TravelPage() {
               className="panel group relative animate-fade-up overflow-hidden text-left transition hover:-translate-y-0.5 hover:shadow-glow disabled:opacity-50"
             >
               <div className="relative h-20 overflow-hidden">
-                <CityArt slug={dest!.slug} className="absolute inset-0 transition duration-500 group-hover:scale-105" />
+                <CityArt
+                  slug={dest!.slug}
+                  className="absolute inset-0 transition duration-500 group-hover:scale-105"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
-                <span className="absolute bottom-2 left-4 font-display text-lg font-bold text-ink">{dest!.name}</span>
+                <span className="absolute bottom-2 left-4 font-display text-lg font-bold text-ink">
+                  {dest!.name}
+                </span>
                 <span className="absolute right-3 top-2 flex items-center gap-1 rounded bg-black/50 px-1.5 py-0.5 text-[11px] text-ink-muted backdrop-blur">
                   <Shield className="h-3 w-3" aria-hidden /> {dest!.policeStrength}
                 </span>
@@ -115,7 +120,9 @@ export function TravelPage() {
                     <Clock className="h-3 w-3" aria-hidden />
                     {t('travel.duration')}
                   </dt>
-                  <dd className="num mt-0.5 text-sm text-ink">{formatDuration(c.durationSeconds)}</dd>
+                  <dd className="num mt-0.5 text-sm text-ink">
+                    {c.durationSeconds !== null ? formatDuration(c.durationSeconds) : '—'}
+                  </dd>
                 </div>
                 <div>
                   <dt className="label flex items-center gap-1">
@@ -128,7 +135,9 @@ export function TravelPage() {
                 </div>
               </dl>
               {tooExpensive && (
-                <p className="border-t border-danger/20 bg-danger/5 px-4 py-2 text-xs text-danger">{t('travel.noFuelMoney')}</p>
+                <p className="border-t border-danger/20 bg-danger/5 px-4 py-2 text-xs text-danger">
+                  {t('travel.noFuelMoney')}
+                </p>
               )}
             </button>
           );
@@ -169,7 +178,12 @@ export function TravelPage() {
       >
         {target && (
           <p className="text-sm text-ink-muted">
-            {t('travel.confirmBody', { duration: formatDuration(target.durationSeconds), cost: formatMoney(target.cost) })}
+            {target.durationSeconds !== null && target.cost !== null
+              ? t('travel.confirmBody', {
+                  duration: formatDuration(target.durationSeconds),
+                  cost: formatMoney(target.cost),
+                })
+              : t('travel.confirmBodyUnknown')}
           </p>
         )}
       </Modal>

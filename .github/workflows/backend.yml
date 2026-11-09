@@ -6,10 +6,16 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/backend.yml'
+      # The backend loads the game parameters and tests against verify.py (T-101).
+      - 'docs/game-design/parameters.toml'
+      - 'docs/game-design/tools/verify.py'
   pull_request:
     paths:
       - 'backend/**'
       - '.github/workflows/backend.yml'
+      # The backend loads the game parameters and tests against verify.py (T-101).
+      - 'docs/game-design/parameters.toml'
+      - 'docs/game-design/tools/verify.py'
 
 concurrency:
   group: backend-${{ github.ref }}
@@ -58,8 +64,16 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Golden vectors up to date with parameters.toml and verify.py
+        working-directory: .
+        run: python3 -I backend/scripts/export-golden-vectors.py --check
 
       - name: Generate Prisma client
         run: npx prisma generate

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyFactor,
+  ceilCt,
+  floorCt,
+  roundHalfUp,
   creditAmount,
   debitAmount,
   mulDiv,
@@ -86,5 +89,36 @@ describe('factors and parsing', () => {
     for (const bad of ['1.5', '1e3', '', ' 1', '0x10', 'abc']) {
       expect(() => parseMoney(bad)).toThrow(RangeError);
     }
+  });
+});
+
+describe('float rounding like verify.py (README §2)', () => {
+  it.each([
+    // x, ceilCt, floorCt, roundHalfUp
+    [10, 10n, 10n, 10n],
+    [10.2, 11n, 10n, 10n],
+    [10.5, 11n, 10n, 11n],
+    [10 + 1e-10, 10n, 10n, 10n], // float noise above an integer → no extra cent charged
+    [10 - 1e-10, 10n, 10n, 10n], // float noise below an integer → no cent lost
+    [10 + 1e-8, 11n, 10n, 10n], // beyond the tolerance it is a real fraction
+    [10 - 1e-8, 10n, 9n, 10n],
+    [-10.2, -10n, -11n, -10n],
+    [0, 0n, 0n, 0n],
+  ])('x = %s → ceil %s, floor %s, half-up %s', (x, ceil, floor, half) => {
+    expect(ceilCt(x)).toBe(ceil);
+    expect(floorCt(x)).toBe(floor);
+    expect(roundHalfUp(x)).toBe(half);
+  });
+
+  it('matches the trade example EX-TRD-01/02 rounding direction', () => {
+    // Buying rounds up, selling rounds down: a round trip can never create money.
+    const price = 5631.517;
+    expect(ceilCt(price * 200)).toBeGreaterThanOrEqual(floorCt(price * 200));
+  });
+
+  it('rejects non-finite and unsafe values', () => {
+    expect(() => ceilCt(Number.NaN)).toThrow(RangeError);
+    expect(() => floorCt(Infinity)).toThrow(RangeError);
+    expect(() => roundHalfUp(2 ** 60)).toThrow(RangeError);
   });
 });

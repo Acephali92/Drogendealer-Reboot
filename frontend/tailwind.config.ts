@@ -29,7 +29,10 @@ export default {
       },
       keyframes: {
         ticker: { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } },
-        'fade-up': { from: { opacity: '0', transform: 'translateY(6px)' }, to: { opacity: '1', transform: 'none' } },
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(6px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
         pulseDot: { '0%,100%': { opacity: '1' }, '50%': { opacity: '0.35' } },
       },
       animation: {

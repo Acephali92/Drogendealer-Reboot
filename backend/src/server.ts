@@ -1,8 +1,15 @@
 import { buildApp } from './app.js';
 import { loadEnv } from './config/env.js';
 
+let app: Awaited<ReturnType<typeof buildApp>>;
+try {
+  app = await buildApp(loadEnv());
+} catch (err) {
+  // Invalid ENV or game parameters: print the readable issue list instead of a stack trace.
+  process.stderr.write(`Startup aborted: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.exit(1);
+}
 const env = loadEnv();
-const app = await buildApp(env);
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, 'Shutting down');

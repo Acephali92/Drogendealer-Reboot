@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Crown, LogOut, Shield, Sword, UserPlus } from 'lucide-react';
+import { ArrowLeft, LogOut, UserPlus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ClanRole } from '@/api/types';
 import { useClan, useInviteToClan, useLeaveClan } from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
 import { Panel } from '@/components/ui/Panel';
@@ -16,13 +15,7 @@ import { formatMoney } from '@/lib/money';
 import { formatDateTime } from '@/lib/time';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
-
-const ROLE_ORDER: Record<ClanRole, number> = { LEADER: 0, OFFICER: 1, MEMBER: 2 };
-const ROLE_ICON: Record<ClanRole, JSX.Element> = {
-  LEADER: <Crown className="h-3 w-3" />,
-  OFFICER: <Shield className="h-3 w-3" />,
-  MEMBER: <Sword className="h-3 w-3" />,
-};
+import { canInvite as roleCanInvite, ROLE_ICON, ROLE_ORDER, ROLE_TONE } from './roles';
 
 export function ClanDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +32,8 @@ export function ClanDetailPage() {
   if (clan.isError) return <ErrorState error={clan.error} onRetry={() => clan.refetch()} />;
   const c = clan.data;
   const me = c.members.find((m) => m.playerId === player?.id);
-  const canInvite = me && me.role !== 'MEMBER';
+  const canInvite = roleCanInvite(me?.role);
+  const godfather = c.members.find((m) => m.role === 'GODFATHER');
   const members = [...c.members].sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || b.level - a.level);
 
   const submit = (e: FormEvent) => {
@@ -69,9 +63,6 @@ export function ClanDetailPage() {
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold text-ink sm:text-3xl">{c.name}</h1>
             {c.description && <p className="mt-1 text-ink-muted">{c.description}</p>}
-            <p className="mt-2 text-xs text-ink-faint">
-              {t('clans.founded')}: {formatDateTime(c.createdAt)}
-            </p>
           </div>
           {me && (
             <Button variant="danger" size="sm" onClick={() => setConfirmLeave(true)}>
@@ -84,9 +75,14 @@ export function ClanDetailPage() {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label={t('clans.members')} value={c.memberCount} />
-        <StatTile label={t('clans.leader')} value={c.leaderName} tone="brass" />
-        <StatTile label={t('clans.bank')} value={formatMoney(c.bank)} />
-        <StatTile label={t('clans.wealth')} value={formatMoney(c.wealth)} tone="neon" />
+        <StatTile label={t('clans.leader')} value={godfather?.name ?? t('clans.noGodfather')} tone="brass" />
+        <StatTile
+          label={t('clans.bank')}
+          value={c.bank !== null ? formatMoney(c.bank) : '—'}
+          hint={c.bank === null ? t('clans.bankHidden') : undefined}
+          tone="neon"
+        />
+        <StatTile label={t('clans.founded')} value={formatDateTime(c.createdAt).split(',')[0]} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -98,13 +94,15 @@ export function ClanDetailPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-ink">
                     {m.name}
-                    {m.playerId === player?.id && <span className="ml-2 text-xs text-brass">({t('rankings.you')})</span>}
+                    {m.playerId === player?.id && (
+                      <span className="ml-2 text-xs text-brass">({t('rankings.you')})</span>
+                    )}
                   </p>
                   <p className="text-xs text-ink-faint">Level {m.level}</p>
                 </div>
-                <Badge tone={m.role === 'LEADER' ? 'brass' : m.role === 'OFFICER' ? 'info' : 'neutral'}>
+                <Badge tone={ROLE_TONE[m.role]}>
                   {ROLE_ICON[m.role]}
-                  {t(`clans.roles.${m.role}`)}
+                  {t(`clans.roles.${m.role}`, { defaultValue: t('clans.roles.ASSOCIATE') })}
                 </Badge>
               </li>
             ))}
