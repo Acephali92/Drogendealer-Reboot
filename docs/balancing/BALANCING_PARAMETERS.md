@@ -122,7 +122,7 @@ Grenzen: P_base > 0; Gleichgewichtspreise aller Märkte in [P_min, P_max] (INV-0
 | `npc.handover_step_days` | 7 | – |
 | `npc.handover_top_routes` | 10 | – |
 
-### 2.6 Vorschläge von Agent 5 (`sim/proposals.toml`, SHA-256 a631ba892620…, Status: Vorschlag – nur Simulation)
+### 2.6 Vorschläge von Agent 5 (`sim/proposals.toml`, SHA-256 dd7fbf2aee4d…, Status: Vorschlag – nur Simulation)
 
 | Schlüssel | Vorschlag |
 |---|---:|
@@ -147,7 +147,11 @@ Grenzen: P_base > 0; Gleichgewichtspreise aller Märkte in [P_min, P_max] (INV-0
 | `safety_net.start_loan_ct` | 100.000 |
 | `safety_net.min_cash_threshold_ct` | 20.000 |
 | `safety_net.cooldown_days` | 7 |
-
+| `progression.org_cost_rate_per_day` | 0,005 |
+| `progression.org_cost_threshold_ct` | 50.000.000 |
+| `progression.catchup_xp_bonus` | 0,5 |
+| `progression.growth_ranking_min_base_ct` | 5.000.000 |
+| `progression.prestige_base_ct` | 5.000.000 |
 
 ## 3. Änderungsprotokoll
 
@@ -164,3 +168,11 @@ Grenzen: P_base > 0; Gleichgewichtspreise aller Märkte in [P_min, P_max] (INV-0
 ## 4. Offene Änderungsvorschläge von Agent 5
 
 Jeder Vorschlag betrifft genau einen Parameter und ist durch einen Simulationslauf belegt (siehe [GAME_BALANCING.md §6](GAME_BALANCING.md#6-befunde-und-empfehlungen) und [SIMULATION_RESULTS.md](SIMULATION_RESULTS.md)). Status: **vorgeschlagen**, noch nicht in `parameters.toml`.
+
+| # | Parameter | Vorschlag | Beleg [gemessen] | Systemeigentümer | Status |
+|---|---|---|---|---|---|
+| P-1 | `travel.confiscation_share` (neu) | 0,5 (bisher implizit 1,0). Strafe nur auf den beschlagnahmten Teil. | `h-confiscation`, `npc-conf`: 0 % Sackgassen bei A, B, C, E | Agent 2 | vorgeschlagen |
+| P-2 | `progression.org_cost_rate_per_day` / `org_cost_threshold_ct` (neu, F-PRG-01) | 0,005 / 50 000 000 ct | `h-wealth-sink`: Geldmenge −30 %, reichster Spieler ÷ Median 17,4 | Agent 5 | vorgeschlagen |
+| P-3 | `economy_ext.*` (neu, F-ECO-10…14) | Werte in `sim/proposals.toml` | `ext`: P/P* 0,91–1,08, also im Korridor | Agent 5 | vorgeschlagen, nach P-1 |
+| P-4 | `goods.kokain.consumption` | 0,004 → 0,003 | **noch nicht simuliert** [Hypothese] | Agent 5 | Experiment geplant |
+
