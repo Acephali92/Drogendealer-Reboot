@@ -51,15 +51,17 @@ export function AccountPage() {
             <Badge tone="info">{t(`status.${player.status}`)}</Badge>
             {city && <Badge>{city.name}</Badge>}
           </div>
-          <div className="mt-4 max-w-md">
-            <ProgressBar value={player.experience / Math.max(1, player.experienceForNextLevel)} />
-            <p className="mt-1 text-xs text-ink-muted">
-              {t('account.nextLevel', {
-                xp: formatNumber(Math.max(0, player.experienceForNextLevel - player.experience)),
-                level: player.level + 1,
-              })}
-            </p>
-          </div>
+          {player.experienceForNextLevel !== null && (
+            <div className="mt-4 max-w-md">
+              <ProgressBar value={player.experience / Math.max(1, player.experienceForNextLevel)} />
+              <p className="mt-1 text-xs text-ink-muted">
+                {t('account.nextLevel', {
+                  xp: formatNumber(Math.max(0, player.experienceForNextLevel - player.experience)),
+                  level: player.level + 1,
+                })}
+              </p>
+            </div>
+          )}
         </div>
         <Button variant="outline" onClick={logout}>
           <LogOut className="h-4 w-4" />

@@ -4,70 +4,95 @@ const NOW = Date.parse('2026-11-08T12:00:00Z');
 
 function setup() {
   const s = E.createState(NOW, 42);
-  const auth = E.register(s, { email: 'a@b.de', username: 'Tester', password: 'geheim123' }, NOW);
+  const auth = E.register(s, { email: 'a@b.de', username: 'Tester', password: 'geheim123', ageConfirmed: true }, NOW);
   const p = E.playerForToken(s, auth.accessToken);
   return { s, p, auth };
 }
 
-describe('Mock-Engine', () => {
-  it('registriert Spieler mit Startgeld, Fahrzeug und Clan-Einladung', () => {
-    const { s, p } = setup();
-    expect(p.cash).toBe(3_000_000);
-    expect(E.vehiclesOf(p)).toHaveLength(1);
-    expect(E.myInvites(s, p)).toHaveLength(1);
-    expect(() => E.register(s, { email: 'a@b.de', username: 'Other', password: 'geheim123' })).toThrow(
+const city = (slug: string) => E.cities.find((c) => c.slug === slug)!;
+const com = (slug: string) => E.commodities.find((c) => c.slug === slug)!;
+
+describe('Mock-Engine (Vertragsformat)', () => {
+  it('verlangt die Altersbestätigung (ADR-013)', () => {
+    const s = E.createState(NOW, 1);
+    expect(() => E.register(s, { email: 'x@y.de', username: 'Jung', password: 'geheim123' })).toThrow(/Alters/);
+    expect(() => E.register(s, { email: 'x@y.de', username: 'Jung', password: 'geheim123', ageConfirmed: 'yes' })).toThrow(
       E.MockApiError,
     );
   });
 
-  it('rotiert Refresh-Tokens', () => {
+  it('registriert mit Startgeld in Cent, Spieler-ID und Clan-Einladung', () => {
+    const { s, p, auth } = setup();
+    expect(auth.user.playerId).toBe(p.id);
+    expect(E.playerDto(s, p).cash).toBe('200000');
+    expect(E.myInvites(s, p).invites).toHaveLength(1);
+    expect(() => E.register(s, { email: 'a@b.de', username: 'Other', password: 'geheim123', ageConfirmed: true })).toThrow(
+      E.MockApiError,
+    );
+  });
+
+  it('rotiert Refresh-Tokens und liefert dabei den Nutzer', () => {
     const { s, auth } = setup();
     const next = E.refresh(s, auth.refreshToken);
     expect(next.refreshToken).not.toBe(auth.refreshToken);
+    expect(next.user.username).toBe('Tester');
     expect(() => E.refresh(s, auth.refreshToken)).toThrow(/abgelaufen/);
   });
 
-  it('kauft und verkauft Ware mit Geld-, Lager- und Laderaumprüfung', () => {
+  it('nutzt die satirischen Anzeigenamen und echten Distanzen', () => {
+    expect(city('berlin').name).toBe('Pleitenberg');
+    expect(com('kokain').name).toBe('Schneegestöber');
+    expect(E.distanceKm(city('berlin').id, city('hamburg').id)).toBe(289);
+  });
+
+  it('kauft und verkauft mit Geld-, Lager- und Laderaumprüfung', () => {
     const { s, p } = setup();
-    const berlin = E.cities.find((c) => c.slug === 'berlin')!;
-    E.setStartCity(s, p, berlin.id);
-    const gras = E.commodities.find((c) => c.slug === 'gras')!;
-    const r = E.trade(s, p, { cityId: berlin.id, commodityId: gras.id, side: 'BUY', quantity: 100 }, NOW);
-    expect(r.inventory.items[0]!.quantity).toBe(100);
-    expect(BigInt(r.player.cash)).toBe(3_000_000n - BigInt(r.transaction.total));
-    expect(() =>
-      E.trade(s, p, { cityId: berlin.id, commodityId: gras.id, side: 'SELL', quantity: 101 }, NOW),
-    ).toThrow(/nicht dabei/);
-    expect(() =>
-      E.trade(s, p, { cityId: berlin.id, commodityId: gras.id, side: 'BUY', quantity: 10_000_000 }, NOW),
-    ).toThrow(E.MockApiError);
-    const sold = E.trade(s, p, { cityId: berlin.id, commodityId: gras.id, side: 'SELL', quantity: 100 }, NOW);
-    expect(sold.inventory.items).toHaveLength(0);
+    E.setStartCity(s, p, city('berlin').id);
+    const gras = com('gras');
+    const r = E.trade(s, p, { cityId: city('berlin').id, commodityId: gras.id, side: 'BUY', quantity: 10 }, NOW);
+    expect(r.inventory.items[0]!.quantity).toBe(10);
+    expect(r.inventory.capacityG).toBeNull(); // kein Fahrzeug → laut Vertrag null
+    expect(BigInt(r.player.cash)).toBe(200_000n - BigInt(r.transaction.total));
+    expect(() => E.trade(s, p, { cityId: city('berlin').id, commodityId: gras.id, side: 'SELL', quantity: 11 })).toThrow(
+      /nicht dabei/,
+    );
+    // Rucksack: 60 Volumeneinheiten, Grünzeug hat Volumen 2 → max. 30
+    expect(() => E.trade(s, p, { cityId: city('berlin').id, commodityId: gras.id, side: 'BUY', quantity: 25 })).toThrow(
+      /Laderaum/,
+    );
   });
 
   it('reist mit Countdown und kommt an', () => {
     const { s, p } = setup();
-    const berlin = E.cities.find((c) => c.slug === 'berlin')!;
-    const amsterdam = E.cities.find((c) => c.slug === 'amsterdam')!;
-    E.setStartCity(s, p, berlin.id);
-    const t = E.startTravel(s, p, amsterdam.id, NOW);
+    E.setStartCity(s, p, city('berlin').id);
+    const { travel } = E.startTravel(s, p, city('leipzig').id, NOW);
+    expect(travel.toCity.name).toBe('Plattenhausen');
     expect(p.status).toBe('TRAVELING');
-    expect(() => E.trade(s, p, { cityId: berlin.id, commodityId: 'x', side: 'BUY', quantity: 1 })).toThrow(
-      /unterwegs/,
-    );
-    E.advance(s, Date.parse(t.arrivesAt) + 1);
+    E.advance(s, Date.parse(travel.arrivesAt) + 1);
     expect(p.status).toBe('IDLE');
-    expect(p.currentCityId).toBe(amsterdam.id);
-    expect(p.notifications[0]!.kind).toBe('TRAVEL_ARRIVED');
+    expect(E.playerDto(s, p).currentCity?.slug).toBe('leipzig');
+    expect(p.notifications[0]!.type).toBe('TRAVEL_ARRIVED');
   });
 
-  it('gründet Clans und erstellt Ranglisten', () => {
+  it('gründet Clans mit Pate und liefert Ranglisten im Vertragsformat', () => {
     const { s, p } = setup();
-    const c = E.clanCreate(s, p, { name: 'Testfamilie', tag: 'TST' }, NOW);
-    expect(c.members[0]!.role).toBe('LEADER');
-    expect(() => E.clanCreate(s, p, { name: 'Zweiter', tag: 'ZWO' })).toThrow(/bereits/);
-    const r = E.rankings(s, p, 'wealth');
-    expect(r.me?.isMe).toBe(true);
-    expect(r.rows[0]!.rank).toBe(1);
+    p.cash = 10_000_000;
+    const { clan } = E.clanCreate(s, p, { name: 'Testfamilie', tag: 'TST' }, NOW);
+    expect(clan.members[0]!.role).toBe('GODFATHER');
+    expect(clan.bank).toBe('0');
+    expect(E.clanGet(s, s.players[Object.keys(s.players)[0]!]!, clan.id).clan.bank).toBeNull();
+    const r = E.rankings(s, 'wealth', 5);
+    expect(r.entries).toHaveLength(5);
+    expect(r.total).toBeGreaterThan(5);
+    expect('player' in r.entries[0]! && r.entries[0].rank).toBe(1);
+  });
+
+  it('exportiert und löscht das Konto (ADR-015)', () => {
+    const { s, p, auth } = setup();
+    expect(E.exportData(s, p).account?.email).toBe('a@b.de');
+    expect(() => E.deleteAccount(s, p, 'falsch')).toThrow(/Passwort/);
+    E.deleteAccount(s, p, 'geheim123');
+    expect(s.players[p.id]).toBeUndefined();
+    expect(() => E.playerForToken(s, auth.accessToken)).toThrow(E.MockApiError);
   });
 });

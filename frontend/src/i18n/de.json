@@ -53,7 +53,8 @@
     "techLevel": "Tech-Level",
     "police": "Polizeipräsenz",
     "population": "Einwohner",
-    "country": "Land"
+    "country": "Land",
+    "noVehicle": "nur Rucksack"
   },
   "heat": {
     "0": "Unauffällig",
@@ -72,6 +73,10 @@
     "usernameHint": "3–20 Zeichen: Buchstaben, Ziffern, _",
     "password": "Passwort",
     "passwordHint": "Mindestens 8 Zeichen",
+    "ageConfirm": "Ich bin mindestens 18 Jahre alt.",
+    "ageHint": "Drogendealer ist ein satirisches Spiel für Erwachsene.",
+    "ageNotice": "Ab 18 · Satire",
+    "ageNoticeText": "Satirisches Browserspiel für Erwachsene. Kein Aufruf zu Drogenkonsum oder -handel.",
     "submitLogin": "Anmelden",
     "submitRegister": "Konto erstellen",
     "toRegister": "Noch kein Konto? Jetzt einsteigen",
@@ -85,7 +90,8 @@
       "username": "Name: 3–20 Zeichen, nur Buchstaben, Ziffern und _",
       "password": "Passwort muss mindestens 8 Zeichen lang sein",
       "email": "Bitte eine gültige E-Mail-Adresse angeben",
-      "required": "Pflichtfeld"
+      "required": "Pflichtfeld",
+      "age": "Du musst mindestens 18 Jahre alt sein."
     }
   },
   "start": {
@@ -129,12 +135,13 @@
     "subtitle": "Von {{city}} aus erreichbar",
     "distance": "Entfernung",
     "duration": "Fahrzeit",
-    "cost": "Sprit",
+    "cost": "Kosten",
     "go": "Losfahren",
     "with": "Mit {{vehicle}}",
-    "withBus": "Mit dem Fernbus",
+    "withBus": "Mit der Bahn",
     "confirmTitle": "Nach {{city}} fahren?",
-    "confirmBody": "Fahrzeit {{duration}}, Spritkosten {{cost}}. Unterwegs kannst du nicht handeln.",
+    "confirmBody": "Fahrzeit {{duration}}, Kosten {{cost}}. Unterwegs kannst du nicht handeln.",
+    "confirmBodyUnknown": "Fahrzeit und Kosten berechnet der Server. Unterwegs kannst du nicht handeln.",
     "onTheRoad": "Unterwegs nach {{city}}",
     "arrivesIn": "Ankunft in",
     "arrived": "Angekommen in {{city}}",
@@ -142,7 +149,7 @@
     "search": "Stadt suchen",
     "sortDistance": "Nächste zuerst",
     "sortName": "A–Z",
-    "noFuelMoney": "Zu wenig Bargeld für den Sprit. Verkauf erst etwas Ware."
+    "noFuelMoney": "Zu wenig Bargeld für die Reise. Verkauf erst etwas Ware."
   },
   "trade": {
     "title": "Aktuelle Marktpreise in {{city}}",
@@ -179,7 +186,9 @@
     "sortName": "Name",
     "sortPrice": "Preis",
     "sortDeal": "Bester Deal",
-    "vsAvg": "ggü. Ø Europa"
+    "vsBase": "ggü. Grundpreis",
+    "bestSellHint": "Bester Verkaufspreis gerade:",
+    "in": "in"
   },
   "inventory": {
     "title": "Inventar",
@@ -230,14 +239,16 @@
   },
   "market": {
     "title": "Marktübersicht",
-    "subtitle": "Preise in ganz Europa. Günstigster Einkauf grün, bester Verkauf bernstein.",
+    "subtitle": "Wo kaufst du am billigsten, wo verkaufst du am teuersten? Einkauf grün, Verkauf bernstein.",
     "commodity": "Ware",
-    "cheapest": "Am günstigsten",
-    "priciest": "Am teuersten",
+    "cheapest": "Günstigster Einkauf",
+    "priciest": "Bester Verkauf",
     "spread": "Marge",
     "showSell": "Verkaufspreise",
     "showBuy": "Einkaufspreise",
     "here": "Du bist hier",
+    "empty": "Noch keine Marktdaten.",
+    "updated": "Stand {{when}}",
     "routeHint": "Beste Route: in {{from}} kaufen, in {{to}} verkaufen (+{{pct}} %)"
   },
   "clans": {
@@ -265,6 +276,7 @@
     "decline": "Ablehnen",
     "joined": "Willkommen in der Familie",
     "invite": "Einladen",
+    "inviteRights": "Einladen dürfen Pate, Consigliere und Capos.",
     "invitePlaceholder": "Name des Spielers",
     "invited": "Einladung an {{name}} verschickt",
     "leave": "Clan verlassen",
@@ -272,10 +284,14 @@
     "left": "Du hast den Clan verlassen",
     "view": "Ansehen",
     "roles": {
-      "LEADER": "Pate",
-      "OFFICER": "Capo",
-      "MEMBER": "Soldat"
+      "GODFATHER": "Pate",
+      "CONSIGLIERE": "Consigliere",
+      "CAPO": "Capo",
+      "SOLDIER": "Soldat",
+      "ASSOCIATE": "Mitläufer"
     },
+    "noGodfather": "vakant",
+    "bankHidden": "Nur für Mitglieder sichtbar",
     "noClans": "Noch keine Clans. Sei der Erste."
   },
   "rankings": {
@@ -290,7 +306,8 @@
     "clan": "Clan",
     "value": "Wert",
     "you": "Du",
-    "yourRank": "Deine Platzierung"
+    "yourRank": "Deine Platzierung",
+    "notListed": "Du bist (noch) nicht in den Top 50."
   },
   "notifications": {
     "title": "Meldungen",

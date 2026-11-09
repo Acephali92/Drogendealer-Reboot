@@ -16,8 +16,8 @@ export function NotificationsPage() {
   const list = useNotifications();
   const read = useReadNotification();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const unread = list.data?.filter((n) => !n.readAt).length ?? 0;
-  const rows = (list.data ?? []).filter((n) => filter === 'all' || !n.readAt);
+  const unread = list.data?.unreadCount ?? 0;
+  const rows = (list.data?.items ?? []).filter((n) => filter === 'all' || !n.readAt);
 
   return (
     <div>

@@ -89,7 +89,14 @@ export const useClans = () => useQuery({ queryKey: qk.clans, queryFn: clanApi.li
 export const useClan = (id: string | null | undefined) =>
   useQuery({ queryKey: qk.clan(id ?? ''), queryFn: () => clanApi.get(id!), enabled: !!id });
 export const useInvites = () => useQuery({ queryKey: qk.invites, queryFn: clanApi.invites });
-export const useRanking = (t: RankingType) => useQuery({ queryKey: qk.rankings(t), queryFn: () => rankingApi.get(t) });
+export function useRanking(t: RankingType) {
+  const me = useMe().data;
+  return useQuery({
+    queryKey: [...qk.rankings(t), me?.id, me?.clanId],
+    queryFn: () => rankingApi.get(t, { playerId: me?.id, clanId: me?.clanId }),
+    enabled: !!me,
+  });
+}
 
 export function useNotifications() {
   const enabled = useAuthed();
@@ -112,6 +119,7 @@ export function useTrade() {
       qc.setQueryData(qk.me, r.player);
       qc.setQueryData(qk.inventory, r.inventory);
       void qc.invalidateQueries({ queryKey: ['market'] });
+      void qc.invalidateQueries({ queryKey: ['rankings'] });
       void qc.invalidateQueries({ queryKey: qk.transactions });
     },
   });
@@ -137,8 +145,8 @@ export function useBuyVehicle() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: vehicleApi.buy,
-    onSuccess: (r) => {
-      qc.setQueryData(qk.me, r.player);
+    onSuccess: (player) => {
+      qc.setQueryData(qk.me, player);
       void qc.invalidateQueries({ queryKey: qk.vehicles });
       void qc.invalidateQueries({ queryKey: qk.inventory });
     },
@@ -161,8 +169,8 @@ export function useSellVehicle() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: vehicleApi.sell,
-    onSuccess: (r) => {
-      qc.setQueryData(qk.me, r.player);
+    onSuccess: (player) => {
+      qc.setQueryData(qk.me, player);
       void qc.invalidateQueries({ queryKey: qk.vehicles });
       void qc.invalidateQueries({ queryKey: qk.inventory });
     },
@@ -173,8 +181,8 @@ export function useBuyEquipment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: equipmentApi.buy,
-    onSuccess: (r) => {
-      qc.setQueryData(qk.me, r.player);
+    onSuccess: (player) => {
+      qc.setQueryData(qk.me, player);
       void qc.invalidateQueries({ queryKey: qk.equipment });
       void qc.invalidateQueries({ queryKey: qk.inventory });
     },

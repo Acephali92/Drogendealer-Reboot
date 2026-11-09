@@ -69,10 +69,12 @@ export function percentDelta(current: Money | bigint, reference: Money | bigint)
 }
 
 const numFmt = new Intl.NumberFormat('de-DE');
-export const formatNumber = (n: number) => numFmt.format(n);
+/** Zahl mit deutschem Tausenderpunkt; fehlende Werte als Gedankenstrich. */
+export const formatNumber = (n: number | null | undefined) => (n === null || n === undefined ? '—' : numFmt.format(n));
 
 /** Gramm → „750 g“ bzw. „242,5 kg“ bzw. „1,2 t“. */
-export function formatWeight(grams: number): string {
+export function formatWeight(grams: number | null | undefined): string {
+  if (grams === null || grams === undefined) return '—';
   const g = Math.max(0, Math.round(grams));
   if (g < 1000) return `${numFmt.format(g)}\u00a0g`;
   if (g < 1_000_000) {

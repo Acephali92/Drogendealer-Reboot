@@ -39,25 +39,8 @@ export function TradePage() {
     return w ? { slug: w, side: 'BUY' } : null;
   });
 
-  /** Ø-Mittelpreis je Ware über alle Städte (für „ggü. Ø Europa“). */
-  const avg = useMemo(() => {
-    const out = new Map<string, bigint>();
-    const o = overview.data;
-    if (!o) return out;
-    for (const c of o.commodities) {
-      let sum = 0n;
-      let n = 0n;
-      for (const city of o.cities) {
-        const p = o.prices[city.id]?.[c.id];
-        if (p) {
-          sum += (toCents(p.buyPrice) + toCents(p.sellPrice)) / 2n;
-          n++;
-        }
-      }
-      if (n) out.set(c.id, sum / n);
-    }
-    return out;
-  }, [overview.data]);
+  /** Beste Preise in ganz Europa je Ware (aus /market/overview). */
+  const best = useMemo(() => new Map((overview.data ?? []).map((r) => [r.commodity.id, r])), [overview.data]);
 
   const ownedBy = useMemo(
     () => new Map((inventory.data?.items ?? []).map((i) => [i.commodity.id, i])),
@@ -67,12 +50,12 @@ export function TradePage() {
   const rows = useMemo(() => {
     let list = [...(market.data ?? [])];
     if (filter === 'owned') list = list.filter((m) => (ownedBy.get(m.commodity.id)?.quantity ?? 0) > 0);
-    const deal = (m: MarketEntry) => percentDelta(m.buyPrice, avg.get(m.commodity.id) ?? m.commodity.basePrice) ?? 0;
+    const deal = (m: MarketEntry) => percentDelta(m.buyPrice, m.commodity.basePrice) ?? 0;
     if (sort === 'name') list.sort((a, b) => a.commodity.name.localeCompare(b.commodity.name, 'de'));
     if (sort === 'price') list.sort((a, b) => Number(toCents(b.buyPrice) - toCents(a.buyPrice)));
     if (sort === 'deal') list.sort((a, b) => deal(a) - deal(b));
     return list;
-  }, [market.data, filter, sort, ownedBy, avg]);
+  }, [market.data, filter, sort, ownedBy]);
 
   if (traveling && travel) {
     return <TravelProgress travel={travel} from={cityById(travel.fromCityId)} to={destination} />;
@@ -116,8 +99,8 @@ export function TradePage() {
         {rows.map((m, i) => {
           const own = ownedBy.get(m.commodity.id);
           const ownedQty = own?.quantity ?? 0;
-          const a = avg.get(m.commodity.id);
-          const vsAvg = a ? percentDelta(m.buyPrice, a) : null;
+          const b = best.get(m.commodity.id);
+          const vsBase = percentDelta(m.buyPrice, m.commodity.basePrice);
           return (
             <article
               key={m.commodity.id}
@@ -135,6 +118,13 @@ export function TradePage() {
               </header>
               <div className="p-4">
                 <p className="mb-4 text-sm text-ink-muted">{m.commodity.description}</p>
+                {b?.highestSell && b.highestSell.city.id !== city.id && (
+                  <p className="-mt-2 mb-4 text-xs text-ink-faint">
+                    {t('trade.bestSellHint')}{' '}
+                    <Money value={b.highestSell.price} className="text-brass" /> {t('trade.in')}{' '}
+                    <span className="text-brass">{b.highestSell.city.name}</span>
+                  </p>
+                )}
                 <div className="flex gap-4">
                   <CommodityIcon slug={m.commodity.slug} size={64} className="hidden sm:inline-grid" />
                   <div className="grid flex-1 grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
@@ -156,12 +146,12 @@ export function TradePage() {
                         <dt className="text-ink-muted">{t('trade.available')}</dt>
                         <dd className="num text-ink">{formatNumber(m.supply)}</dd>
                       </div>
-                      {vsAvg !== null && (
+                      {vsBase !== null && (
                         <div className="flex justify-between gap-2">
-                          <dt className="text-ink-muted">{t('trade.vsAvg')}</dt>
-                          <dd className={cn('num font-semibold', vsAvg < 0 ? 'text-neon' : vsAvg > 0 ? 'text-danger' : 'text-ink-muted')}>
-                            {vsAvg > 0 ? '+' : ''}
-                            {vsAvg.toLocaleString('de-DE')} %
+                          <dt className="text-ink-muted">{t('trade.vsBase')}</dt>
+                          <dd className={cn('num font-semibold', vsBase < 0 ? 'text-neon' : vsBase > 0 ? 'text-danger' : 'text-ink-muted')}>
+                            {vsBase > 0 ? '+' : ''}
+                            {vsBase.toLocaleString('de-DE')} %
                           </dd>
                         </div>
                       )}

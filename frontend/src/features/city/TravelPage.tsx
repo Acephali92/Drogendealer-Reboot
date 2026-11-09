@@ -85,7 +85,7 @@ export function TravelPage() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {detail.isPending && Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-36" />)}
         {list.map(({ c, city: dest }, i) => {
-          const tooExpensive = toCents(c.cost) > toCents(player.cash);
+          const tooExpensive = c.cost !== null && toCents(c.cost) > toCents(player.cash);
           return (
             <button
               key={c.toCityId}
@@ -115,7 +115,7 @@ export function TravelPage() {
                     <Clock className="h-3 w-3" aria-hidden />
                     {t('travel.duration')}
                   </dt>
-                  <dd className="num mt-0.5 text-sm text-ink">{formatDuration(c.durationSeconds)}</dd>
+                  <dd className="num mt-0.5 text-sm text-ink">{c.durationSeconds !== null ? formatDuration(c.durationSeconds) : '—'}</dd>
                 </div>
                 <div>
                   <dt className="label flex items-center gap-1">
@@ -169,7 +169,9 @@ export function TravelPage() {
       >
         {target && (
           <p className="text-sm text-ink-muted">
-            {t('travel.confirmBody', { duration: formatDuration(target.durationSeconds), cost: formatMoney(target.cost) })}
+            {target.durationSeconds !== null && target.cost !== null
+              ? t('travel.confirmBody', { duration: formatDuration(target.durationSeconds), cost: formatMoney(target.cost) })
+              : t('travel.confirmBodyUnknown')}
           </p>
         )}
       </Modal>

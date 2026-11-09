@@ -43,7 +43,7 @@ export function AppShell() {
   const { t } = useTranslation();
   const [moreOpen, setMoreOpen] = useState(false);
   const location = useLocation();
-  const unread = useNotifications().data?.filter((n) => !n.readAt).length ?? 0;
+  const unread = useNotifications().data?.unreadCount ?? 0;
   const online = useOnline().data?.count;
   const logout = useLogout();
   const all = NAV_GROUPS.flatMap((g) => g.items);

@@ -27,7 +27,7 @@ export function WeaponsPage() {
   if (!player) return null;
   const list = (types.data ?? []).filter((e) => e.slot === slot).sort((a, b) => Number(toCents(a.price) - toCents(b.price)));
   const maxPower = Math.max(1, ...(types.data ?? []).map((e) => Math.max(e.attack, e.defense)));
-  const free = cargo ? cargo.capacity - cargo.used : 0;
+  const free = cargo?.free ?? null;
 
   return (
     <div className="space-y-6">
@@ -75,8 +75,8 @@ export function WeaponsPage() {
           const count = owned.data?.filter((o) => o.equipmentType.id === e.id).length ?? 0;
           const power = e.slot === 'WEAPON' ? e.attack : e.defense;
           const poor = toCents(e.price) > toCents(player.cash);
-          const heavy = e.weightG > free;
-          const hidden = e.weightG < VISIBLE_FROM_G;
+          const heavy = free !== null && e.weightG !== null && e.weightG > free;
+          const hidden = e.weightG !== null && e.weightG < VISIBLE_FROM_G;
           return (
             <article key={e.id} className="panel animate-fade-up overflow-hidden" style={{ animationDelay: `${i * 30}ms` }}>
               <header className="panel-header">

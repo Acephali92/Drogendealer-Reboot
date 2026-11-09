@@ -42,6 +42,9 @@ function Row({ r, type }: { r: RankingRow; type: RankingType }) {
           {r.isMe && <span className="ml-2 text-xs text-brass">({t('rankings.you')})</span>}
         </span>
         {type !== 'clans' && r.tag && <Badge className="mt-0.5">{r.tag}</Badge>}
+        {type !== 'clans' && r.level !== null && type !== 'level' && (
+          <span className="ml-2 text-xs text-ink-faint">Level {r.level}</span>
+        )}
       </span>
       <span className={cn('num text-right font-semibold', type === 'wealth' || type === 'clans' ? 'text-neon' : 'text-ink')}>
         {formatValue(type, r.value)}
@@ -104,13 +107,8 @@ export function RankingsPage() {
                 <Row key={row.id} r={row} type={type} />
               ))}
             </ul>
-            {!meVisible && r.data.me && (
-              <div className="border-t border-brass/30">
-                <p className="label px-4 pt-3">{t('rankings.yourRank')}</p>
-                <ul>
-                  <Row r={r.data.me} type={type} />
-                </ul>
-              </div>
+            {!meVisible && (
+              <p className="border-t border-line/10 px-4 py-3 text-xs text-ink-faint">{t('rankings.notListed')}</p>
             )}
           </div>
         </div>

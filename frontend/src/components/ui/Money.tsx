@@ -3,7 +3,7 @@ import { formatMoney, toCents } from '@/lib/money';
 import { cn } from '@/lib/cn';
 
 interface MoneyProps {
-  value: MoneyT | bigint;
+  value: MoneyT | bigint | null | undefined;
   signed?: boolean;
   /** Positiv grün, negativ rot */
   colored?: boolean;
@@ -12,6 +12,7 @@ interface MoneyProps {
 }
 
 export function Money({ value, signed, colored, cents, className }: MoneyProps) {
+  if (value === null || value === undefined) return <span className={cn('num text-ink-faint', className)}>—</span>;
   const v = toCents(value);
   return (
     <span

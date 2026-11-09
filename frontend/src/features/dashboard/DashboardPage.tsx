@@ -86,12 +86,16 @@ export function DashboardPage() {
           tone="brass"
           icon={<Star className="h-4 w-4" />}
           hint={
-            <div className="space-y-1">
-              <ProgressBar value={player.experience / Math.max(1, player.experienceForNextLevel)} size="xs" />
-              <span className="num">
-                {formatNumber(player.experience)} / {formatNumber(player.experienceForNextLevel)} XP
-              </span>
-            </div>
+            player.experienceForNextLevel !== null ? (
+              <div className="space-y-1">
+                <ProgressBar value={player.experience / Math.max(1, player.experienceForNextLevel)} size="xs" />
+                <span className="num">
+                  {formatNumber(player.experience)} / {formatNumber(player.experienceForNextLevel)} XP
+                </span>
+              </div>
+            ) : (
+              <span className="num">{formatNumber(player.experience)} XP</span>
+            )
           }
         />
         <StatTile
@@ -209,7 +213,7 @@ export function DashboardPage() {
             padded={false}
           >
             <ul className="divide-y divide-line/5">
-              {(notifications.data ?? []).slice(0, 5).map((n) => (
+              {(notifications.data?.items ?? []).slice(0, 5).map((n) => (
                 <li key={n.id} className="flex gap-3 px-4 py-3">
                   <NotificationIcon kind={n.kind} />
                   <div className="min-w-0">
@@ -218,7 +222,7 @@ export function DashboardPage() {
                   </div>
                 </li>
               ))}
-              {notifications.data?.length === 0 && <li className="p-4 text-sm text-ink-muted">{t('notifications.empty')}</li>}
+              {notifications.data?.items.length === 0 && <li className="p-4 text-sm text-ink-muted">{t('notifications.empty')}</li>}
             </ul>
           </Panel>
 

@@ -19,7 +19,7 @@ export function TopBar() {
   const { t } = useTranslation();
   const { player, city, traveling, travel, destination, cargo } = useGame();
   const notifications = useNotifications();
-  const unread = notifications.data?.filter((n) => !n.readAt).length ?? 0;
+  const unread = notifications.data?.unreadCount ?? 0;
   const onArrive = useArrivalRefresh();
 
   return (
@@ -74,10 +74,10 @@ export function TopBar() {
                 <dt className="sr-only">{t('stats.cargo')}</dt>
                 <dd className="w-full">
                   <div className="num flex justify-between text-[11px] text-ink-muted">
-                    <span>{formatWeight(cargo.capacity - cargo.used)}</span>
+                    <span>{formatWeight(cargo.free)}</span>
                     <span className="text-ink-faint">frei</span>
                   </div>
-                  <ProgressBar value={cargo.used / Math.max(1, cargo.capacity)} tone="auto" size="xs" />
+                  <ProgressBar value={cargo.capacity ? cargo.used / cargo.capacity : 0} tone="auto" size="xs" />
                 </dd>
               </div>
             )}
@@ -130,7 +130,7 @@ export function TopBar() {
           {cargo && (
             <span className="flex shrink-0 items-center gap-1.5 text-ink-muted">
               <Package className="h-3.5 w-3.5" aria-hidden />
-              <span className="num">{formatWeight(cargo.capacity - cargo.used)} frei</span>
+              <span className="num">{formatWeight(cargo.free)} frei</span>
             </span>
           )}
           <span className="flex shrink-0 items-center gap-1.5 text-ink-muted">

@@ -114,16 +114,18 @@ export function VehiclesPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {types.isPending && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-60" />)}
           {types.data?.map((vt, i) => {
-            const locked = player.level < vt.licenseClass;
+            const locked = vt.licenseClass !== null && player.level < vt.licenseClass;
             const poor = toCents(vt.price) > toCents(player.cash);
             return (
               <article key={vt.id} className="panel animate-fade-up overflow-hidden" style={{ animationDelay: `${i * 40}ms` }}>
                 <div className="relative grid h-32 place-items-center bg-gradient-to-b from-surface-3/60 to-surface">
                   <VehicleArt slug={vt.slug} className="h-24 w-48" />
-                  <Badge tone={locked ? 'danger' : 'neutral'} className="absolute left-3 top-3">
-                    {locked && <Lock className="h-3 w-3" />}
-                    {t('vehicles.licenseClass', { n: vt.licenseClass })}
-                  </Badge>
+                  {vt.licenseClass !== null && (
+                    <Badge tone={locked ? 'danger' : 'neutral'} className="absolute left-3 top-3">
+                      {locked && <Lock className="h-3 w-3" />}
+                      {t('vehicles.licenseClass', { n: vt.licenseClass })}
+                    </Badge>
+                  )}
                 </div>
                 <div className="p-4">
                   <div className="flex items-baseline justify-between gap-2">

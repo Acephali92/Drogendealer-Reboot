@@ -20,7 +20,7 @@ interface Props {
   player: Player;
   owned: InventoryItem | undefined;
   cityId: string;
-  cargo: { used: number; capacity: number };
+  cargo: { used: number; capacity: number | null; free: number | null };
   onClose: () => void;
 }
 
@@ -44,7 +44,7 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
     unitPrice: unit,
     supply: entry.supply,
     owned: ownedQty,
-    freeG: cargo.capacity - cargo.used,
+    freeG: cargo.free,
     unitWeightG: c.unitWeightG,
   });
   const q = Math.min(qty, max);
@@ -125,10 +125,11 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
             <div className="mb-1 flex justify-between text-xs text-ink-faint">
               <span>{t('stats.cargo')}</span>
               <span className="num">
-                {formatWeight(usedAfter)} / {formatWeight(cargo.capacity)}
+                {formatWeight(usedAfter)}
+                {cargo.capacity !== null ? ` / ${formatWeight(cargo.capacity)}` : ` · ${t('stats.noVehicle')}`}
               </span>
             </div>
-            <ProgressBar value={usedAfter / Math.max(1, cargo.capacity)} tone="auto" />
+            {cargo.capacity !== null && <ProgressBar value={usedAfter / Math.max(1, cargo.capacity)} tone="auto" />}
           </div>
         </div>
 

@@ -99,3 +99,23 @@ export async function api<T>(method: Method, path: string, opts: RequestOptions 
 
 export const get = <T>(path: string, signal?: AbortSignal) => api<T>('GET', path, { signal });
 export const post = <T>(path: string, body?: unknown) => api<T>('POST', path, { body });
+export const del = <T>(path: string, body?: unknown) => api<T>('DELETE', path, { body });
+
+/** Lädt eine Datei (z. B. Datenexport) mit Bearer-Token und gibt Blob + Dateiname zurück. */
+export async function download(path: string): Promise<{ blob: Blob; filename: string }> {
+  const attempt = async () => {
+    const token = useAuth.getState().accessToken;
+    const res = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    return res;
+  };
+  if (!useAuth.getState().accessToken) await refreshSession();
+  let res = await attempt();
+  if (res.status === 401 && (await refreshSession())) res = await attempt();
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
+    throw new ApiError(res.status, body?.error?.code ?? `HTTP_${res.status}`, body?.error?.message ?? res.statusText);
+  }
+  const cd = res.headers.get('content-disposition') ?? '';
+  const filename = /filename="?([^";]+)"?/i.exec(cd)?.[1] ?? 'export.json';
+  return { blob: await res.blob(), filename };
+}

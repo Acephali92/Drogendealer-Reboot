@@ -37,9 +37,11 @@ export function InventoryPage() {
           hint={
             cargo && (
               <div className="space-y-1">
-                <ProgressBar value={cargo.used / Math.max(1, cargo.capacity)} tone="auto" size="xs" />
+                {cargo.capacity !== null && (
+                  <ProgressBar value={cargo.used / Math.max(1, cargo.capacity)} tone="auto" size="xs" />
+                )}
                 <span className="num">
-                  {t('stats.freeCargo')}: {formatWeight(cargo.capacity - cargo.used)}
+                  {t('stats.freeCargo')}: {cargo.free !== null ? formatWeight(cargo.free) : t('stats.noVehicle')}
                 </span>
               </div>
             )

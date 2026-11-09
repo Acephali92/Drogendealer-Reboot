@@ -1,97 +1,112 @@
-/** Ein Funktionsaufruf pro Endpunkt aus docs/frontend/API-CONTRACT.md. */
-import { api, get, post } from './client';
-import type {
-  AuthResponse,
-  City,
-  CityDetail,
-  ClanDetail,
-  ClanInvite,
-  ClanSummary,
-  EquipmentType,
-  GameNotification,
-  Inventory,
-  MarketEntry,
-  MarketOverview,
-  MoneyTransaction,
-  Player,
-  PlayerEquipment,
-  Ranking,
-  RankingType,
-  TickerEvent,
-  TradeResult,
-  TradeSide,
-  Travel,
-  Vehicle,
-  VehicleType,
-} from './types';
+/**
+ * Ein Funktionsaufruf pro Endpunkt aus docs/api/API-CONTRACT.md.
+ * Antworten werden über api/adapters.ts in UI-Modelle übersetzt.
+ * Mit (draft) markierte Endpunkte sind im Backend noch nicht implementiert und laufen über den Mock.
+ */
+import { api, del, download, get, post } from './client';
+import type * as C from './contract';
+import * as A from './adapters';
+import type { RankingType, TradeSide } from './types';
 
 export const authApi = {
-  login: (login: string, password: string) =>
-    api<AuthResponse>('POST', '/auth/login', { body: { login, password }, anonymous: true }),
-  register: (email: string, username: string, password: string) =>
-    api<AuthResponse>('POST', '/auth/register', { body: { email, username, password }, anonymous: true }),
-  logout: (refreshToken: string) =>
-    api<void>('POST', '/auth/logout', { body: { refreshToken }, anonymous: true }),
+  login: async (login: string, password: string) =>
+    A.toAuth(await api<C.AuthResponseDto>('POST', '/auth/login', { body: { login, password }, anonymous: true })),
+  register: async (email: string, username: string, password: string, ageConfirmed: boolean) =>
+    A.toAuth(
+      await api<C.AuthResponseDto>('POST', '/auth/register', {
+        body: { email, username, password, ageConfirmed },
+        anonymous: true,
+      }),
+    ),
+  logout: (refreshToken: string) => api<void>('POST', '/auth/logout', { body: { refreshToken }, anonymous: true }),
 };
 
 export const playerApi = {
-  me: () => get<Player>('/players/me'),
-  setStartCity: (cityId: string) => post<Player>('/players/me/start-city', { cityId }),
-  transactions: () => get<MoneyTransaction[]>('/players/me/transactions?limit=50'),
-  online: () => get<{ count: number }>('/players/online'),
+  me: async () => A.toPlayer((await get<{ player: C.PlayerDto }>('/players/me')).player),
+  /** (draft) */
+  setStartCity: async (cityId: string) =>
+    A.toPlayer((await post<{ player: C.PlayerDto }>('/players/me/start-city', { cityId })).player),
+  transactions: async () =>
+    (await get<{ items: C.MoneyTransactionDto[] } & C.Page>('/players/me/transactions?limit=50')).items.map(
+      A.toTransaction,
+    ),
+  online: () => get<C.OnlineDto>('/players/online'),
+  exportData: () => download('/players/me/export'),
+  deleteAccount: (password: string) => del<void>('/players/me', { password }),
 };
 
 export const worldApi = {
-  cities: () => get<City[]>('/cities'),
-  city: (slug: string) => get<CityDetail>(`/cities/${encodeURIComponent(slug)}`),
-  market: (slug: string) => get<MarketEntry[]>(`/cities/${encodeURIComponent(slug)}/market`),
-  overview: () => get<MarketOverview>('/market/overview'),
-  ticker: () => get<TickerEvent[]>('/ticker'),
+  cities: async () => (await get<{ cities: C.CityDto[] }>('/cities')).cities.map(A.toCity),
+  city: async (slug: string) =>
+    A.toCityDetail((await get<{ city: C.CityDto & { connections: C.ConnectionDto[] } }>(`/cities/${encodeURIComponent(slug)}`)).city),
+  market: async (slug: string) => A.toMarket(await get<C.MarketDto>(`/cities/${encodeURIComponent(slug)}/market`)),
+  overview: async () => A.toOverview(await get<C.OverviewDto>('/market/overview')),
+  ticker: async () => (await get<{ events: C.TickerEventDto[] }>('/ticker?limit=30')).events.map(A.toTicker),
 };
 
 export const tradeApi = {
-  trade: (b: { cityId: string; commodityId: string; side: TradeSide; quantity: number }) =>
-    post<TradeResult>('/trade', b),
-  inventory: () => get<Inventory>('/inventory'),
+  /** (draft) */
+  trade: async (b: { cityId: string; commodityId: string; side: TradeSide; quantity: number }) => {
+    const r = await post<C.TradeResultDto>('/trade', b);
+    return { player: A.toPlayer(r.player), inventory: A.toInventory(r.inventory) };
+  },
+  inventory: async () => A.toInventory(await get<C.InventoryDto>('/inventory')),
 };
 
 export const vehicleApi = {
-  types: () => get<VehicleType[]>('/vehicle-types'),
-  mine: () => get<Vehicle[]>('/vehicles'),
-  buy: (vehicleTypeId: string) => post<{ vehicle: Vehicle; player: Player }>('/vehicles', { vehicleTypeId }),
-  activate: (id: string) => post<Vehicle[]>(`/vehicles/${id}/activate`),
-  sell: (id: string) => post<{ player: Player }>(`/vehicles/${id}/sell`),
+  types: async () => (await get<{ vehicleTypes: C.VehicleTypeDto[] }>('/vehicle-types')).vehicleTypes,
+  mine: async () => (await get<{ vehicles: C.VehicleDto[] }>('/vehicles')).vehicles.map(A.toVehicle),
+  /** (draft) */
+  buy: async (vehicleTypeId: string) =>
+    A.toPlayer((await post<{ vehicle: C.VehicleDto; player: C.PlayerDto }>('/vehicles', { vehicleTypeId })).player),
+  /** (draft) */
+  activate: async (id: string) =>
+    (await post<{ vehicles: C.VehicleDto[] }>(`/vehicles/${id}/activate`)).vehicles.map(A.toVehicle),
+  /** (draft) */
+  sell: async (id: string) => A.toPlayer((await post<{ player: C.PlayerDto }>(`/vehicles/${id}/sell`)).player),
 };
 
 export const equipmentApi = {
-  types: () => get<EquipmentType[]>('/equipment-types'),
-  mine: () => get<PlayerEquipment[]>('/equipment'),
-  buy: (equipmentTypeId: string) =>
-    post<{ equipment: PlayerEquipment; player: Player }>('/equipment', { equipmentTypeId }),
+  types: async () => (await get<{ equipmentTypes: C.EquipmentTypeDto[] }>('/equipment-types')).equipmentTypes,
+  mine: async () => (await get<{ equipment: C.EquipmentDto[] }>('/equipment')).equipment.map(A.toEquipment),
+  /** (draft) */
+  buy: async (equipmentTypeId: string) =>
+    A.toPlayer((await post<{ equipment: C.EquipmentDto; player: C.PlayerDto }>('/equipment', { equipmentTypeId })).player),
 };
 
 export const travelApi = {
-  start: (toCityId: string) => post<Travel>('/travel', { toCityId }),
-  current: () => get<Travel | null>('/travel/current'),
+  /** (draft) */
+  start: async (toCityId: string) => A.toTravel((await post<{ travel: C.TravelDto }>('/travel', { toCityId })).travel)!,
+  current: async () => A.toTravel((await get<{ travel: C.TravelDto | null }>('/travel/current')).travel),
 };
 
 export const clanApi = {
-  list: () => get<ClanSummary[]>('/clans'),
-  get: (id: string) => get<ClanDetail>(`/clans/${id}`),
-  create: (b: { name: string; tag: string; description?: string }) => post<ClanDetail>('/clans', b),
-  invite: (id: string, playerName: string) => post<ClanInvite>(`/clans/${id}/invites`, { playerName }),
+  list: async () => (await get<{ clans: C.ClanListItemDto[] } & C.Page>('/clans?limit=100')).clans.map(A.toClanSummary),
+  get: async (id: string) => A.toClanDetail((await get<{ clan: C.ClanDetailDto }>(`/clans/${id}`)).clan),
+  /** (draft) */
+  create: async (b: { name: string; tag: string; description?: string }) =>
+    A.toClanDetail((await post<{ clan: C.ClanDetailDto }>('/clans', b)).clan),
+  /** (draft) */
+  invite: (id: string, playerName: string) => post<unknown>(`/clans/${id}/invites`, { playerName }),
+  /** (draft) */
   leave: (id: string) => post<void>(`/clans/${id}/leave`),
-  invites: () => get<ClanInvite[]>('/clan-invites'),
-  accept: (id: string) => post<ClanDetail>(`/clan-invites/${id}/accept`),
+  invites: async () => (await get<{ invites: C.ClanInviteDto[] }>('/clan-invites')).invites.map(A.toInvite),
+  /** (draft) */
+  accept: async (id: string) => A.toClanDetail((await post<{ clan: C.ClanDetailDto }>(`/clan-invites/${id}/accept`)).clan),
+  /** (draft) */
   decline: (id: string) => post<void>(`/clan-invites/${id}/decline`),
 };
 
 export const rankingApi = {
-  get: (type: RankingType) => get<Ranking>(`/rankings?type=${type}&limit=50`),
+  get: async (type: RankingType, me: { playerId?: string | null; clanId?: string | null }) =>
+    A.toRanking(await get<C.RankingDto>(`/rankings?type=${type}&limit=50`), me),
 };
 
 export const notificationApi = {
-  list: () => get<GameNotification[]>('/notifications'),
-  read: (id: string) => post<void>(`/notifications/${id}/read`),
-  readAll: () => post<void>('/notifications/read-all'),
+  list: async () => {
+    const r = await get<{ items: C.NotificationDto[]; unreadCount: number } & C.Page>('/notifications?limit=50');
+    return { items: r.items.map(A.toNotification), unreadCount: r.unreadCount, total: r.total };
+  },
+  read: (id: string) => post<unknown>(`/notifications/${id}/read`),
+  readAll: () => post<{ updated: number }>('/notifications/read-all'),
 };
