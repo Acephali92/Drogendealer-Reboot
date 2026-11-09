@@ -26,6 +26,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-017 | Kontolöschung pseudonymisiert statt Journale zu löschen | Akzeptiert (Details durch Agent 5) | 2026-11-08 |
 | ADR-018 | Gemeinsames Clan-Guthaben, Wahl eines neuen Paten | Akzeptiert (Wahlverfahren durch Agent 2) | 2026-11-08 |
 | ADR-019 | Geld überall in Cent (ganzzahlig) | Akzeptiert | 2026-11-09 |
+| ADR-020 | Datengetriebene Spielbilder mit Fallback | Akzeptiert | 2026-11-09 |
 
 ---
 
@@ -169,6 +170,18 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 - **Kontext:** Drei Bereiche haben unterschiedliche Geldeinheiten angenommen: Game Design (`parameters.toml`, `verify.py`) und Frontend rechnen in **Cent**, der Backend-Vertrag (`docs/api/API-CONTRACT.md`) in **ganzen Spielwährungs-Einheiten**. Das Game Design braucht Beträge unter 1 € (z. B. Spritpreis 185 ct/l, Umsatz und Wäsche pro Tick in ct).
 - **Entscheidung:** Alle Geldbeträge werden im gesamten System als **ganzzahlige Cent** geführt: in `parameters.toml`, in der Datenbank (`BigInt`), in der Spiellogik, im API-JSON (als String, z. B. `"3000000"` = 30.000,00 €) und im Frontend (`BigInt`). Umrechnung in Euro nur bei der Anzeige. Keine Gleitkommazahlen für Geld.
 - **Konsequenzen:** Agent 3 stellt Vertrag, Startwerte und Tests auf Cent um (T-109); da noch kein Spieler existiert, ist keine Datenmigration nötig. Agent 4 behält seine Cent-Logik. Agent 5 prüft, dass `BigInt` für Cent-Beträge im Late-Game reicht (ja: bis ca. 9,2 · 10^16 €). Agent 6 nutzt Cent in der Simulation.
+
+## ADR-020 – Datengetriebene Spielbilder mit Fallback
+- **Status:** Akzeptiert · **Datum:** 2026-11-09 · **Entschieden von:** Product Owner (Vorgabe: Bildpfade in `parameters.toml`, dynamisches Laden mit Fallback), Ausgestaltung Agent 1
+- **Kontext:** Waren, Fahrzeuge, Waffen, Schutzausrüstung, Crew und Raumschiffe sollen Bilder bekommen. Der Product Owner will Bilder selbst einstellen können, ohne Code anzufassen.
+- **Entscheidung:**
+  1. **Ablage:** `frontend/public/images/<kategorie>/` mit den Kategorien `goods`, `vehicles`, `weapons`, `armor`, `crew`, `ships`. Die Bilddateien liefert der Product Owner. Ordnerstruktur, Platzhalter (`_fallback.svg`) und Anleitung (`README.md`) betreut Agent 4. Herkunft und Lizenz fremder Bilder stehen in `QUELLEN.md`.
+  2. **Zuordnung nur in `parameters.toml` (Agent 2):** Jeder Eintrag bekommt ein optionales Feld `image`, relativ zu `images/` (z. B. `[goods.gras] image = "goods/gras.webp"`). Dazu ein Abschnitt `[images]` mit `fallback.<kategorie>` (z. B. `fallback.goods = "goods/_fallback.svg"`). Konvention: Dateiname = Schlüssel. Kein Bildpfad steht im Code.
+  3. **Prüfung:** `verify.py` prüft jeden `image`-Pfad: relativ, ohne `..`, Endung `.webp`, `.png` oder `.svg`, Kategorie passt zum Abschnitt. Fehlende Dateien sind eine Warnung, kein Fehler, weil der Fallback greift.
+  4. **API (Agent 3):** Endpunkte für Waren, Fahrzeuge, Ausrüstung und Schiffe liefern das Feld `image` (relativer Pfad oder `null`) aus `parameters.toml` mit aus (Teil von T-101). Bildpfade werden nicht in der Datenbank gespeichert.
+  5. **Frontend (Agent 4):** eine zentrale Komponente (z. B. `GameImage`) lädt das Bild aus `${BASE_URL}images/<image>`. Fallback-Kette: `image` fehlt oder lädt nicht → Kategorie-Platzhalter aus `[images]` → eingebautes neutrales Symbol. Dazu `loading="lazy"`, festes Seitenverhältnis (kein Layout-Springen) und `alt` = Anzeigename (`name`), nie der Schlüssel (ADR-013). Im Mock-Modus kommen die Pfade aus derselben `parameters.toml` (beim Build eingelesen), damit Mock und Backend identisch sind.
+  6. **Bildregeln:** WebP (bevorzugt), PNG oder SVG; quadratisch 512 × 512 px; höchstens 300 KB. Stil satirisch-comicartig (ADR-013): keine echten Markenlogos, keine realen Personen, keine realistischen Drogen- oder Konsumdarstellungen. Nur eigene oder passend lizenzierte Bilder.
+- **Konsequenzen:** Neue Bilder brauchen keine Code-Änderung, nur Datei plus Eintrag in `parameters.toml`. Ohne Bilder sieht das Spiel dank Fallback trotzdem vollständig aus. Bild-PRs prüft Agent 1 auf Format, Größe, Stil und Rechte. Bilder werden von Caddy als statische Dateien ausgeliefert (ADR-014); ein späterer Wechsel auf ein CDN ändert nur den Basis-Pfad.
 
 ---
 

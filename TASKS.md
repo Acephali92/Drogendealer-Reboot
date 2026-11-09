@@ -38,6 +38,10 @@
 | T-110 | Frontend-Nacharbeiten aus PR #3: Schriften selbst hosten (ADR-015), Mock-Default `off` in Production, CI `frontend.yml`, `UI-GUIDE.md` | A4 | todo | T-006 |
 | T-111 | Production-Start verweigern, wenn `JWT_SECRET` dem Platzhalter aus `.env.example` entspricht | A3 | todo | T-004 |
 | T-112 | Interne Schlüssel (`city.berlin`, Warenschlüssel) nie in der UI anzeigen, nur `name` (ADR-013) | A3 + A4 | todo | T-003 |
+| T-113 | `image`-Felder und `[images]`-Fallbacks in `parameters.toml`, Pfadprüfung in `verify.py` (ADR-020) | A2 | todo | – |
+| T-114 | API liefert `image` für Waren, Fahrzeuge, Ausrüstung, Schiffe aus `parameters.toml` (ADR-020) | A3 | todo | T-101, T-113 |
+| T-115 | `GameImage`-Komponente mit Fallback-Kette, Kategorie-Platzhalter `_fallback.svg`, Mocks aus `parameters.toml` (ADR-020) | A4 | todo | T-113 |
+| T-116 | Bilder für Waren, Fahrzeuge, Waffen usw. einstellen (`frontend/public/images/`) | Product Owner | jederzeit | – |
 
 ## M2 – Reisen & Spielerfortschritt
 
