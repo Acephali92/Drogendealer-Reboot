@@ -1,63 +1,106 @@
 # Balancing & Simulation
 
-> Verantwortlich: **Agent 6 – Game Balancing & Simulation Engineer**
-> Status: **Konzept v0.1** (2026-11-08) – noch kein Simulationscode.
+> Verantwortlich: **Agent 5 – Game Balancing & Simulation Engineer** (laut Product Owner gibt es fünf Agenten; `PROJECT.md` führt die Rolle noch als „Agent 6“).
+> Stand: 2026-11-09 · Basis: `main` @ `74790f7` mit Game Design (PR #4), Backend inkl. `backend/src/domain/` (PR #2/#6/#8/#9/#14), ADR-001…020.
 
-Dieser Ordner beschreibt, **wie** wir die Spielwirtschaft von Drogendealer-Reboot ausbalancieren und mit
-automatisierten Simulationen absichern. Grundlage ist eine **persistente Multiplayer-Welt** mit
-Echtzeit-Ticks (1 Tick = 10 min, 144 Ticks = 1 Tag) laut Game-Design von Agent 2.
+Dieser Ordner beschreibt die Spielökonomie von Drogendealer-Reboot fachlich, misst sie mit einer reproduzierbaren Simulation (`sim/`) und leitet daraus Balancing-Entscheidungen ab.
 
 ## Dokumente
 
 | Datei | Inhalt |
 |---|---|
-| [balancing-concept.md](balancing-concept.md) | Kern: die sieben Balancing-Fragen mit Modell, Messgrößen, Zielkorridoren, Szenarien und Stellschrauben |
-| [player-archetypes.md](player-archetypes.md) | Simulierte Spielertypen (Bots) inkl. adversarialer Exploit-Bots |
-| [exploit-catalog.md](exploit-catalog.md) | Bekannte Exploit-Klassen mit Invariante, Gegenmaßnahme und automatischem Test |
-| [simulation-spec.md](simulation-spec.md) | Technische Spezifikation der Simulations-Engine (Architektur, Szenarien, Outputs, CI) |
+| [GAME_BALANCING.md](GAME_BALANCING.md) | **Einstieg:** Ist-Analyse A–E, Designziele, KPIs mit Zielkorridoren, die sieben Balancing-Fragen, Risiko/Belohnung, Befunde und Empfehlungen |
+| [GAME_ECONOMY.md](GAME_ECONOMY.md) | Wirtschaftsmodell: Angebot/Nachfrage, Preisarten, Ereignisse, wirtschaftliche Eigendynamik, Geldquellen/-senken, Anforderungen an die Umsetzung |
+| [MARKET_SIMULATION.md](MARKET_SIMULATION.md) | Simulation: Architektur, Bedienung, Spielerprofile A–E, adversariale Bots, Szenarien, Metriken, CI |
+| [NPC_BEHAVIOR.md](NPC_BEHAVIOR.md) | NPC-Typen, Verhalten, Intensität k und Rückbau (R-4) |
+| [PROGRESSION_MODEL.md](PROGRESSION_MODEL.md) | Startkapital, Wachstumsphasen, Entwicklungsleiter, Rückschläge ohne Sackgasse, Langzeitziele, vermögensabhängige Senken |
+| [BALANCING_PARAMETERS.md](BALANCING_PARAMETERS.md) | Parameterverzeichnis (generiert aus `parameters.toml`) und Änderungsprotokoll |
+| [SIMULATION_RESULTS.md](SIMULATION_RESULTS.md) | Alle Simulationsläufe mit Hypothese, Setup, Messwerten und Auswertung |
+| [exploit-catalog.md](exploit-catalog.md) | Anhang: Exploit-Klassen mit Invariante, Gegenmaßnahme und Test |
 
-## Rollenabgrenzung
+## Zuständigkeit
 
-| Wer | Verantwortet | Artefakt |
+Entscheidung des Product Owners vom 2026-11-09: Die Zuständigkeit ist **nach Systemen geteilt**.
+
+| Bereich | Fachlich verantwortlich | Technische Umsetzung |
 |---|---|---|
-| Agent 2 – Game Designer | Formeln und **Parameterwerte** | `docs/game-design/*.md`, `docs/game-design/parameters.toml` |
-| **Agent 6 – Balancing** | **Zielkorridore (KPIs)**, Simulation, Befunde, **Änderungsvorschläge** für Parameter | `docs/balancing/*`, später `sim/` |
-| Agent 3 – Backend | Implementierung der Formeln als reine Domain-Funktionen | `backend/` |
-| Agent 5 – Datenbank | Ledger, aus dem sich jede Preis- und Geldänderung rekonstruieren lässt (Kalibrierung) | DB-Schema |
+| Spielökonomie, Preise, Angebot/Nachfrage, Warenverfügbarkeit, Marktdynamik, Wirtschaftsereignisse, NPC-Verhalten (Markt), Progression, Schwierigkeit, Risiko/Belohnung, Langzeitmotivation, Simulation | **Agent 5 (Balancing)** | Agent 3 (Backend) |
+| Kampf, Clans, Geldwäsche, Immobilien, Weltraum, Reisen/Kontrollen | Agent 2 (Game Design) | Agent 3 |
+| `docs/game-design/parameters.toml` (Datei) | Agent 2 pflegt die Datei. Änderungen in den Wirtschafts-/NPC-Abschnitten bringt Agent 5 per PR ein und stimmt sie mit Agent 2 ab. | – |
 
-Grundsatz: **Agent 6 setzt keine Spielparameter selbst.** Alle Zahlenwerte stehen ausschließlich in
-`parameters.toml`. Agent 6 definiert, *welches Ergebnis* die Parameter erzeugen sollen, misst es per
-Simulation und schlägt Änderungen per Pull Request an Agent 2 vor.
+Die ADR dazu muss Agent 1 noch anlegen.
 
-## Balancing-Workflow
+Werte stehen **nur** in `parameters.toml`. Noch nicht beschlossene Vorschläge stehen in `sim/proposals.toml` und werden ausschließlich in Simulationsvarianten genutzt.
 
-```
- parameters.toml ──► Simulation (N Seeds × Szenarien) ──► KPI-Report (Ampel)
-        ▲                                                       │
-        │            Änderungsvorschlag (PR an Agent 2)         │ rot/gelb
-        └───────────────────────────────────────────────────────┘
-```
+## Arbeitsweise
 
-1. **Hypothese**: Ein KPI liegt außerhalb seines Zielkorridors (Simulation, Live-Telemetrie oder Spieler-Feedback).
-2. **Sensitivitätsanalyse**: Ein Parameter-Sweep zeigt, welche Stellschrauben den KPI am stärksten bewegen.
-3. **Vorschlag**: Minimale Parameteränderung, die den KPI in den Korridor bringt, **ohne** andere KPIs rot zu färben.
-4. **Review** durch Agent 2 (Design-Intention) und Agent 1 (Gesamtsystem).
-5. **Regression**: Der nächtliche CI-Lauf `balance-check` hält alle Korridore dauerhaft grün.
+Jede größere Balancing-Änderung durchläuft dieselben Schritte:
 
-## KPI-Glossar (Kurzfassung)
+1. Problem identifizieren.
+2. Ursache analysieren.
+3. Hypothese formulieren.
+4. Erwartete Wirkung beschreiben.
+5. Simulieren.
+6. Auswerten.
+7. **Genau einen** Parameter anpassen.
+8. Erneut simulieren.
+9. Dokumentieren.
+10. Mit Agent 1 und Agent 3 abstimmen.
 
-| Kürzel | Bedeutung |
+Jedes Experiment in `sim/src/scenarios.ts` ändert genau eine Sache gegenüber der Basis.
+
+**Kennzeichnung in allen Dokumenten:**
+
+| Marke | Bedeutung |
 |---|---|
-| `NW(t)` | Nettovermögen eines Spielers zum Zeitpunkt t (Schwarz- + Weißgeld + Warenwert + Sachwerte) |
-| `IPH` | Einkommen pro aktiver Spielstunde (Income per Hour) |
-| `TTM(m)` | Zeit bis Meilenstein m (Time to Milestone), in Spieltagen |
-| `RDI` | Route-Dominanz-Index = Gewinn/Tick der besten Route ÷ Median der profitablen Routen |
-| `Slip(q)` | Durchschnittliche Preisverschlechterung einer Order der Menge q |
-| `T½` | Halbwertszeit der Preiserholung nach einem Schock |
-| `Gini` | Gini-Koeffizient des Nettovermögens aktiver Spieler |
-| `Top1%` | Vermögensanteil des reichsten Prozents |
-| `GAP14` | IPH eines Neulings an Tag 14 ÷ IPH eines Veteranen |
-| `VLQ` | Victim-Loss-Quote: PvP-Verlust pro Tag ÷ Tageseinkommen des Opfers |
-| `SFR` | Sink/Faucet-Ratio: Geldsenken ÷ Geldquellen pro Tag, serverweit |
+| **[gemessen]** | Ergebnis eines Simulationslaufs, siehe [SIMULATION_RESULTS.md](SIMULATION_RESULTS.md) |
+| **[Regel]** | beschlossene Formel oder beschlossener Wert in `docs/game-design/` |
+| **[Design]** | Vorschlag von Agent 5, noch nicht beschlossen |
+| **[Annahme]** | Modellannahme der Simulation |
+| **[Hypothese]** | noch ungetestete Erwartung |
 
-Die vollständigen Definitionen und Zielkorridore stehen in [balancing-concept.md](balancing-concept.md).
+## Simulation in drei Befehlen
+
+```bash
+cd sim && npm ci
+```
+
+```bash
+npm test
+```
+
+```bash
+npm run sim -- run base-short
+```
+
+Mehr dazu in [MARKET_SIMULATION.md §2](MARKET_SIMULATION.md#2-bedienung).
+
+## Abdeckung des Auftrags
+
+| Auftrag | Wo |
+|---|---|
+| Phase 1 – Analyse A–E | [GAME_BALANCING.md §1](GAME_BALANCING.md#1-ist-analyse) |
+| Phase 2 – Angebot/Nachfrage, Preise, Dynamik | [GAME_ECONOMY.md](GAME_ECONOMY.md) |
+| Phase 3 – NPC- und Marktsimulation | [NPC_BEHAVIOR.md](NPC_BEHAVIOR.md), [MARKET_SIMULATION.md](MARKET_SIMULATION.md) |
+| Phase 4 – Progression und Balance | [PROGRESSION_MODEL.md](PROGRESSION_MODEL.md), [GAME_BALANCING.md](GAME_BALANCING.md) |
+| Phase 5 – Simulation A–E, kurz- und langfristig | [SIMULATION_RESULTS.md](SIMULATION_RESULTS.md) |
+| Phase 6 – Parameterverzeichnis | [BALANCING_PARAMETERS.md](BALANCING_PARAMETERS.md) |
+| Phase 7 – Dokumentation | dieser Ordner |
+| Verantwortungsbereiche 1–4 (Ökonomie, Preise, Angebot/Nachfrage, Verfügbarkeit) | GAME_ECONOMY §2–3 |
+| 5 NPC-Verhalten | NPC_BEHAVIOR |
+| 6–7 Marktdynamik, Ereignisse | GAME_ECONOMY §4–5 |
+| 8–9 Progression, Schwierigkeitskurven | PROGRESSION_MODEL |
+| 10 Risiko/Belohnung | GAME_BALANCING §4 |
+| 11 Langzeitmotivation | PROGRESSION_MODEL §7–8 |
+| 12 Simulationstests | MARKET_SIMULATION, SIMULATION_RESULTS, `sim/test/` |
+
+## Definition of Done – Stand
+
+| Kriterium | Stand |
+|---|---|
+| 1–4 Funktion, Wirkung, Parameter, Abhängigkeiten | erfüllt für Handel, Preise, Ereignisse, NPC-Händler, Reisen/Kontrollen |
+| 5 Spielertypen getestet | erfüllt (A–E, 10–150 Spieler) |
+| 6 Langfristige Auswirkungen | erfüllt (365 Tage) |
+| 7 Nachvollziehbar | erfüllt (Seeds, Parameter-Hash, deterministisch) |
+| 8 Agent 3 bestätigt Umsetzung | **teilweise**: Der Zufall (F-GLB-01/02) ist im Backend umgesetzt und wird von der Simulation genutzt. Die Wirtschaftsregeln (T-103) fehlen noch. |
+| 9 Keine kritischen Balancing-Probleme | **offen**: siehe kritische Befunde in [GAME_BALANCING.md §6](GAME_BALANCING.md#6-befunde-und-empfehlungen) |
