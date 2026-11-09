@@ -54,6 +54,7 @@ demand_wealth_exponent = 1.0      # β: reiche Städte konsumieren mehr
 # realm       "earth" | "space"     (Herkunftswelt, bestimmt Standardmärkte)
 
 [goods.gras]
+image = "goods/gras.webp"
 name = "Grünzeug"
 realm = "earth"
 base_price = 1_000
@@ -64,6 +65,7 @@ spoil_rate = 0.0001
 heat = 0.5
 
 [goods.haschisch]
+image = "goods/haschisch.webp"
 name = "Krümelbrocken"
 realm = "earth"
 base_price = 1_200
@@ -74,6 +76,7 @@ spoil_rate = 0.0
 heat = 0.6
 
 [goods.pilze]
+image = "goods/pilze.webp"
 name = "Zauberschwammerl"
 realm = "earth"
 base_price = 1_500
@@ -84,6 +87,7 @@ spoil_rate = 0.002
 heat = 0.7
 
 [goods.speed]
+image = "goods/speed.webp"
 name = "Turboflocken"
 realm = "earth"
 base_price = 2_000
@@ -94,6 +98,7 @@ spoil_rate = 0.0
 heat = 1.0
 
 [goods.ecstasy]
+image = "goods/ecstasy.webp"
 name = "Grinsepillen"
 realm = "earth"
 base_price = 1_000
@@ -104,6 +109,7 @@ spoil_rate = 0.0
 heat = 1.0
 
 [goods.lsd]
+image = "goods/lsd.webp"
 name = "Bunte Briefmarken"
 realm = "earth"
 base_price = 1_500
@@ -114,6 +120,7 @@ spoil_rate = 0.0
 heat = 1.0
 
 [goods.kokain]
+image = "goods/kokain.webp"
 name = "Schneegestöber"
 realm = "earth"
 base_price = 8_000
@@ -124,6 +131,7 @@ spoil_rate = 0.0
 heat = 1.5
 
 [goods.heroin]
+image = "goods/heroin.webp"
 name = "Dämmerpulver"
 realm = "earth"
 base_price = 6_000
@@ -134,6 +142,7 @@ spoil_rate = 0.0
 heat = 2.0
 
 [goods.sternenstaub]
+image = "goods/sternenstaub.webp"
 name = "Sternenstaub"
 realm = "space"
 base_price = 50_000
@@ -144,6 +153,7 @@ spoil_rate = 0.0
 heat = 3.0
 
 [goods.mondkristall]
+image = "goods/mondkristall.webp"
 name = "Mondkristall"
 realm = "space"
 base_price = 30_000
@@ -154,6 +164,7 @@ spoil_rate = 0.0
 heat = 1.0
 
 [goods.marsmoos]
+image = "goods/marsmoos.webp"
 name = "Marsmoos"
 realm = "space"
 base_price = 20_000
@@ -164,6 +175,7 @@ spoil_rate = 0.001
 heat = 1.5
 
 [goods.nullgrav]
+image = "goods/nullgrav.webp"
 name = "Nullgrav-Kapseln"
 realm = "space"
 base_price = 80_000
@@ -337,6 +349,7 @@ debt_repayment_rate = 0.5         # Anteil künftiger Verkaufserlöse zur Schuld
 vehicle_resale_rate = 0.6
 
 [vehicles.kleinwagen]
+image = "vehicles/kleinwagen.webp"
 name = "Kleinwagen"
 price = 800_000
 speed = 100                       # km/h
@@ -345,6 +358,7 @@ capacity = 300
 hide = 0.10                       # Versteckbonus gegen Kontrollen
 
 [vehicles.transporter]
+image = "vehicles/transporter.webp"
 name = "Transporter"
 price = 2_500_000
 speed = 85
@@ -353,6 +367,7 @@ capacity = 1_500
 hide = 0.0
 
 [vehicles.sportwagen]
+image = "vehicles/sportwagen.webp"
 name = "Sportwagen"
 price = 6_000_000
 speed = 150
@@ -361,6 +376,7 @@ capacity = 150
 hide = 0.20
 
 [vehicles.lkw]
+image = "vehicles/lkw.webp"
 name = "LKW mit Schmuggelversteck"
 price = 9_000_000
 speed = 75
@@ -477,33 +493,42 @@ attack_cooldown_ticks = 3
 heat_attack = 15.0
 
 [weapons.messer]
+image = "weapons/messer.webp"
 strength = 5
 price = 50_000
 [weapons.pistole]
+image = "weapons/pistole.webp"
 strength = 20
 price = 300_000
 [weapons.mp]
+image = "weapons/mp.webp"
 strength = 45
 price = 1_500_000
 [weapons.sturmgewehr]
+image = "weapons/sturmgewehr.webp"
 strength = 80
 price = 4_000_000
 
 [armor.lederjacke]
+image = "armor/lederjacke.webp"
 strength = 5
 price = 30_000
 [armor.weste]
+image = "armor/weste.webp"
 strength = 15
 price = 250_000
 [armor.plattenweste]
+image = "armor/plattenweste.webp"
 strength = 35
 price = 1_200_000
 
 [crew.schlaeger]
+image = "crew/schlaeger.webp"
 strength = 8
 hire = 100_000
 upkeep = 150                      # ct pro Tick
 [crew.profi]
+image = "crew/profi.webp"
 strength = 20
 hire = 500_000
 upkeep = 400
@@ -716,6 +741,7 @@ demand = { marsmoos = 3.0, nullgrav = 2.0 }
 "ceres-mars" = 190_000
 
 [ships.shuttle]
+image = "ships/shuttle.webp"
 name = "Shuttle"
 price = 50_000_000
 speed = 200.0                     # Tkm/h
@@ -725,6 +751,7 @@ strength = 20.0
 range = 500                       # max. Distanz pro Flug in Tkm
 
 [ships.frachter]
+image = "ships/frachter.webp"
 name = "Frachter"
 price = 300_000_000
 speed = 10_000.0
@@ -734,6 +761,7 @@ strength = 40.0
 range = 300_000
 
 [ships.kreuzer]
+image = "ships/kreuzer.webp"
 name = "Kreuzer"
 price = 800_000_000
 speed = 20_000.0
@@ -777,6 +805,23 @@ handover_miss_days = 7            # so lange verfehlt → k steigt wieder
 handover_step = 0.1
 handover_step_days = 7            # weitere Schritte im Wochenabstand
 handover_top_routes = 10
+
+# -----------------------------------------------------------------------------
+# Bilder (ADR-020) – Pfade relativ zu frontend/public/images/
+# Konvention: <kategorie>/<schlüssel>.webp (auch .png/.svg erlaubt). Fehlt eine Datei oder
+# lässt sie sich nicht laden, zeigt das Frontend den Fallback der Kategorie.
+# -----------------------------------------------------------------------------
+[images]
+base_dir = "frontend/public/images"
+allowed_extensions = [".webp", ".png", ".svg"]
+
+[images.fallback]
+goods = "goods/_fallback.svg"
+vehicles = "vehicles/_fallback.svg"
+weapons = "weapons/_fallback.svg"
+armor = "armor/_fallback.svg"
+crew = "crew/_fallback.svg"
+ships = "ships/_fallback.svg"
 
 # -----------------------------------------------------------------------------
 # Wertebereiche für die Invariantenprüfung: "abschnitt.schluessel" = [min, max]
