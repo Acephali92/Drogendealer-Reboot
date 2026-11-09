@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { Gauge, Lock, Package, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Vehicle } from '@/api/types';
-import { useActivateVehicle, useBuyVehicle, useSellVehicle, useVehicleTypes, useVehicles } from '@/api/queries';
+import {
+  useActivateVehicle,
+  useBuyVehicle,
+  useSellVehicle,
+  useVehicleTypes,
+  useVehicles,
+} from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -40,7 +46,8 @@ export function VehiclesPage() {
   const sell = useSellVehicle();
   const [selling, setSelling] = useState<Vehicle | null>(null);
   if (!player) return null;
-  const resale = (v: Vehicle) => (toCents(v.vehicleType.price) * BigInt(Math.round(v.condition * 0.6))) / 100n;
+  const resale = (v: Vehicle) =>
+    (toCents(v.vehicleType.price) * BigInt(Math.round(v.condition * 0.6))) / 100n;
 
   return (
     <div className="space-y-8">
@@ -69,15 +76,28 @@ export function VehiclesPage() {
                   <VehicleArt slug={v.vehicleType.slug} className="h-14 w-28 shrink-0" />
                 </div>
                 <dl className="mt-3 grid grid-cols-3 gap-2">
-                  <Spec icon={<Package className="h-3 w-3" />} label={t('vehicles.capacity')} value={formatWeight(v.vehicleType.capacityG)} />
-                  <Spec icon={<Gauge className="h-3 w-3" />} label={t('vehicles.speed')} value={`${v.vehicleType.speedKmh} km/h`} />
+                  <Spec
+                    icon={<Package className="h-3 w-3" />}
+                    label={t('vehicles.capacity')}
+                    value={formatWeight(v.vehicleType.capacityG)}
+                  />
+                  <Spec
+                    icon={<Gauge className="h-3 w-3" />}
+                    label={t('vehicles.speed')}
+                    value={`${v.vehicleType.speedKmh} km/h`}
+                  />
                   <Spec
                     icon={<Wrench className="h-3 w-3" />}
                     label={t('vehicles.condition')}
                     value={
                       <span className="flex items-center gap-2 whitespace-nowrap">
                         {v.condition}&nbsp;%
-                        <ProgressBar value={v.condition / 100} tone={v.condition < 40 ? 'danger' : 'neon'} size="xs" className="w-10" />
+                        <ProgressBar
+                          value={v.condition / 100}
+                          tone={v.condition < 40 ? 'danger' : 'neon'}
+                          size="xs"
+                          className="w-10"
+                        />
                       </span>
                     }
                   />
@@ -91,7 +111,8 @@ export function VehiclesPage() {
                       loading={activate.isPending && activate.variables === v.id}
                       onClick={() =>
                         activate.mutate(v.id, {
-                          onSuccess: () => toast.success(t('vehicles.activated', { name: v.vehicleType.name })),
+                          onSuccess: () =>
+                            toast.success(t('vehicles.activated', { name: v.vehicleType.name })),
                           onError: (e) => toast.error(errorMessage(e)),
                         })
                       }
@@ -114,25 +135,42 @@ export function VehiclesPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {types.isPending && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-60" />)}
           {types.data?.map((vt, i) => {
-            const locked = player.level < vt.licenseClass;
+            const locked = vt.licenseClass !== null && player.level < vt.licenseClass;
             const poor = toCents(vt.price) > toCents(player.cash);
             return (
-              <article key={vt.id} className="panel animate-fade-up overflow-hidden" style={{ animationDelay: `${i * 40}ms` }}>
+              <article
+                key={vt.id}
+                className="panel animate-fade-up overflow-hidden"
+                style={{ animationDelay: `${i * 40}ms` }}
+              >
                 <div className="relative grid h-32 place-items-center bg-gradient-to-b from-surface-3/60 to-surface">
                   <VehicleArt slug={vt.slug} className="h-24 w-48" />
-                  <Badge tone={locked ? 'danger' : 'neutral'} className="absolute left-3 top-3">
-                    {locked && <Lock className="h-3 w-3" />}
-                    {t('vehicles.licenseClass', { n: vt.licenseClass })}
-                  </Badge>
+                  {vt.licenseClass !== null && (
+                    <Badge tone={locked ? 'danger' : 'neutral'} className="absolute left-3 top-3">
+                      {locked && <Lock className="h-3 w-3" />}
+                      {t('vehicles.licenseClass', { n: vt.licenseClass })}
+                    </Badge>
+                  )}
                 </div>
                 <div className="p-4">
                   <div className="flex items-baseline justify-between gap-2">
                     <h3 className="font-display text-lg font-semibold text-ink">{vt.name}</h3>
-                    <Money value={vt.price} className={cn('font-semibold', poor ? 'text-danger' : 'text-brass')} />
+                    <Money
+                      value={vt.price}
+                      className={cn('font-semibold', poor ? 'text-danger' : 'text-brass')}
+                    />
                   </div>
                   <dl className="mt-3 grid grid-cols-2 gap-2">
-                    <Spec icon={<Package className="h-3 w-3" />} label={t('vehicles.capacity')} value={formatWeight(vt.capacityG)} />
-                    <Spec icon={<Gauge className="h-3 w-3" />} label={t('vehicles.speed')} value={`${vt.speedKmh} km/h`} />
+                    <Spec
+                      icon={<Package className="h-3 w-3" />}
+                      label={t('vehicles.capacity')}
+                      value={formatWeight(vt.capacityG)}
+                    />
+                    <Spec
+                      icon={<Gauge className="h-3 w-3" />}
+                      label={t('vehicles.speed')}
+                      value={`${vt.speedKmh} km/h`}
+                    />
                   </dl>
                   <Button
                     className="mt-4 w-full"
@@ -183,7 +221,10 @@ export function VehiclesPage() {
       >
         {selling && (
           <p className="text-sm text-ink-muted">
-            {t('vehicles.sellConfirm', { name: selling.vehicleType.name, price: formatMoney(resale(selling)) })}
+            {t('vehicles.sellConfirm', {
+              name: selling.vehicleType.name,
+              price: formatMoney(resale(selling)),
+            })}
           </p>
         )}
       </Modal>

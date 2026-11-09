@@ -3,8 +3,17 @@ import { Handshake, Route, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CityArt } from '@/components/ui/CityArt';
 import { Logo } from '@/components/layout/Logo';
+import { LegalLinks } from '@/features/legal/LegalLinks';
 
-export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+export function AuthLayout({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+}) {
   const { t } = useTranslation();
   const features = [
     { icon: Handshake, text: t('auth.features.trade') },
@@ -42,6 +51,10 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
           <h1 className="text-3xl font-bold text-ink">{title}</h1>
           <p className="mb-8 mt-2 text-sm text-ink-muted">{subtitle}</p>
           {children}
+          <p className="mt-10 rounded-lg border border-danger/30 bg-danger/5 p-3 text-xs text-ink-muted">
+            <strong className="text-danger">{t('auth.ageNotice')}:</strong> {t('auth.ageNoticeText')}
+          </p>
+          <LegalLinks className="mt-4 justify-center" />
         </div>
       </div>
     </div>

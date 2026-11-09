@@ -1,74 +1,272 @@
 /**
- * Platzhalter-Spieldaten für den Mock-Server.
- * Werden ersetzt, sobald Agent 2 `parameters.toml` und Agent 3 die Seeds liefert.
- * Geld in Cent, Gewicht in Gramm.
+ * Mock-Spieldaten, abgeleitet aus docs/game-design/parameters.toml (Agent 2, v0.1.0).
+ * Anzeigenamen sind satirisch-fiktiv (ADR-013); Schlüssel/Slugs sind technisch und werden
+ * nie angezeigt (T-112). Geld in ganzzahligen Cent (ADR-019).
+ *
+ * Abweichung, bis Backend/Game Design sie klären: Die Spezifikation rechnet Laderaum in
+ * Volumeneinheiten, der API-Vertrag in Gramm. Der Mock setzt 1 Volumeneinheit = VOLUME_G Gramm.
  */
+
+export const VOLUME_G = 100;
 
 export interface CitySeed {
   slug: string;
   name: string;
   country: string;
-  lat: number;
-  lon: number;
-  techLevel: number;
-  policeStrength: number;
-  population: number;
+  /** Einwohner in Tausend */
+  pop: number;
+  wealth: number;
+  /** 0–1 */
+  police: number;
+  /** ct pro Liter */
+  fuelPrice: number;
+  supply: Record<string, number>;
+  demand: Record<string, number>;
   description: string;
 }
 
 export const CITIES: CitySeed[] = [
-  { slug: 'altea', name: 'Altea', country: 'Spanien', lat: 38.6, lon: -0.05, techLevel: 2, policeStrength: 25, population: 22000, description: 'Weiße Häuser, blaue Kuppel, Touristen mit zu viel Bargeld.' },
-  { slug: 'amiens', name: 'Amiens', country: 'Frankreich', lat: 49.89, lon: 2.3, techLevel: 3, policeStrength: 40, population: 134000, description: 'Ruhige Kathedralenstadt. Gerade deshalb fällt hier keiner auf.' },
-  { slug: 'amsterdam', name: 'Amsterdam', country: 'Niederlande', lat: 52.37, lon: 4.9, techLevel: 5, policeStrength: 30, population: 870000, description: 'Grachten, Coffeeshops und ein Hafen, der niemals schläft.' },
-  { slug: 'athen', name: 'Athen', country: 'Griechenland', lat: 37.98, lon: 23.73, techLevel: 3, policeStrength: 35, population: 664000, description: 'Unter der Akropolis wird mehr gehandelt als Oliven.' },
-  { slug: 'barcelona', name: 'Barcelona', country: 'Spanien', lat: 41.39, lon: 2.17, techLevel: 4, policeStrength: 45, population: 1620000, description: 'Partyhauptstadt am Mittelmeer. Die Nachfrage ist riesig.' },
-  { slug: 'basel', name: 'Basel', country: 'Schweiz', lat: 47.56, lon: 7.59, techLevel: 5, policeStrength: 70, population: 178000, description: 'Pharma-Labore und Banken. Diskretion hat ihren Preis.' },
-  { slug: 'belfast', name: 'Belfast', country: 'Nordirland', lat: 54.6, lon: -5.93, techLevel: 3, policeStrength: 55, population: 345000, description: 'Rau, ehrlich, verschwiegen. Wer redet, verliert.' },
-  { slug: 'berlin', name: 'Berlin', country: 'Deutschland', lat: 52.52, lon: 13.4, techLevel: 5, policeStrength: 50, population: 3700000, description: 'Arm, aber sexy. Die Clubs laufen bis Montagmittag.' },
-  { slug: 'coventry', name: 'Coventry', country: 'England', lat: 52.41, lon: -1.51, techLevel: 3, policeStrength: 45, population: 345000, description: 'Industriestadt mit kurzen Wegen nach London.' },
-  { slug: 'frankfurt', name: 'Frankfurt', country: 'Deutschland', lat: 50.11, lon: 8.68, techLevel: 5, policeStrength: 60, population: 760000, description: 'Banken oben, Bahnhofsviertel unten. Hier wird Geld gewaschen.' },
-  { slug: 'madrid', name: 'Madrid', country: 'Spanien', lat: 40.42, lon: -3.7, techLevel: 4, policeStrength: 50, population: 3300000, description: 'Die Nacht beginnt um Mitternacht. Das Geschäft auch.' },
-  { slug: 'portsmouth', name: 'Portsmouth', country: 'England', lat: 50.82, lon: -1.09, techLevel: 3, policeStrength: 40, population: 208000, description: 'Fährhafen zum Kontinent. Ideal für größere Ladungen.' },
+  {
+    slug: 'berlin',
+    name: 'Pleitenberg',
+    country: 'Deutschland',
+    pop: 3700,
+    wealth: 1.0,
+    police: 0.55,
+    fuelPrice: 185,
+    supply: { speed: 1.5, ecstasy: 1.5 },
+    demand: { speed: 1.4, ecstasy: 1.6 },
+    description:
+      'Arm, aber sexy. Die Clubs laufen bis Montagmittag, die Baustellen bis zum Jüngsten Gericht.',
+  },
+  {
+    slug: 'hamburg',
+    name: 'Schmuddelhafen',
+    country: 'Deutschland',
+    pop: 1850,
+    wealth: 1.2,
+    police: 0.65,
+    fuelPrice: 185,
+    supply: { kokain: 2.0, heroin: 1.5 },
+    demand: {},
+    description:
+      'Containerkräne, Nebel und Fischbrötchen. Was im Hafen vom Laster fällt, landet hier auf dem Markt.',
+  },
+  {
+    slug: 'muenchen',
+    name: 'Protzingen',
+    country: 'Deutschland',
+    pop: 1500,
+    wealth: 1.6,
+    police: 0.8,
+    fuelPrice: 190,
+    supply: { kokain: 0.5, gras: 0.6, haschisch: 0.7 },
+    demand: { kokain: 1.4 },
+    description: 'Lederhosen, Leasingwagen und eine Polizei, die nichts anderes zu tun hat.',
+  },
+  {
+    slug: 'koeln',
+    name: 'Klüngelheim',
+    country: 'Deutschland',
+    pop: 1080,
+    wealth: 1.1,
+    police: 0.6,
+    fuelPrice: 185,
+    supply: {},
+    demand: { gras: 1.3 },
+    description: 'Man kennt sich, man hilft sich. Das Kölsch ist klein, die Kundschaft durstig.',
+  },
+  {
+    slug: 'frankfurt',
+    name: 'Bankfurt',
+    country: 'Deutschland',
+    pop: 770,
+    wealth: 1.5,
+    police: 0.7,
+    fuelPrice: 185,
+    supply: { heroin: 1.3 },
+    demand: { kokain: 1.5 },
+    description: 'Oben Glastürme, unten Bahnhofsviertel. Hier wird Geld gewaschen, bis es quietscht.',
+  },
+  {
+    slug: 'leipzig',
+    name: 'Plattenhausen',
+    country: 'Deutschland',
+    pop: 620,
+    wealth: 0.8,
+    police: 0.5,
+    fuelPrice: 180,
+    supply: { speed: 2.5 },
+    demand: {},
+    description: 'Plattenbau-Charme und Küchenlabore. Turboflocken gibt es hier fast vom Fass.',
+  },
+  {
+    slug: 'amsterdam',
+    name: 'Qualmsterdam',
+    country: 'Niederlande',
+    pop: 900,
+    wealth: 1.3,
+    police: 0.3,
+    fuelPrice: 200,
+    supply: { gras: 3.0, haschisch: 3.0, pilze: 3.0, ecstasy: 2.0 },
+    demand: {},
+    description: 'Grachten, Fahrräder und eine Rauchwolke, die man vom Weltraum aus sieht.',
+  },
+  {
+    slug: 'rotterdam',
+    name: 'Containerdam',
+    country: 'Niederlande',
+    pop: 650,
+    wealth: 1.0,
+    police: 0.45,
+    fuelPrice: 200,
+    supply: { kokain: 2.5, heroin: 1.8 },
+    demand: {},
+    description: 'Europas größter Hafen. Ein Container mehr oder weniger fällt nicht auf.',
+  },
 ];
+
+/** Straßendistanzen in km, Schlüssel alphabetisch „a-b“ (parameters.toml [distances]). */
+export const DISTANCES: Record<string, number> = {
+  'amsterdam-berlin': 655,
+  'amsterdam-frankfurt': 440,
+  'amsterdam-hamburg': 465,
+  'amsterdam-koeln': 260,
+  'amsterdam-leipzig': 650,
+  'amsterdam-muenchen': 830,
+  'amsterdam-rotterdam': 80,
+  'berlin-frankfurt': 545,
+  'berlin-hamburg': 289,
+  'berlin-koeln': 575,
+  'berlin-leipzig': 190,
+  'berlin-muenchen': 585,
+  'berlin-rotterdam': 700,
+  'frankfurt-hamburg': 490,
+  'frankfurt-koeln': 190,
+  'frankfurt-leipzig': 395,
+  'frankfurt-muenchen': 395,
+  'frankfurt-rotterdam': 440,
+  'hamburg-koeln': 425,
+  'hamburg-leipzig': 395,
+  'hamburg-muenchen': 775,
+  'hamburg-rotterdam': 490,
+  'koeln-leipzig': 500,
+  'koeln-muenchen': 575,
+  'koeln-rotterdam': 250,
+  'leipzig-muenchen': 430,
+  'leipzig-rotterdam': 680,
+  'muenchen-rotterdam': 820,
+};
 
 export interface CommoditySeed {
   slug: string;
   name: string;
   description: string;
-  illegal: boolean;
-  unitWeightG: number;
-  /** Basispreis pro Einheit in Cent */
+  /** Lagereinheiten pro Einheit */
+  volume: number;
+  /** ct pro Einheit */
   basePrice: number;
+  /** Heat-Faktor */
+  heat: number;
 }
 
 export const COMMODITIES: CommoditySeed[] = [
-  { slug: 'gras', name: 'Gras', description: 'Grünes Gold aus dem Gewächshaus. Der Klassiker für Einsteiger.', illegal: true, unitWeightG: 1, basePrice: 900 },
-  { slug: 'haschisch', name: 'Haschisch', description: 'Gepresst, in Folie, mit Stempel. Reist gut und riecht wenig.', illegal: true, unitWeightG: 1, basePrice: 1100 },
-  { slug: 'amphetamine', name: 'Amphetamine', description: 'Aus Küchenlaboren übereifriger Chemiestudenten. Hält die Nacht am Laufen.', illegal: true, unitWeightG: 1, basePrice: 3500 },
-  { slug: 'ecstasy', name: 'Ecstasy', description: 'Bunte Pillen mit Logos. Am Wochenende kaum zu bekommen.', illegal: true, unitWeightG: 1, basePrice: 1500 },
-  { slug: 'lsd', name: 'LSD', description: 'Kleine Papierchen, große Reisen. Leicht, aber begehrt.', illegal: true, unitWeightG: 1, basePrice: 1200 },
-  { slug: 'angel-dust', name: 'Angel Dust', description: 'Starkes Zeug mit hohem Suchtpotenzial. Nichts für Anfänger.', illegal: true, unitWeightG: 1, basePrice: 5100 },
-  { slug: 'crack', name: 'Crack', description: 'Gestrecktes Kokain, billig im Einkauf, schnell verkauft.', illegal: true, unitWeightG: 1, basePrice: 2500 },
-  { slug: 'kokain', name: 'Kokain', description: 'Weißes Pulver, große Margen, große Risiken.', illegal: true, unitWeightG: 1, basePrice: 8000 },
-  { slug: 'heroin', name: 'Heroin', description: 'Das härteste Geschäft der Straße. Hohe Preise, hohe Hitze.', illegal: true, unitWeightG: 1, basePrice: 6500 },
+  {
+    slug: 'gras',
+    name: 'Grünzeug',
+    description: 'Biologisch angebaut, behauptet zumindest der Gärtner. Der Klassiker für Einsteiger.',
+    volume: 2,
+    basePrice: 1000,
+    heat: 0.5,
+  },
+  {
+    slug: 'haschisch',
+    name: 'Krümelbrocken',
+    description: 'Gepresst, in Folie, mit Stempel. Reist gut und krümelt überall.',
+    volume: 1,
+    basePrice: 1200,
+    heat: 0.6,
+  },
+  {
+    slug: 'pilze',
+    name: 'Zauberschwammerl',
+    description: 'Aus dem Wald, aus dem Keller, aus dem Märchen. Verdirbt schneller als dir lieb ist.',
+    volume: 2,
+    basePrice: 1500,
+    heat: 0.7,
+  },
+  {
+    slug: 'speed',
+    name: 'Turboflocken',
+    description: 'Für Leute, die ihre Steuererklärung in zwölf Minuten machen wollen.',
+    volume: 1,
+    basePrice: 2000,
+    heat: 1.0,
+  },
+  {
+    slug: 'ecstasy',
+    name: 'Grinsepillen',
+    description: 'Bunte Pillen mit Logos. Am Wochenende kaum zu bekommen.',
+    volume: 1,
+    basePrice: 1000,
+    heat: 1.0,
+  },
+  {
+    slug: 'lsd',
+    name: 'Bunte Briefmarken',
+    description: 'Kleine Papierchen, große Reisen. Die Post weiß von nichts.',
+    volume: 1,
+    basePrice: 1500,
+    heat: 1.0,
+  },
+  {
+    slug: 'kokain',
+    name: 'Schneegestöber',
+    description: 'Weißes Pulver, große Margen, große Klappe. Die Bullen lieben es.',
+    volume: 1,
+    basePrice: 8000,
+    heat: 1.5,
+  },
+  {
+    slug: 'heroin',
+    name: 'Dämmerpulver',
+    description: 'Das härteste Geschäft der Straße. Hohe Preise, hohe Hitze.',
+    volume: 1,
+    basePrice: 6000,
+    heat: 2.0,
+  },
 ];
 
 export interface VehicleSeed {
   slug: string;
   name: string;
   price: number;
-  capacityG: number;
   speedKmh: number;
-  licenseClass: number;
+  /** Liter pro 100 km */
+  consumption: number;
+  /** Volumeneinheiten */
+  capacity: number;
 }
 
 export const VEHICLES: VehicleSeed[] = [
-  { slug: 'motorroller', name: 'Motorroller', price: 120_000, capacityG: 20_000, speedKmh: 60, licenseClass: 1 },
-  { slug: 'rostlaube', name: 'Rostlaube', price: 450_000, capacityG: 240_500, speedKmh: 90, licenseClass: 1 },
-  { slug: 'kombi', name: 'Familienkombi', price: 1_800_000, capacityG: 600_000, speedKmh: 120, licenseClass: 2 },
-  { slug: 'sportwagen', name: 'Sportwagen', price: 9_500_000, capacityG: 150_000, speedKmh: 220, licenseClass: 3 },
-  { slug: 'transporter', name: 'Transporter', price: 4_200_000, capacityG: 1_500_000, speedKmh: 110, licenseClass: 3 },
-  { slug: 'lkw', name: 'Sattelzug', price: 18_000_000, capacityG: 8_000_000, speedKmh: 80, licenseClass: 4 },
+  { slug: 'kleinwagen', name: 'Kleinwagen', price: 800_000, speedKmh: 100, consumption: 6, capacity: 300 },
+  {
+    slug: 'transporter',
+    name: 'Transporter',
+    price: 2_500_000,
+    speedKmh: 85,
+    consumption: 10,
+    capacity: 1_500,
+  },
+  { slug: 'sportwagen', name: 'Sportwagen', price: 6_000_000, speedKmh: 150, consumption: 12, capacity: 150 },
+  {
+    slug: 'lkw',
+    name: 'LKW mit Schmuggelversteck',
+    price: 9_000_000,
+    speedKmh: 75,
+    consumption: 30,
+    capacity: 6_000,
+  },
 ];
 
 export interface EquipmentSeed {
@@ -76,22 +274,76 @@ export interface EquipmentSeed {
   name: string;
   description: string;
   slot: 'WEAPON' | 'ARMOR';
-  attack: number;
-  defense: number;
+  strength: number;
   price: number;
+  /** Nicht in der Spezifikation; nur für die Anzeige im Mock */
   weightG: number;
 }
 
 export const EQUIPMENT: EquipmentSeed[] = [
-  { slug: 'schlagring', name: 'Schlagring', description: 'Passt in jede Hosentasche. Überzeugt in jedem Gespräch.', slot: 'WEAPON', attack: 3, defense: 0, price: 4_500, weightG: 200 },
-  { slug: 'baseballschlaeger', name: 'Baseballschläger', description: 'Für den Sport gekauft, nie einen Ball getroffen.', slot: 'WEAPON', attack: 6, defense: 0, price: 9_000, weightG: 900 },
-  { slug: 'pistole-9mm', name: 'Pistole 9 mm', description: 'Handliche Halbautomatik. Standard auf der Straße.', slot: 'WEAPON', attack: 14, defense: 0, price: 30_200, weightG: 800 },
-  { slug: 'pumpgun', name: 'Pumpgun', description: 'Laut, kurz, eindeutig.', slot: 'WEAPON', attack: 24, defense: 0, price: 207_000, weightG: 2_000 },
-  { slug: 'sturmgewehr', name: 'Sturmgewehr', description: 'Militärisch. Fällt auf, wirkt aber.', slot: 'WEAPON', attack: 38, defense: 0, price: 1_250_000, weightG: 3_800 },
-  { slug: 'panzerfaust', name: 'Panzerfaust', description: 'Für Probleme mit Fahrzeugen.', slot: 'WEAPON', attack: 22, defense: 0, price: 415_000, weightG: 20_000 },
-  { slug: 'scharfschuetzengewehr', name: 'Scharfschützengewehr', description: 'Riesiges Kaliber, riesige Reichweite.', slot: 'WEAPON', attack: 53, defense: 0, price: 8_838_000, weightG: 7_500 },
-  { slug: 'lederjacke', name: 'Lederjacke', description: 'Sieht gut aus und hält ein Messer ab. Manchmal.', slot: 'ARMOR', attack: 0, defense: 4, price: 25_000, weightG: 1_500 },
-  { slug: 'schutzweste', name: 'Schutzweste', description: 'Kevlar unter dem Hoodie.', slot: 'ARMOR', attack: 0, defense: 15, price: 180_000, weightG: 3_000 },
+  {
+    slug: 'messer',
+    name: 'Klappmesser',
+    description: 'Passt in jede Hosentasche und öffnet auch Bierflaschen.',
+    slot: 'WEAPON',
+    strength: 5,
+    price: 50_000,
+    weightG: 150,
+  },
+  {
+    slug: 'pistole',
+    name: 'Pistole',
+    description: 'Handlich, laut, überzeugend. Standard auf der Straße.',
+    slot: 'WEAPON',
+    strength: 20,
+    price: 300_000,
+    weightG: 900,
+  },
+  {
+    slug: 'mp',
+    name: 'Maschinenpistole',
+    description: 'Für Gespräche, die schnell zu Ende sein sollen.',
+    slot: 'WEAPON',
+    strength: 45,
+    price: 1_500_000,
+    weightG: 2_800,
+  },
+  {
+    slug: 'sturmgewehr',
+    name: 'Sturmgewehr',
+    description: 'Militärisch. Fällt auf, wirkt aber.',
+    slot: 'WEAPON',
+    strength: 80,
+    price: 4_000_000,
+    weightG: 3_800,
+  },
+  {
+    slug: 'lederjacke',
+    name: 'Lederjacke',
+    description: 'Sieht gut aus und hält ein Messer ab. Manchmal.',
+    slot: 'ARMOR',
+    strength: 5,
+    price: 30_000,
+    weightG: 1_500,
+  },
+  {
+    slug: 'weste',
+    name: 'Schutzweste',
+    description: 'Kevlar unter dem Hoodie. Unauffällig schwitzen.',
+    slot: 'ARMOR',
+    strength: 15,
+    price: 250_000,
+    weightG: 3_000,
+  },
+  {
+    slug: 'plattenweste',
+    name: 'Plattenweste',
+    description: 'Für den Fall, dass die Verhandlungen scheitern.',
+    slot: 'ARMOR',
+    strength: 35,
+    price: 1_200_000,
+    weightG: 8_000,
+  },
 ];
 
 export const BOT_NAMES = [
@@ -110,24 +362,25 @@ export const BOT_NAMES = [
 ];
 
 export const BOT_CLANS = [
-  { name: 'Bahnhofsviertel Familie', tag: 'BVF', description: 'Die alten Hasen aus Frankfurt. Wer mitmacht, ist geschützt.' },
+  {
+    name: 'Bahnhofsviertel Familie',
+    tag: 'BVF',
+    description: 'Die alten Hasen aus Bankfurt. Wer mitmacht, ist geschützt.',
+  },
   { name: 'Hafenratten', tag: 'HFR', description: 'Fähren, Container, Lagerhallen. Wir bewegen alles.' },
   { name: 'Nordlicht Syndikat', tag: 'NLS', description: 'Leise, effizient, international.' },
 ];
 
-/** Startwerte für neue Spieler. */
 export const START = {
-  cash: 3_000_000, // 30.000 €
-  pocketCapacityG: 2_000,
-  starterVehicle: 'rostlaube',
+  cash: 200_000, // 2.000 € Schwarzgeld (player.start_cash_black)
+  backpackCapacity: 60, // Volumeneinheiten ohne Fahrzeug
   maxHealth: 100,
 };
 
-/** Simulation: 1 Mock-Tick = 30 s Echtzeit (im echten Spiel 10 min). */
+export const TRAIN = { speedKmh: 120, centsPerKm: 15 };
+export const CLAN_FOUNDING_COST = 5_000_000;
+export const VEHICLE_RESALE_RATE = 0.6;
+
+/** Demo-Beschleunigung: 1 Mock-Tick = 30 s (im Spiel 10 min); Reisezeiten ÷ 240. */
 export const MOCK_TICK_MS = 30_000;
-/** Reisezeit-Faktor: Echtzeit wird für die Demo um diesen Faktor beschleunigt. */
 export const TRAVEL_TIME_SCALE = 240;
-/** Spritkosten in Cent pro km. */
-export const FUEL_CENTS_PER_KM = 12;
-/** Geschwindigkeit ohne eigenes Fahrzeug (Fernbus). */
-export const BUS_SPEED_KMH = 70;

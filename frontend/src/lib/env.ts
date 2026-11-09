@@ -1,3 +1,8 @@
-export type MockMode = 'all' | 'hybrid' | 'off';
-const raw = import.meta.env.VITE_USE_MOCKS;
-export const mockMode: MockMode = raw === 'hybrid' || raw === 'off' ? raw : 'all';
+import type { MockMode } from './mockMode';
+
+export type { MockMode };
+
+declare const __MOCK_MODE__: MockMode;
+
+/** Zur Build-Zeit festgelegt (vite.config.ts → resolveMockMode), daher tree-shakebar. */
+export const mockMode: MockMode = __MOCK_MODE__;

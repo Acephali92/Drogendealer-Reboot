@@ -11,7 +11,9 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:no-mocks": "node scripts/check-no-mocks.mjs"
   },
   "msw": {
     "workerDirectory": [
@@ -19,6 +21,9 @@
     ]
   },
   "dependencies": {
+    "@fontsource/inter": "5.1.1",
+    "@fontsource/jetbrains-mono": "5.1.2",
+    "@fontsource/space-grotesk": "5.1.1",
     "@tanstack/react-query": "5.62.0",
     "clsx": "2.1.1",
     "i18next": "24.1.0",

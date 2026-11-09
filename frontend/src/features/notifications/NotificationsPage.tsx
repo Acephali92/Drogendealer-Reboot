@@ -16,8 +16,8 @@ export function NotificationsPage() {
   const list = useNotifications();
   const read = useReadNotification();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const unread = list.data?.filter((n) => !n.readAt).length ?? 0;
-  const rows = (list.data ?? []).filter((n) => filter === 'all' || !n.readAt);
+  const unread = list.data?.unreadCount ?? 0;
+  const rows = (list.data?.items ?? []).filter((n) => filter === 'all' || !n.readAt);
 
   return (
     <div>
@@ -25,7 +25,12 @@ export function NotificationsPage() {
         title={t('notifications.title')}
         subtitle={t('notifications.subtitle')}
         actions={
-          <Button size="sm" disabled={!unread} loading={read.isPending && read.variables === 'all'} onClick={() => read.mutate('all')}>
+          <Button
+            size="sm"
+            disabled={!unread}
+            loading={read.isPending && read.variables === 'all'}
+            onClick={() => read.mutate('all')}
+          >
             <CheckCheck className="h-4 w-4" />
             {t('notifications.markAll')}
           </Button>
@@ -53,17 +58,29 @@ export function NotificationsPage() {
                   <>
                     <NotificationIcon kind={n.kind} />
                     <div className="min-w-0 flex-1">
-                      <p className={cn('text-sm', n.readAt ? 'text-ink-muted' : 'font-semibold text-ink')}>{n.title}</p>
+                      <p className={cn('text-sm', n.readAt ? 'text-ink-muted' : 'font-semibold text-ink')}>
+                        {n.title}
+                      </p>
                       {n.body && <p className="mt-0.5 text-sm text-ink-muted">{n.body}</p>}
                       <p className="mt-1 text-xs text-ink-faint" title={formatDateTime(n.createdAt)}>
                         {formatRelative(n.createdAt)}
                       </p>
                     </div>
-                    {!n.readAt && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brass shadow-glow" aria-label={t('notifications.unread')} />}
-                    {n.link && <ChevronRight className="h-4 w-4 shrink-0 self-center text-ink-faint" aria-hidden />}
+                    {!n.readAt && (
+                      <span
+                        className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brass shadow-glow"
+                        aria-label={t('notifications.unread')}
+                      />
+                    )}
+                    {n.link && (
+                      <ChevronRight className="h-4 w-4 shrink-0 self-center text-ink-faint" aria-hidden />
+                    )}
                   </>
                 );
-                const cls = cn('flex gap-3 px-4 py-4 transition hover:bg-surface-2/60', !n.readAt && 'bg-brass/[0.03]');
+                const cls = cn(
+                  'flex gap-3 px-4 py-4 transition hover:bg-surface-2/60',
+                  !n.readAt && 'bg-brass/[0.03]',
+                );
                 const markRead = () => !n.readAt && read.mutate(n.id);
                 return (
                   <li key={n.id}>

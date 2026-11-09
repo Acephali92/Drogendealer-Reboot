@@ -1,9 +1,11 @@
 /**
- * API-Typen. Maßgeblich abgestimmt in docs/frontend/API-CONTRACT.md.
- * Feldnamen folgen dem Prisma-Modell des Backends (Agent 3).
+ * UI-Modelle. Die Oberfläche arbeitet ausschließlich mit diesen Typen.
+ * `api/adapters.ts` übersetzt die Rohformate des Backend-Vertrags (`api/contract.ts`)
+ * hierher – ändert sich der Vertrag, ändert sich nur der Adapter.
  */
+import type { ClanRoleDto, PlayerStatusDto, TransactionReasonDto } from './contract';
 
-/** Geldbetrag in Cent als Ganzzahl-String (BigInt-sicher). */
+/** Geldbetrag in ganzzahligen Cent als String (ADR-019, BigInt-sicher). */
 export type Money = string;
 export type ISODate = string;
 
@@ -12,6 +14,7 @@ export interface AuthUser {
   email: string;
   username: string;
   role: 'PLAYER' | 'ADMIN';
+  playerId: string;
 }
 
 export interface AuthTokens {
@@ -23,7 +26,14 @@ export interface AuthResponse extends AuthTokens {
   user: AuthUser;
 }
 
-export type PlayerStatus = 'IDLE' | 'TRAVELING' | 'IN_COMBAT' | 'HOSPITAL' | 'JAIL';
+export type PlayerStatus = PlayerStatusDto;
+export type ClanRole = ClanRoleDto;
+
+export interface CityRef {
+  id: string;
+  slug: string;
+  name: string;
+}
 
 export interface Player {
   id: string;
@@ -34,13 +44,16 @@ export interface Player {
   maxHealth: number;
   level: number;
   experience: number;
-  experienceForNextLevel: number;
+  /** null, solange die Levelkurve nicht feststeht */
+  experienceForNextLevel: number | null;
   reputation: number;
   heat: number;
   currentCityId: string | null;
+  currentCity: CityRef | null;
   status: PlayerStatus;
   statusUntil: ISODate | null;
   clanId: string | null;
+  clan: { id: string; name: string; tag: string; role: ClanRole } | null;
   createdAt: ISODate;
 }
 
@@ -48,18 +61,20 @@ export interface City {
   id: string;
   slug: string;
   name: string;
-  country: string;
-  description?: string;
-  techLevel: number;
-  policeStrength: number;
-  population: number;
+  description: string | null;
+  country: string | null;
+  techLevel: number | null;
+  policeStrength: number | null;
+  population: number | null;
 }
 
 export interface CityConnection {
   toCityId: string;
+  toCity: CityRef;
   distanceKm: number;
-  durationSeconds: number;
-  cost: Money;
+  /** Fehlt, bis das Backend die Reiseregeln umsetzt */
+  durationSeconds: number | null;
+  cost: Money | null;
 }
 
 export interface CityDetail extends City {
@@ -70,12 +85,10 @@ export interface Commodity {
   id: string;
   slug: string;
   name: string;
-  description?: string;
+  description: string | null;
   illegal: boolean;
   unitWeightG: number;
   basePrice: Money;
-  minPrice: Money;
-  maxPrice: Money;
 }
 
 export type Trend = 'UP' | 'DOWN' | 'FLAT';
@@ -85,14 +98,21 @@ export interface MarketEntry {
   buyPrice: Money;
   sellPrice: Money;
   supply: number;
+  /** Vom Client aus dem letzten bekannten Preis abgeleitet */
   trend: Trend;
   updatedAt: ISODate;
 }
 
-export interface MarketOverview {
-  cities: City[];
-  commodities: Commodity[];
-  prices: Record<string, Record<string, { buyPrice: Money; sellPrice: Money; trend: Trend }>>;
+export interface PricePoint {
+  city: CityRef;
+  price: Money;
+  updatedAt: ISODate;
+}
+
+export interface OverviewRow {
+  commodity: Commodity;
+  lowestBuy: PricePoint | null;
+  highestSell: PricePoint | null;
 }
 
 export interface InventoryItem {
@@ -103,27 +123,16 @@ export interface InventoryItem {
 
 export interface Inventory {
   items: InventoryItem[];
-  capacityG: number;
+  /** null = kein aktives Fahrzeug (Kapazität bestimmt der Server) */
+  capacityG: number | null;
   usedG: number;
 }
 
 export type TradeSide = 'BUY' | 'SELL';
 
-export interface TradeTransaction {
-  id: string;
-  cityId: string;
-  commodityId: string;
-  side: TradeSide;
-  quantity: number;
-  unitPrice: Money;
-  total: Money;
-  createdAt: ISODate;
-}
-
 export interface TradeResult {
   player: Player;
   inventory: Inventory;
-  transaction: TradeTransaction;
 }
 
 export interface VehicleType {
@@ -133,7 +142,7 @@ export interface VehicleType {
   price: Money;
   capacityG: number;
   speedKmh: number;
-  licenseClass: number;
+  licenseClass: number | null;
 }
 
 export interface Vehicle {
@@ -148,39 +157,40 @@ export interface EquipmentType {
   id: string;
   slug: string;
   name: string;
-  description?: string;
+  description: string | null;
   slot: 'WEAPON' | 'ARMOR';
   attack: number;
   defense: number;
   price: Money;
-  weightG: number;
+  weightG: number | null;
 }
 
 export interface PlayerEquipment {
   id: string;
   equipmentType: EquipmentType;
   equipped: boolean;
+  acquiredAt: ISODate;
 }
 
 export interface Travel {
   id: string;
   fromCityId: string;
   toCityId: string;
-  vehicleId: string | null;
+  fromCity: CityRef;
+  toCity: CityRef;
+  vehicleName: string | null;
   departedAt: ISODate;
   arrivesAt: ISODate;
   status: 'IN_PROGRESS' | 'ARRIVED' | 'CANCELLED';
 }
 
-export type ClanRole = 'LEADER' | 'OFFICER' | 'MEMBER';
-
 export interface ClanSummary {
   id: string;
   name: string;
   tag: string;
+  description: string | null;
   memberCount: number;
-  wealth: Money;
-  leaderName: string;
+  createdAt: ISODate;
 }
 
 export interface ClanMember {
@@ -188,21 +198,20 @@ export interface ClanMember {
   name: string;
   role: ClanRole;
   level: number;
+  reputation: number;
   joinedAt: ISODate;
 }
 
 export interface ClanDetail extends ClanSummary {
-  description?: string;
-  bank: Money;
+  /** Nur für Mitglieder sichtbar, sonst null */
+  bank: Money | null;
   members: ClanMember[];
-  createdAt: ISODate;
 }
 
 export interface ClanInvite {
   id: string;
-  clan: ClanSummary;
-  invitedByName: string;
-  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  clan: { id: string; name: string; tag: string };
+  invitedByName: string | null;
   createdAt: ISODate;
 }
 
@@ -212,16 +221,17 @@ export interface RankingRow {
   rank: number;
   id: string;
   name: string;
-  tag?: string;
-  /** Bei wealth/clans: Money, sonst Zahl als String. */
+  tag: string | null;
+  level: number | null;
+  /** Bei wealth/clans: Cent, sonst Zahl – immer als String */
   value: string;
   isMe: boolean;
 }
 
 export interface Ranking {
   type: RankingType;
+  total: number;
   rows: RankingRow[];
-  me: RankingRow | null;
 }
 
 export type NotificationKind =
@@ -237,13 +247,19 @@ export interface GameNotification {
   id: string;
   kind: NotificationKind;
   title: string;
-  body?: string;
-  link?: string;
+  body: string | null;
+  link: string | null;
   readAt: ISODate | null;
   createdAt: ISODate;
 }
 
-export type TransactionReason = 'TRADE' | 'TRAVEL' | 'VEHICLE' | 'COMBAT' | 'CLAN' | 'BANK' | 'ADMIN';
+export interface NotificationList {
+  items: GameNotification[];
+  unreadCount: number;
+  total: number;
+}
+
+export type TransactionReason = TransactionReasonDto;
 
 export interface MoneyTransaction {
   id: string;
@@ -260,5 +276,5 @@ export interface TickerEvent {
 }
 
 export interface ApiErrorBody {
-  error: { code: string; message: string };
+  error: { code: string; message: string; details?: { path: string; message: string }[] };
 }
