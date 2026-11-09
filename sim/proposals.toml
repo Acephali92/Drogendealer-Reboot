@@ -55,3 +55,14 @@ police_pressure_decay = 0.01           # pro Tick Rückgang Richtung 0
 start_loan_ct = 100_000                # 1 000 € Kredit, Tilgung über travel.debt_repayment_rate
 min_cash_threshold_ct = 20_000         # verfügbar, wenn Bargeld + Warenwert < 200 €
 cooldown_days = 7
+
+# -----------------------------------------------------------------------------
+# Progression und vermögensabhängige Senken (PROGRESSION_MODEL.md §7, T-505/T-508)
+# -----------------------------------------------------------------------------
+[progression]
+org_cost_rate_per_day = 0.005          # F-PRG-01: 0,5 % des Nettovermögens über der Schwelle, täglich
+org_cost_threshold_ct = 50_000_000     # ab 500 000 € Nettovermögen
+catchup_xp_bonus = 0.5                 # F-PRG-02: bis +50 % XP unter dem Server-Median (nicht simuliert)
+growth_ranking_min_base_ct = 5_000_000 # F-PRG-03: Untergrenze 50 000 € für Zuwachs-Ranglisten
+prestige_base_ct = 5_000_000           # F-PRG-04: erster Prestigekauf 50 000 €, Verdopplung je Kauf
+

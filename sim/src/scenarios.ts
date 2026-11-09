@@ -72,6 +72,14 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     },
     hypothesis: 'Ab einer bestimmten Zahl regelmäßig aktiver Spieler erfüllen Routen-Konkurrenz, Marktaktivität und Spitzen-Online die Schwellen 14 Tage am Stück; danach sinkt k schrittweise (Prognose für den Betreiber, keine Schwelle).',
   },
+  'npc-conf': {
+    scenario: sc('npc-conf', 'Variante zu h-confiscation: zusätzlich NPC-Händler F-NPC-01, k = 1', 90, 12, 30, { ...BASE_OPTIONS, npc: true, npcIntensity: 1, confiscationShare: 0.5 }),
+    hypothesis: 'Mit Teilbeschlagnahme verlieren NPC-Händler ihren verheerenden Nebeneffekt (mehr Totalverluste durch dünnere Margen); sie bremsen dann nur noch das Wachstum.',
+  },
+  'h-wealth-sink': {
+    scenario: sc('h-wealth-sink', 'Hypothese: Organisationskosten F-PRG-01 (0,5 %/Tag über 500 000 € NW)', 365, 8, 30, { ...BASE_OPTIONS, wealthSink: true }),
+    hypothesis: 'Die Organisationskosten lassen frühe Phasen unberührt (< 500 000 €) und flachen das Spätspiel ab: Geldmenge und Vorsprung des reichsten Spielers wachsen langsamer als in base.',
+  },
   'h-control': {
     scenario: sc('h-control', 'Hypothese: travel.control_base 0,02 → 0,015', 90, 12, 30),
     overrides: { 'travel.control_base': 0.015 },

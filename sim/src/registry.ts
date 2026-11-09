@@ -77,7 +77,7 @@ export function registryMarkdown(params: LoadedToml<Params>, proposals: LoadedTo
   L.push('');
   L.push('| Schlüssel | Vorschlag |');
   L.push('|---|---:|');
-  for (const sec of ['economy_ext', 'npc_ext', 'safety_net'] as const) {
+  for (const sec of ['economy_ext', 'npc_ext', 'safety_net', 'progression'] as const) {
     for (const [k, v] of Object.entries(proposals.data[sec])) L.push(`| \`${sec}.${k}\` | ${fmt(v)} |`);
   }
   L.push('');

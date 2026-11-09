@@ -206,4 +206,5 @@ export interface Proposals {
     police_pressure_decay: number;
   };
   safety_net: { start_loan_ct: number; min_cash_threshold_ct: number; cooldown_days: number };
+  progression: { org_cost_rate_per_day: number; org_cost_threshold_ct: number; catchup_xp_bonus: number; growth_ranking_min_base_ct: number; prestige_base_ct: number };
 }

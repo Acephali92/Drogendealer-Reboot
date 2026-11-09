@@ -169,7 +169,7 @@ export function toMarkdown(s: Summary): string {
   L.push(`### ${sc.id} – ${sc.title}`);
   L.push('');
   L.push(`- **Hypothese:** ${s.hypothesis}`);
-  L.push(`- **Setup:** ${sc.background} Hintergrundspieler + je 1 beobachteter Bot A–E, ${sc.days} Tage, ${s.seeds.length} Seeds. Erweiterungen: Wirtschaft ${sc.options.economyExt ? 'an' : 'aus'}, NPC-Händler F-NPC-01 ${sc.options.npc ? `an (k = ${sc.options.npcIntensity})` : 'aus'}, Kundenbindung/Polizeidruck ${sc.options.npcExt ? 'an' : 'aus'}, Sicherheitsnetz ${sc.options.safetyNet ? 'an' : 'aus'}, Beschlagnahme bei Kontrolle ${Math.round((sc.options.confiscationShare ?? 1) * 100)} % der Ladung.`);
+  L.push(`- **Setup:** ${sc.background} Hintergrundspieler + je 1 beobachteter Bot A–E, ${sc.days} Tage, ${s.seeds.length} Seeds. Erweiterungen: Wirtschaft ${sc.options.economyExt ? 'an' : 'aus'}, NPC-Händler F-NPC-01 ${sc.options.npc ? `an (k = ${sc.options.npcIntensity})` : 'aus'}, Kundenbindung/Polizeidruck ${sc.options.npcExt ? 'an' : 'aus'}, Sicherheitsnetz ${sc.options.safetyNet ? 'an' : 'aus'}, Beschlagnahme bei Kontrolle ${Math.round((sc.options.confiscationShare ?? 1) * 100)} % der Ladung, Organisationskosten F-PRG-01 ${sc.options.wealthSink ? 'an' : 'aus'}.`);
   if (Object.keys(s.overrides).length) L.push(`- **Geänderter Parameter:** ${Object.entries(s.overrides).map(([k, v]) => `\`${k}\` = ${v}`).join(', ')}`);
   L.push(`- **Parameter:** \`${s.paramsSource}\` (SHA-256 \`${s.paramsSha256.slice(0, 12)}…\`), Vorschläge \`sim/proposals.toml\` (\`${s.proposalsSha256.slice(0, 12)}…\`). Invariantenverletzungen: **${s.invariantViolations}**.`);
   L.push('');
@@ -195,12 +195,12 @@ export function toMarkdown(s: Summary): string {
   L.push('');
   L.push('**Verhalten und Risiko [gemessen]** (Mittel je beobachtetem Bot)');
   L.push('');
-  L.push('| Profil | Fahrten/Tag | Kontrollquote je Fahrt | Ø Marge je Handel | Einnahmen Verkauf € | Einkauf € | Reisekosten € | Strafen+Bestechung € | Sackgassen-Tage | Neustarts | Ende < Startkapital |');
+  L.push('| Profil | Fahrten/Tag | Kontrollquote je Fahrt | Ø Marge je Handel | Einnahmen Verkauf € | Einkauf € | Reisekosten € | Strafen, Bestechung, Tilgung, Organisation € | Sackgassen-Tage | Neustarts | Ende < Startkapital |');
   L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
   for (const id of sc.tracked) {
     const pr = s.profiles[id]!;
     const i = pr.incomeEur;
-    L.push(`| ${id} | ${pr.tripsPerDay} | ${(pr.bustRate * 100).toFixed(1)} % | ${(pr.avgMargin * 100).toFixed(0)} % | ${fmt(i.sale!)} | ${fmt(i.purchase!)} | ${fmt(i.fuel! + i.train!)} | ${fmt(i.fine! + i.bribe! + i.debtRepay!)} | ${pr.stuckDays} | ${pr.recoveries} | ${Math.round(pr.lossShare * 100)} % |`);
+    L.push(`| ${id} | ${pr.tripsPerDay} | ${(pr.bustRate * 100).toFixed(1)} % | ${(pr.avgMargin * 100).toFixed(0)} % | ${fmt(i.sale!)} | ${fmt(i.purchase!)} | ${fmt(i.fuel! + i.train!)} | ${fmt(i.fine! + i.bribe! + i.debtRepay! + i.orgCost!)} | ${pr.stuckDays} | ${pr.recoveries} | ${Math.round(pr.lossShare * 100)} % |`);
   }
   L.push('');
   L.push('**Markt und Geldmenge [gemessen]**');

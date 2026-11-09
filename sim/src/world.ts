@@ -56,8 +56,10 @@ export interface SimOptions {
   npcExt?: boolean;
   /** Startkredit gegen Sackgassen (PROGRESSION_MODEL.md §6) */
   safetyNet: boolean;
-  /** Anteil der Ladung, der bei einer Kontrolle beschlagnahmt wird (Agent 2: 1,0; Vorschlag R-1: 0,5) */
+  /** Anteil der Ladung, der bei einer Kontrolle beschlagnahmt wird (Regel Agent 2: 1,0; Vorschlag Agent 5: 0,5) */
   confiscationShare?: number;
+  /** [Design] F-PRG-01 Organisationskosten (proposals.toml [progression]) */
+  wealthSink?: boolean;
 }
 
 export interface Market {
@@ -85,16 +87,16 @@ export interface Lot {
 }
 
 export type Ledger = Record<
-  'sale' | 'purchase' | 'fuel' | 'train' | 'fine' | 'bribe' | 'vehicleBuy' | 'vehicleSell' | 'loan' | 'debtRepay',
+  'sale' | 'purchase' | 'fuel' | 'train' | 'fine' | 'bribe' | 'vehicleBuy' | 'vehicleSell' | 'loan' | 'debtRepay' | 'orgCost',
   number
 >;
 
 export function emptyLedger(): Ledger {
-  return { sale: 0, purchase: 0, fuel: 0, train: 0, fine: 0, bribe: 0, vehicleBuy: 0, vehicleSell: 0, loan: 0, debtRepay: 0 };
+  return { sale: 0, purchase: 0, fuel: 0, train: 0, fine: 0, bribe: 0, vehicleBuy: 0, vehicleSell: 0, loan: 0, debtRepay: 0, orgCost: 0 };
 }
 
 export const FAUCETS: Array<keyof Ledger> = ['sale', 'vehicleSell', 'loan'];
-export const SINKS: Array<keyof Ledger> = ['purchase', 'fuel', 'train', 'fine', 'bribe', 'vehicleBuy', 'debtRepay'];
+export const SINKS: Array<keyof Ledger> = ['purchase', 'fuel', 'train', 'fine', 'bribe', 'vehicleBuy', 'debtRepay', 'orgCost'];
 
 export interface Trip {
   id: string;
@@ -620,8 +622,21 @@ export class World {
       this.safetyNet(pl);
       decide(this, pl);
     }
+    if (this.o.wealthSink && (this.t + 1) % this.tpd === 0) this.orgCosts();
     this.checkInvariants(before, ledgerBefore);
     this.t += 1;
+  }
+
+  /** [Design] F-PRG-01: K_Tag = r · max(0, NW − NW₀), zuerst vom Bargeld; Rest wird nicht gestundet. */
+  private orgCosts(): void {
+    const { org_cost_rate_per_day: r, org_cost_threshold_ct: nw0 } = this.pr.progression;
+    for (const pl of this.players) {
+      const due = Math.ceil(r * Math.max(0, this.networth(pl) - nw0));
+      const paid = Math.min(pl.cash, due);
+      if (paid <= 0) continue;
+      pl.cash -= paid;
+      this.book(pl, 'orgCost', paid);
+    }
   }
 
   private safetyNet(pl: Player): void {
