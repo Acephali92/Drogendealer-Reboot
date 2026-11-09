@@ -140,7 +140,7 @@
     - Der Pfad muss relativ sein: kein `..`, kein führendes `/`, kein `://` und kein Backslash.
     - Erlaubte Zeichen sind `[a-z0-9_-/.]`, die Endung ist `.webp`, `.png` oder `.svg`. Das sind dieselben Regeln wie bei `safeImagePath` im Frontend.
     - Der Pfad muss im Ordner der eigenen Kategorie liegen, zum Beispiel eine Ware unter `goods/`.
-  - **`[images]`** ist optional und enthält nur `fallback.<kategorie>` mit denselben Regeln.
+  - **`[images]`** ist optional und hat das Format aus T-113 (PR #17): `base_dir` (relativer Ordner im Repo, ohne `..`), `allowed_extensions` (Teilmenge von `.webp`, `.png`, `.svg`, eindeutig) und `[images.fallback]` mit `<kategorie>` = Pfad, für den dieselben Regeln gelten. Jede Bildendung muss in `allowed_extensions` stehen.
   - Anders als das Frontend lehnt das Backend ungültige Pfade beim Start ab (Fail-fast), statt sie still zu ignorieren.
   - **Ränge:** Akzeptiert werden die Enum-Werte und **übergangsweise** die alten deutschen Werte. Letztere werden abgebildet (`PATE→GODFATHER`, `SOLDAT→SOLDIER`, `MITLAEUFER→ASSOCIATE`) und beim Start als Warnung geloggt.
   - Ein Test sichert ab, dass `CLAN_RANKS` exakt dem DB-Enum `ClanRole` entspricht.

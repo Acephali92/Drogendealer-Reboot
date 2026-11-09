@@ -341,14 +341,17 @@
     },
     "armor": {
       "lederjacke": {
+        "image": "armor/lederjacke.webp",
         "price": 30000,
         "strength": 5
       },
       "plattenweste": {
+        "image": "armor/plattenweste.webp",
         "price": 1200000,
         "strength": 35
       },
       "weste": {
+        "image": "armor/weste.webp",
         "price": 250000,
         "strength": 15
       }
@@ -725,11 +728,13 @@
     "crew": {
       "profi": {
         "hire": 500000,
+        "image": "crew/profi.webp",
         "strength": 20,
         "upkeep": 400
       },
       "schlaeger": {
         "hire": 100000,
+        "image": "crew/schlaeger.webp",
         "strength": 8,
         "upkeep": 150
       }
@@ -805,6 +810,7 @@
         "base_price": 1000,
         "consumption": 0.008,
         "heat": 1.0,
+        "image": "goods/ecstasy.webp",
         "name": "Grinsepillen",
         "realm": "earth",
         "spoil_rate": 0.0,
@@ -815,6 +821,7 @@
         "base_price": 1000,
         "consumption": 0.02,
         "heat": 0.5,
+        "image": "goods/gras.webp",
         "name": "Grünzeug",
         "realm": "earth",
         "spoil_rate": 0.0001,
@@ -825,6 +832,7 @@
         "base_price": 1200,
         "consumption": 0.01,
         "heat": 0.6,
+        "image": "goods/haschisch.webp",
         "name": "Krümelbrocken",
         "realm": "earth",
         "spoil_rate": 0.0,
@@ -835,6 +843,7 @@
         "base_price": 6000,
         "consumption": 0.002,
         "heat": 2.0,
+        "image": "goods/heroin.webp",
         "name": "Dämmerpulver",
         "realm": "earth",
         "spoil_rate": 0.0,
@@ -845,6 +854,7 @@
         "base_price": 8000,
         "consumption": 0.004,
         "heat": 1.5,
+        "image": "goods/kokain.webp",
         "name": "Schneegestöber",
         "realm": "earth",
         "spoil_rate": 0.0,
@@ -855,6 +865,7 @@
         "base_price": 1500,
         "consumption": 0.003,
         "heat": 1.0,
+        "image": "goods/lsd.webp",
         "name": "Bunte Briefmarken",
         "realm": "earth",
         "spoil_rate": 0.0,
@@ -865,6 +876,7 @@
         "base_price": 20000,
         "consumption": 0.015,
         "heat": 1.5,
+        "image": "goods/marsmoos.webp",
         "name": "Marsmoos",
         "realm": "space",
         "spoil_rate": 0.001,
@@ -875,6 +887,7 @@
         "base_price": 30000,
         "consumption": 0.01,
         "heat": 1.0,
+        "image": "goods/mondkristall.webp",
         "name": "Mondkristall",
         "realm": "space",
         "spoil_rate": 0.0,
@@ -885,6 +898,7 @@
         "base_price": 80000,
         "consumption": 0.005,
         "heat": 2.5,
+        "image": "goods/nullgrav.webp",
         "name": "Nullgrav-Kapseln",
         "realm": "space",
         "spoil_rate": 0.0,
@@ -895,6 +909,7 @@
         "base_price": 1500,
         "consumption": 0.004,
         "heat": 0.7,
+        "image": "goods/pilze.webp",
         "name": "Zauberschwammerl",
         "realm": "earth",
         "spoil_rate": 0.002,
@@ -905,6 +920,7 @@
         "base_price": 2000,
         "consumption": 0.008,
         "heat": 1.0,
+        "image": "goods/speed.webp",
         "name": "Turboflocken",
         "realm": "earth",
         "spoil_rate": 0.0,
@@ -915,6 +931,7 @@
         "base_price": 50000,
         "consumption": 0.01,
         "heat": 3.0,
+        "image": "goods/sternenstaub.webp",
         "name": "Sternenstaub",
         "realm": "space",
         "spoil_rate": 0.0,
@@ -927,6 +944,22 @@
       "max": 100.0,
       "police_decay_damping": 0.5,
       "trade_heat_per_keur": 0.5
+    },
+    "images": {
+      "allowed_extensions": [
+        ".webp",
+        ".png",
+        ".svg"
+      ],
+      "base_dir": "frontend/public/images",
+      "fallback": {
+        "armor": "armor/_fallback.svg",
+        "crew": "crew/_fallback.svg",
+        "goods": "goods/_fallback.svg",
+        "ships": "ships/_fallback.svg",
+        "vehicles": "vehicles/_fallback.svg",
+        "weapons": "weapons/_fallback.svg"
+      }
     },
     "laundering": {
       "closure_ticks": 144,
@@ -1033,6 +1066,7 @@
       "frachter": {
         "capacity": 5000,
         "consumption": 0.2,
+        "image": "ships/frachter.webp",
         "name": "Frachter",
         "price": 300000000,
         "range": 300000,
@@ -1042,6 +1076,7 @@
       "kreuzer": {
         "capacity": 1500,
         "consumption": 0.4,
+        "image": "ships/kreuzer.webp",
         "name": "Kreuzer",
         "price": 800000000,
         "range": 300000,
@@ -1051,6 +1086,7 @@
       "shuttle": {
         "capacity": 200,
         "consumption": 2.0,
+        "image": "ships/shuttle.webp",
         "name": "Shuttle",
         "price": 50000000,
         "range": 500,
@@ -1214,6 +1250,7 @@
         "capacity": 300,
         "consumption": 6.0,
         "hide": 0.1,
+        "image": "vehicles/kleinwagen.webp",
         "name": "Kleinwagen",
         "price": 800000,
         "speed": 100
@@ -1222,6 +1259,7 @@
         "capacity": 6000,
         "consumption": 30.0,
         "hide": 0.3,
+        "image": "vehicles/lkw.webp",
         "name": "LKW mit Schmuggelversteck",
         "price": 9000000,
         "speed": 75
@@ -1230,6 +1268,7 @@
         "capacity": 150,
         "consumption": 12.0,
         "hide": 0.2,
+        "image": "vehicles/sportwagen.webp",
         "name": "Sportwagen",
         "price": 6000000,
         "speed": 150
@@ -1238,6 +1277,7 @@
         "capacity": 1500,
         "consumption": 10.0,
         "hide": 0.0,
+        "image": "vehicles/transporter.webp",
         "name": "Transporter",
         "price": 2500000,
         "speed": 85
@@ -1245,18 +1285,22 @@
     },
     "weapons": {
       "messer": {
+        "image": "weapons/messer.webp",
         "price": 50000,
         "strength": 5
       },
       "mp": {
+        "image": "weapons/mp.webp",
         "price": 1500000,
         "strength": 45
       },
       "pistole": {
+        "image": "weapons/pistole.webp",
         "price": 300000,
         "strength": 20
       },
       "sturmgewehr": {
+        "image": "weapons/sturmgewehr.webp",
         "price": 4000000,
         "strength": 80
       }
@@ -1841,7 +1885,7 @@
     }
   ],
   "sources": {
-    "parameters.toml": "1072bd27076269fcf2eb471aca68bb1e4faa0a40d12db0a67b88b7bc75ee6669",
-    "verify.py": "7315452cffc15f7dff5b41a547e3d7699409ae7cedfe9d38890e2629b4f449d5"
+    "parameters.toml": "c856766f1a0f600044d11454a3c430cab9ca9da114c4aac69e43452a549c9285",
+    "verify.py": "752d5adf2477a78c8cb8791a327f4743178c55a132f3e871c745f428132df8f7"
   }
 }

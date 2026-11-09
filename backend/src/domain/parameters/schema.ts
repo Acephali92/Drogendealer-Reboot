@@ -417,9 +417,23 @@ const ship = z
   })
   .strict();
 
-/** [images] fallback.<category> – placeholder per category (ADR-020). Optional until T-113. */
+/** Image file extensions the game supports at all (ADR-020); [images].allowed_extensions narrows them. */
+export const IMAGE_EXTENSIONS = ['.webp', '.png', '.svg'] as const;
+
+/** [images] (ADR-020, format of T-113): base directory, allowed extensions and fallback per category. */
 const images = z
   .object({
+    /** Folder in the repo that holds the images (relative to the repo root). */
+    base_dir: z
+      .string()
+      .min(1)
+      .refine((s) => !s.startsWith('/') && !s.includes('..') && !s.includes('\\'), {
+        message: 'base_dir must be a relative path without ".."',
+      }),
+    allowed_extensions: z
+      .array(z.enum(IMAGE_EXTENSIONS, { error: `extension must be one of ${IMAGE_EXTENSIONS.join(', ')}` }))
+      .min(1)
+      .refine((a) => new Set(a).size === a.length, 'extensions must be unique'),
     fallback: z
       .object(
         Object.fromEntries(IMAGE_CATEGORIES.map((c) => [c, imagePath.optional()])) as Record<

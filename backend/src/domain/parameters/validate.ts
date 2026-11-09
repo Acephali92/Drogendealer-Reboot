@@ -116,16 +116,22 @@ export function crossCheck(p: GameParameters): ParameterIssue[] {
     crew: p.crew,
     ships: p.ships,
   };
+  // Extensions: [images].allowed_extensions if present, otherwise all supported ones.
+  const allowed = p.images?.allowed_extensions ?? ['.webp', '.png', '.svg'];
+  const checkImage = (path: string, image: string, category: ImageCategory) => {
+    if (!image.startsWith(`${category}/`)) {
+      issues.push({ path, message: `image must be inside "${category}/"` });
+    }
+    if (!allowed.some((ext) => image.toLowerCase().endsWith(ext))) {
+      issues.push({ path, message: `extension not in [images].allowed_extensions (${allowed.join(', ')})` });
+    }
+  };
   for (const category of IMAGE_CATEGORIES) {
     for (const [key, entry] of Object.entries(imageSections[category])) {
-      if (entry.image !== undefined && !entry.image.startsWith(`${category}/`)) {
-        issues.push({ path: `${category}.${key}.image`, message: `image must be inside "${category}/"` });
-      }
+      if (entry.image !== undefined) checkImage(`${category}.${key}.image`, entry.image, category);
     }
     const fallback = p.images?.fallback[category];
-    if (fallback !== undefined && !fallback.startsWith(`${category}/`)) {
-      issues.push({ path: `images.fallback.${category}`, message: `fallback must be inside "${category}/"` });
-    }
+    if (fallback !== undefined) checkImage(`images.fallback.${category}`, fallback, category);
   }
 
   if (new Set(p.clans.ranks).size !== p.clans.ranks.length) {
