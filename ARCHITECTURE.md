@@ -69,6 +69,10 @@ ADR-012 (Balancing-Simulation).
 - MSW-Mocks auf Basis des API-Vertrags, solange Endpunkte fehlen. Mocks müssen dem Vertrag entsprechen.
 - Keine Spiellogik im Client außer Anzeige-Hilfen (z. B. Restzeit-Countdown). Alle Prüfungen erfolgen serverseitig.
 
+### Spielbilder (ADR-020)
+- Dateien in `frontend/public/images/<kategorie>/`, Zuordnung ausschließlich über das Feld `image` in `parameters.toml`.
+- Fluss: `parameters.toml` → Backend liefert `image` in der API → Frontend lädt `images/<image>` → bei Fehler Kategorie-Platzhalter → eingebautes Symbol.
+
 ## 5. Datenmodell (Agent 5, Umsetzung Agent 3)
 
 - PostgreSQL 16, Schema ausschließlich über Prisma (`backend/prisma/schema.prisma`) und dessen Migrationen. Was Prisma nicht abbilden kann (CHECK-Constraints, Trigger, Partitionierung), wird als handgeschriebenes SQL in einer Prisma-Migration ergänzt.
