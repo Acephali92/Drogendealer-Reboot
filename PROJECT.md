@@ -60,11 +60,12 @@ Einloggen ─► Markt in aktueller Stadt prüfen ─► Kaufen / Verkaufen
 | Agent | Rolle | Eigentum (Ordner/Dokumente) | Session-Titel |
 |-------|-------|------------------------------|---------------|
 | Agent 1 | Project Director / Technical Lead | Root-Steuerungsdokumente, Root-`README.md`, `.github/` (gemeinsam) | „Agent 1 – Projektdirektor/Technischer Lead“ |
-| Agent 2 | Game Designer (Spielregeln & Systemdokumentation) | `docs/game-design/` inkl. `parameters.toml` und Prüfskript `verify.py` | „Spielregeln und Systemdokumentation“ |
-| Agent 3 | Backend Developer | `backend/` (außer Datenmodell-Entscheidungen), `docker-compose.yml`, `docs/api/` | „Agent 3 – Backend-Entwickler“ |
+| Agent 2 | Game Designer (Spielregeln & Systemdokumentation) | `docs/game-design/` inkl. `parameters.toml` und Prüfskript `verify.py`; fachlich: Kampf, Clans, Geldwäsche, Immobilien, Weltraum, Reisen/Kontrollen (ADR-022) | „Spielregeln und Systemdokumentation“ |
+| Agent 3 | Backend Developer | `backend/` inkl. Datenmodell (`backend/prisma/`), `docker-compose.yml`, `docs/api/`, `docs/database/` (ADR-022) | „Agent 3 – Backend-Entwickler“ |
 | Agent 4 | Frontend / UI | `frontend/`, `docs/frontend/` | „Frontend-UI für Spieloberfläche“ |
-| Agent 5 | Database Architect | Datenmodell (`backend/prisma/schema.prisma` fachlich), `docs/database/` | „Datenbankarchitektur für Spielwelt“ |
-| Agent 6 | Game Balancing & Simulation Engineer | `sim/`, `docs/balancing/` | „Game Balancing & Simulation Engineer“ |
+| Agent 5 | Game Balancing & Simulation | `sim/`, `docs/balancing/`; fachlich: Wirtschaft, Preise, Markt, NPC-Marktverhalten, Progression (ADR-022) | „Game Balancing & Simulation Engineer“ |
+
+Die frühere Rolle „Database Architect“ entfällt (ADR-022). Das Datenmodell verantwortet Agent 3.
 
 ### Agent 1 – Project Director / Technical Lead
 - Gesamtarchitektur überwachen, Entwicklungsaufgaben definieren und verteilen
@@ -76,8 +77,8 @@ Einloggen ─► Markt in aktueller Stadt prüfen ─► Kaufen / Verkaufen
 Agent 1 implementiert **keine größeren Features** selbstständig, ohne die zuständigen Entwickler einzubeziehen.
 
 ### Schnittstellen zwischen Rollen (Kurzfassung)
-- **Agent 2 → Agent 3/6:** Regeln und Zahlen stehen ausschließlich in Agent 2s Parameterdatei; Backend und Simulation lesen sie, kopieren sie nicht.
-- **Agent 5 ↔ Agent 3:** Agent 5 entscheidet das Datenmodell, Agent 3 setzt es in Prisma-Migrationen und Code um. Es gibt **ein** Schema (Prisma), keine parallele SQL-Schiene (ADR-010).
+- **Agent 2 → Agent 3/5:** Regeln und Zahlen stehen ausschließlich in Agent 2s Parameterdatei; Backend und Simulation lesen sie, kopieren sie nicht.
+- **Datenmodell:** Agent 3 entwirft und setzt es um. Es gibt **ein** Schema (Prisma), keine parallele SQL-Schiene (ADR-010, ADR-022).
 - **Agent 3 ↔ Agent 4:** Der API-Vertrag gehört Agent 3; Agent 4 liefert Anforderungen und mockt per MSW, bis Endpunkte existieren (ADR-011).
 
 ## 6. Arbeitsregeln für alle Agenten

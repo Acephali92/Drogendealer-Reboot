@@ -28,6 +28,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-019 | Geld überall in Cent (ganzzahlig) | Akzeptiert | 2026-11-09 |
 | ADR-020 | Datengetriebene Spielbilder mit Fallback | Akzeptiert | 2026-11-09 |
 | ADR-021 | Technische Enum-Werte englisch, deutsche Namen nur zur Anzeige | Akzeptiert | 2026-11-09 |
+| ADR-022 | Team aus fünf Agenten; Spielregeln geteilt nach Systemen | Akzeptiert | 2026-11-09 |
 
 ---
 
@@ -142,7 +143,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   3. Gegen Inflation und Abhängen von Neulingen: Geldsenken, die mit dem Vermögen wachsen, und Aufhol-Mechaniken für neue Spieler (Ausgestaltung: Agent 2, Prüfung: Agent 6).
   4. Ranglisten zusätzlich für Zeiträume ohne Reset (z. B. „Aufsteiger der Woche/des Monats“), damit auch neue Spieler Ziele haben.
   5. NPC-Händler und NPC-Gegner als Ausgleich für eine kleine Spielerzahl werden von Agent 2 geprüft (Vorschlag N-1/N-2 von Agent 6). Ihre Stärke soll mit steigender Spielerzahl sinken; die Schwelle ist offen (PROJECT.md Q12).
-- **Nachtrag 2026-11-08 (Q12):** Der Product Owner hat gegenüber Agent 6 festgelegt: „Erst wenn genug Spieler regelmäßig Online sind um die Spielmechanik zu tragen.“ Umsetzung (Agent 6, `docs/balancing/balancing-concept.md` §2, R-4): Es gibt keine feste Spielerzahl. Die NPC-Intensität k (Start 1) sinkt erst, wenn Kennzahlen aus echten Spielern 14 Tage am Stück erfüllt sind: Routen-Konkurrenz, Zielverfügbarkeit ohne NPCs, Marktaktivität, gleichzeitig Online zur Abendspitze; „regelmäßig aktiv“ heißt Login an ≥ 4 von 7 Tagen. k sinkt dann um 0,1 pro Woche und steigt wieder, wenn die Kennzahlen 7 Tage verfehlt werden (Hysterese). Schwellenwerte sind Parameter in `parameters.toml`, nicht im Code.
+- **Nachtrag 2026-11-08 (Q12):** Der Product Owner hat gegenüber Agent 6 festgelegt: „Erst wenn genug Spieler regelmäßig Online sind um die Spielmechanik zu tragen.“ Umsetzung (Balancing-Agent, R-4; seit #19 in `docs/balancing/NPC_BEHAVIOR.md` §4): Es gibt keine feste Spielerzahl. Die NPC-Intensität k (Start 1) sinkt erst, wenn Kennzahlen aus echten Spielern 14 Tage am Stück erfüllt sind: Routen-Konkurrenz, Zielverfügbarkeit ohne NPCs, Marktaktivität, gleichzeitig Online zur Abendspitze; „regelmäßig aktiv“ heißt Login an ≥ 4 von 7 Tagen. k sinkt dann um 0,1 pro Woche und steigt wieder, wenn die Kennzahlen 7 Tage verfehlt werden (Hysterese). Schwellenwerte sind Parameter in `parameters.toml`, nicht im Code.
 - **Konsequenzen:** Ein einzelner VPS reicht vorerst (passt zu ADR-014). Journale wachsen dauerhaft, deshalb plant Agent 5 Partitionierung bzw. Archivierung (T-507). NPC-Logik läuft serverseitig im Tick und muss als reine Regelfunktion simulierbar sein (ADR-012). Jede Parameteränderung im Live-Betrieb wirkt auf eine bestehende Welt; sie braucht vorher einen Simulationslauf und ggf. eine Datenmigration.
 
 ## ADR-017 – Kontolöschung pseudonymisiert statt Journale zu löschen
@@ -194,6 +195,16 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   3. Für Clan-Ränge gilt: `GODFATHER` = Pate, `CONSIGLIERE` = Consigliere, `CAPO` = Capo, `SOLDIER` = Soldat, `ASSOCIATE` = Mitläufer.
   4. Das Game Design verwendet in Regeln und Parametern die technischen Werte, z. B. `clans.election_voter_min_rank = "SOLDIER"`, und führt die deutsche Bezeichnung als Erläuterung.
 - **Konsequenzen:** Agent 2 passt `clans.md` und die Rang-Parameter in `parameters.toml` an (T-117). Agent 3 prüft die Werte beim Laden der Parameter gegen den Enum. Keine Datenbankmigration nötig.
+
+## ADR-022 – Team aus fünf Agenten; Spielregeln geteilt nach Systemen
+- **Status:** Akzeptiert · **Datum:** 2026-11-09 · **Entschieden von:** Product Owner (gegenüber Agent 1 bestätigt)
+- **Kontext:** Bisher waren sechs Agenten geführt (5 = Database Architect, 6 = Balancing). Die Datenbank-Sitzung hatte kein Repository und hat nie geliefert; der Balancing-Agent arbeitet als „Agent 5“. Außerdem war offen, wer die Wirtschaftsregeln verantwortet.
+- **Entscheidung:**
+  1. **Fünf Agenten:** 1 Project Director, 2 Game Design, 3 Backend **inklusive Datenmodell**, 4 Frontend, 5 Game Balancing & Simulation. Die Rolle „Database Architect“ entfällt.
+  2. **Datenmodell:** Agent 3 entwirft, dokumentiert (`docs/database/`) und setzt um. ADR-010 gilt weiter (ein Prisma-Schema, Journale). Wo frühere ADRs (ADR-010, ADR-016 bis ADR-019) „Agent 5“ für Datenbankaufgaben nennen, ist jetzt Agent 3 gemeint. Wo sie „Agent 6“ nennen, ist der Balancing-Agent gemeint, also jetzt Agent 5.
+  3. **Spielregeln geteilt nach Systemen:** Agent 5 verantwortet fachlich Spielökonomie, Preise, Angebot/Nachfrage, Marktdynamik, Wirtschaftsereignisse, NPC-Marktverhalten, Progression und Simulation. Agent 2 verantwortet Kampf, Clans, Geldwäsche, Immobilien, Weltraum und Reisen/Kontrollen.
+  4. `docs/game-design/parameters.toml` und `verify.py` bleiben in Agent 2s Eigentum. Änderungen an den Abschnitten von Agent 5 bringt Agent 5 per PR ein, abgestimmt mit Agent 2. Bei Streit entscheidet Agent 1.
+- **Konsequenzen:** Die offenen Datenbank-Aufgaben (T-005, ADR-017-Pseudonymisierung, ADR-018-Clan-Kasse, B-9 bis B-15, T-507, T-605) liegen bei Agent 3. Die Datenbank-Sitzung wird nicht mehr genutzt. Systemübergreifende Regeln (z. B. Beschlagnahme bei Kontrollen beeinflusst die Wirtschaft) stimmen Agent 2 und Agent 5 gemeinsam ab.
 
 ---
 
