@@ -64,7 +64,16 @@ export function registryMarkdown(params: LoadedToml<Params>, proposals: LoadedTo
   L.push('|---|---:|---:|---:|---:|---:|');
   for (const [k, e] of Object.entries(p.events)) L.push(`| \`${k}\` | ${fmt(e.probability)} | ${e.duration} | ${fmt(e.stock_shock)} | ${fmt(e.supply_mult)} | ${fmt(e.demand_mult)} |`);
   L.push('');
-  L.push(`### 2.5 Vorschläge von Agent 5 (\`sim/proposals.toml\`, SHA-256 ${proposals.sha256.slice(0, 12)}…, Status: ${proposals.data.meta.status})`);
+  L.push('### 2.5 NPCs (`npc.*`, Regel F-NPC-01…04, Agent 2 / fachlich Agent 5)');
+  L.push('');
+  L.push('| Schlüssel | Wert | Grenzen ([bounds]) |');
+  L.push('|---|---:|---|');
+  for (const [k, v] of Object.entries((p.npc as Record<string, unknown>) ?? {})) {
+    const b = p.bounds?.[`npc.${k}`];
+    L.push(`| \`npc.${k}\` | ${fmt(v)} | ${b ? `[${b[0]}; ${b[1]}]` : '–'} |`);
+  }
+  L.push('');
+  L.push(`### 2.6 Vorschläge von Agent 5 (\`sim/proposals.toml\`, SHA-256 ${proposals.sha256.slice(0, 12)}…, Status: ${proposals.data.meta.status})`);
   L.push('');
   L.push('| Schlüssel | Vorschlag |');
   L.push('|---|---:|');
