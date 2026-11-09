@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Crosshair, Package, Shield } from 'lucide-react';
+import { Crosshair, Package } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEquipment, useMarket } from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
@@ -10,7 +10,7 @@ import { Money } from '@/components/ui/Money';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { CommodityIcon } from '@/components/ui/CommodityIcon';
+import { CommodityImage, EquipmentImage } from '@/components/ui/GameImages';
 import { EmptyState, Skeleton } from '@/components/ui/Feedback';
 import { formatMoney, formatNumber, formatWeight, multiplyMoney, percentDelta } from '@/lib/money';
 import { cn } from '@/lib/cn';
@@ -98,7 +98,7 @@ export function InventoryPage() {
                     <tr key={i.commodity.id} className="hover:bg-surface-2/60">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <CommodityIcon slug={i.commodity.slug} size={36} />
+                          <CommodityImage commodity={i.commodity} size={36} />
                           <div>
                             <p className="font-semibold text-ink">{i.commodity.name}</p>
                             <p className="text-xs text-ink-faint">
@@ -144,7 +144,7 @@ export function InventoryPage() {
                 return (
                   <li key={i.commodity.id}>
                     <Link to={`/handel?ware=${i.commodity.slug}`} className="flex items-center gap-3 p-4">
-                      <CommodityIcon slug={i.commodity.slug} size={40} />
+                      <CommodityImage commodity={i.commodity} size={40} />
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-ink">{i.commodity.name}</p>
                         <p className="num text-xs text-ink-muted">
@@ -172,13 +172,7 @@ export function InventoryPage() {
                 key={e.id}
                 className="flex items-center gap-3 rounded-xl bg-surface-2 p-3 ring-1 ring-line/10"
               >
-                <span className="grid h-10 w-10 place-items-center rounded-lg bg-surface-3 text-brass">
-                  {e.equipmentType.slot === 'WEAPON' ? (
-                    <Crosshair className="h-5 w-5" />
-                  ) : (
-                    <Shield className="h-5 w-5" />
-                  )}
-                </span>
+                <EquipmentImage type={e.equipmentType} size={40} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-ink">{e.equipmentType.name}</p>
                   <p className="num text-xs text-ink-muted">

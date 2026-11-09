@@ -18,7 +18,12 @@ export const toAuth = (r: C.AuthResponseDto): UI.AuthResponse => ({
   user: toUser(r.user),
 });
 
-export const toCommodity = (c: C.CommodityDto): UI.Commodity => ({ ...c });
+export const toCommodity = (c: C.CommodityDto): UI.Commodity => ({ ...c, image: c.image ?? null });
+export const toVehicleType = (v: C.VehicleTypeDto): UI.VehicleType => ({ ...v, image: v.image ?? null });
+export const toEquipmentType = (e: C.EquipmentTypeDto): UI.EquipmentType => ({
+  ...e,
+  image: e.image ?? null,
+});
 
 export const toCity = (c: C.CityDto): UI.City => ({ ...c });
 
@@ -69,8 +74,14 @@ export const toInventory = (i: C.InventoryDto): UI.Inventory => ({
   usedG: i.usedG,
 });
 
-export const toVehicle = (v: C.VehicleDto): UI.Vehicle => ({ ...v });
-export const toEquipment = (e: C.EquipmentDto): UI.PlayerEquipment => ({ ...e });
+export const toVehicle = (v: C.VehicleDto): UI.Vehicle => ({
+  ...v,
+  vehicleType: toVehicleType(v.vehicleType),
+});
+export const toEquipment = (e: C.EquipmentDto): UI.PlayerEquipment => ({
+  ...e,
+  equipmentType: toEquipmentType(e.equipmentType),
+});
 
 export const toTravel = (t: C.TravelDto | null): UI.Travel | null =>
   t && {

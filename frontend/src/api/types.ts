@@ -89,6 +89,8 @@ export interface Commodity {
   illegal: boolean;
   unitWeightG: number;
   basePrice: Money;
+  /** Bildpfad relativ zu images/ oder null (ADR-020) */
+  image: string | null;
 }
 
 export type Trend = 'UP' | 'DOWN' | 'FLAT';
@@ -143,6 +145,8 @@ export interface VehicleType {
   capacityG: number;
   speedKmh: number;
   licenseClass: number | null;
+  /** Bildpfad relativ zu images/ oder null (ADR-020) */
+  image: string | null;
 }
 
 export interface Vehicle {
@@ -163,6 +167,8 @@ export interface EquipmentType {
   defense: number;
   price: Money;
   weightG: number | null;
+  /** Bildpfad relativ zu images/ oder null (ADR-020) */
+  image: string | null;
 }
 
 export interface PlayerEquipment {

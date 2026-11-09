@@ -109,6 +109,8 @@ export interface CommodityDto {
   illegal: boolean;
   unitWeightG: number;
   basePrice: Cents;
+  /** Bildpfad relativ zu images/ (ADR-020, T-114) */
+  image?: string | null;
 }
 export interface MarketPriceDto {
   commodity: CommodityDto;
@@ -148,6 +150,8 @@ export interface VehicleTypeDto {
   capacityG: number;
   speedKmh: number;
   licenseClass: number | null;
+  /** Bildpfad relativ zu images/ (ADR-020, T-114) */
+  image?: string | null;
 }
 export interface VehicleDto {
   id: string;
@@ -166,6 +170,8 @@ export interface EquipmentTypeDto {
   defense: number;
   weightG: number | null;
   price: Cents;
+  /** Bildpfad relativ zu images/ (ADR-020, T-114) */
+  image?: string | null;
 }
 export interface EquipmentDto {
   id: string;

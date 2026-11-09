@@ -5,7 +5,7 @@ import { useOverview } from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Money } from '@/components/ui/Money';
-import { CommodityIcon } from '@/components/ui/CommodityIcon';
+import { CommodityImage } from '@/components/ui/GameImages';
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/Feedback';
 import { percentDelta } from '@/lib/money';
 import { formatRelative } from '@/lib/time';
@@ -50,7 +50,7 @@ export function MarketPage() {
           <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {top.map((r) => (
               <div key={r.commodity.id} className="panel flex items-center gap-3 p-4">
-                <CommodityIcon slug={r.commodity.slug} size={40} />
+                <CommodityImage commodity={r.commodity} size={40} />
                 <div className="min-w-0 flex-1 text-sm">
                   <p className="font-semibold text-ink">{r.commodity.name}</p>
                   <p className="flex flex-wrap items-center gap-1 text-xs">
@@ -82,7 +82,7 @@ export function MarketPage() {
                   <tr key={r.commodity.id} className="hover:bg-surface-2/50">
                     <th scope="row" className="px-4 py-3 text-left">
                       <span className="flex items-center gap-3 font-semibold text-ink">
-                        <CommodityIcon slug={r.commodity.slug} size={32} />
+                        <CommodityImage commodity={r.commodity} size={32} />
                         {r.commodity.name}
                       </span>
                     </th>
@@ -127,7 +127,7 @@ export function MarketPage() {
                 <li key={r.commodity.id} className="space-y-2 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <span className="flex items-center gap-3 font-semibold text-ink">
-                      <CommodityIcon slug={r.commodity.slug} size={32} />
+                      <CommodityImage commodity={r.commodity} size={32} />
                       {r.commodity.name}
                     </span>
                     <span

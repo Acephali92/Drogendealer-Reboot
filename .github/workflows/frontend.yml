@@ -5,10 +5,12 @@ on:
   push:
     paths:
       - 'frontend/**'
+      - 'docs/game-design/parameters.toml'
       - '.github/workflows/frontend.yml'
   pull_request:
     paths:
       - 'frontend/**'
+      - 'docs/game-design/parameters.toml'
       - '.github/workflows/frontend.yml'
 
 concurrency:
