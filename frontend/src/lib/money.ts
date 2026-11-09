@@ -36,7 +36,7 @@ export function formatMoney(value: Money | number | bigint, opts: FormatMoneyOpt
     out += ',' + rest.toString().padStart(2, '0');
   }
   const sign = negative ? '−' : signed && v > 0n ? '+' : '';
-  return `${sign}${out}${currency ? ' €' : ''}`;
+  return `${sign}${out}${currency ? '\u00a0€' : ''}`;
 }
 
 /** Kompakte Darstellung für Kacheln: 1,2 Mio. €. */
@@ -44,7 +44,7 @@ export function formatMoneyCompact(value: Money | bigint): string {
   const v = toCents(value);
   const euros = Number(v / 100n);
   return (
-    new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 }).format(euros) + ' €'
+    new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 }).format(euros) + '\u00a0€'
   );
 }
 
@@ -74,9 +74,9 @@ export const formatNumber = (n: number) => numFmt.format(n);
 /** Gramm → „750 g“ bzw. „242,5 kg“ bzw. „1,2 t“. */
 export function formatWeight(grams: number): string {
   const g = Math.max(0, Math.round(grams));
-  if (g < 1000) return `${numFmt.format(g)} g`;
+  if (g < 1000) return `${numFmt.format(g)}\u00a0g`;
   if (g < 1_000_000) {
-    return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(g / 1000)} kg`;
+    return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(g / 1000)}\u00a0kg`;
   }
-  return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(g / 1_000_000)} t`;
+  return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(g / 1_000_000)}\u00a0t`;
 }
