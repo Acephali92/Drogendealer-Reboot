@@ -1,5 +1,6 @@
 /**
- * Money arithmetic for game rules. All amounts are whole currency units as BigInt.
+ * Money arithmetic for game rules. All amounts are integer cents as BigInt (ADR-019):
+ * 100n = 1,00 €. Conversion to euros happens only for display (frontend).
  *
  * Rounding rule (exploit catalogue, Agent 6): amounts paid TO a player are rounded DOWN,
  * amounts charged TO a player are rounded UP. Splitting an order into many small ones can
@@ -59,9 +60,10 @@ export function total(unitPrice: bigint, quantity: number): bigint {
   return unitPrice * BigInt(quantity);
 }
 
-/** Parses a money string from the API ("1500", "-20"); rejects decimals and garbage. */
+/** Parses a money string from the API in cents ("150000", "-20"); rejects decimals and garbage. */
 export function parseMoney(input: string): bigint {
-  if (!/^-?\d{1,30}$/.test(input)) throw new RangeError(`parseMoney: "${input}" is not a whole amount`);
+  if (!/^-?\d{1,30}$/.test(input))
+    throw new RangeError(`parseMoney: "${input}" is not an integer amount of cents`);
   return BigInt(input);
 }
 

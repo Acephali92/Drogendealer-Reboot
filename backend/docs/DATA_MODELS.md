@@ -8,7 +8,7 @@
 | Thema          | Regel                                                                                                         |
 | -------------- | ------------------------------------------------------------------------------------------------------------- |
 | IDs            | `cuid()`-Strings, im Prisma-Client erzeugt. Ausnahme: Zeilen aus Triggern verwenden `gen_random_uuid()::text` |
-| Geld           | `BigInt` (ganze Spielwährungs-Einheiten), im JSON als String                                                  |
+| Geld           | `BigInt` in **ganzzahligen Cent** (ADR-019), im JSON als String                                               |
 | Zeit           | `TIMESTAMP(3)` in UTC, für Dauer-Aktionen Endzeitpunkte (`arrivesAt`, `statusUntil`)                          |
 | Namen          | Spalten in camelCase, wie Prisma sie erzeugt; handgeschriebenes SQL quotet sie (`"cityId"`)                   |
 | Löschverhalten | Jede Relation hat ein explizites `onDelete` (siehe §4)                                                        |
