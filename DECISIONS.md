@@ -25,6 +25,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-016 | Dauerhafte Welt ohne Resets, kleine Spielerzahl zum Start | Akzeptiert | 2026-11-08 |
 | ADR-017 | Kontolöschung pseudonymisiert statt Journale zu löschen | Akzeptiert (Details durch Agent 5) | 2026-11-08 |
 | ADR-018 | Gemeinsames Clan-Guthaben, Wahl eines neuen Paten | Akzeptiert (Wahlverfahren durch Agent 2) | 2026-11-08 |
+| ADR-019 | Geld überall in Cent (ganzzahlig) | Akzeptiert | 2026-11-09 |
 
 ---
 
@@ -162,6 +163,12 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   4. Wahlverfahren (wer wählen und gewählt werden darf, Dauer, Mehrheit, Gleichstand, keine Stimmabgabe, einziges verbleibendes Mitglied) legt Agent 2 als Regel mit Parametern in `parameters.toml` fest. Fallback-Vorschlag von Agent 1, falls die Wahl ergebnislos endet: das dienstälteste ranghöchste Mitglied.
   5. Verlässt das letzte Mitglied den Clan, wird der Clan aufgelöst. Was mit dem Restguthaben geschieht, regelt Agent 2 inflationsneutral (ADR-016).
 - **Konsequenzen:** Agent 5 modelliert Clan-Journal und Wahl (Wahl, Stimmen, Ergebnis nachvollziehbar). Agent 3 setzt Wahl-Endpunkte und die Auflösung per Tick bzw. lazy um. Agent 4 baut die Wahl-Oberfläche. Die bestehende Löschlogik (Clan bleibt ohne Paten) ist bis dahin korrekt.
+
+## ADR-019 – Geld überall in Cent (ganzzahlig)
+- **Status:** Akzeptiert · **Datum:** 2026-11-09 · **Anlass:** Review der PRs #2, #3, #4
+- **Kontext:** Drei Bereiche haben unterschiedliche Geldeinheiten angenommen: Game Design (`parameters.toml`, `verify.py`) und Frontend rechnen in **Cent**, der Backend-Vertrag (`docs/api/API-CONTRACT.md`) in **ganzen Spielwährungs-Einheiten**. Das Game Design braucht Beträge unter 1 € (z. B. Spritpreis 185 ct/l, Umsatz und Wäsche pro Tick in ct).
+- **Entscheidung:** Alle Geldbeträge werden im gesamten System als **ganzzahlige Cent** geführt: in `parameters.toml`, in der Datenbank (`BigInt`), in der Spiellogik, im API-JSON (als String, z. B. `"3000000"` = 30.000,00 €) und im Frontend (`BigInt`). Umrechnung in Euro nur bei der Anzeige. Keine Gleitkommazahlen für Geld.
+- **Konsequenzen:** Agent 3 stellt Vertrag, Startwerte und Tests auf Cent um (T-109); da noch kein Spieler existiert, ist keine Datenmigration nötig. Agent 4 behält seine Cent-Logik. Agent 5 prüft, dass `BigInt` für Cent-Beträge im Late-Game reicht (ja: bis ca. 9,2 · 10^16 €). Agent 6 nutzt Cent in der Simulation.
 
 ---
 

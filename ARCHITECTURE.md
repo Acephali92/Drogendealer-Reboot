@@ -72,7 +72,7 @@ ADR-012 (Balancing-Simulation).
 ## 5. Datenmodell (Agent 5, Umsetzung Agent 3)
 
 - PostgreSQL 16, Schema ausschließlich über Prisma (`backend/prisma/schema.prisma`) und dessen Migrationen. Was Prisma nicht abbilden kann (CHECK-Constraints, Trigger, Partitionierung), wird als handgeschriebenes SQL in einer Prisma-Migration ergänzt.
-- Geldbeträge: `BigInt` in der Datenbank, im JSON als **String** übertragen.
+- Geldbeträge: ganzzahlige **Cent** (ADR-019), `BigInt` in der Datenbank, im JSON als **String** übertragen.
 - **Nachvollziehbarkeit (Pflicht):** wirtschaftliche Vorgänge werden in unveränderlichen Journal-Tabellen (append-only) festgehalten:
   - Geldbewegungen (`MoneyTransaction`, mit `balanceAfter` und Grund)
   - Handelsvorgänge (`TradeTransaction`)

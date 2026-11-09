@@ -1,0 +1,517 @@
+// Drogendealer-Reboot – Datenmodell
+//
+// Dieses Schema deckt alle Spielbereiche ab (Konten, Spieler, Wirtschaft, Handel,
+// Reisen, Kampf, Clans/Soziales). Spiel-Logik und konkrete Balancing-Werte kommen
+// später vom Game Designer; hier werden nur Struktur und Integritätsregeln festgelegt.
+//
+// Konventionen:
+// - IDs: cuid() Strings
+// - Geldbeträge: BigInt in ganzzahligen Cent (ADR-019; reicht bis ca. 9,2 · 10^16 €)
+// - Zeitbasierte Echtzeit-Aktionen speichern Endzeitpunkte (arrivesAt, statusUntil),
+//   damit sie später "lazy" beim nächsten Zugriff aufgelöst werden können.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Konten & Auth ─────────────────────────────
+
+enum UserRole {
+  PLAYER
+  ADMIN
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  username       String    @unique
+  passwordHash   String
+  role           UserRole  @default(PLAYER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLoginAt    DateTime?
+  /// Zeitpunkt der Pflicht-Bestätigung \"ich bin mindestens 18\" bei der Registrierung (ADR-013).
+  ageConfirmedAt DateTime
+
+  player        Player?
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id           String    @id @default(cuid())
+  userId       String
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  userAgent    String?
+  ip           String?
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────── Spieler & Fortschritt ───────────────────────────
+
+enum PlayerStatus {
+  IDLE
+  TRAVELING
+  IN_COMBAT
+  HOSPITAL
+  JAIL
+}
+
+model Player {
+  id            String       @id @default(cuid())
+  userId        String       @unique
+  name          String       @unique
+  cash          BigInt       @default(0)
+  bank          BigInt       @default(0)
+  health        Int          @default(100)
+  maxHealth     Int          @default(100)
+  level         Int          @default(1)
+  experience    Int          @default(0)
+  reputation    Int          @default(0)
+  /// Fahndungsdruck 0–100 (Mechanik folgt mit dem Game Design).
+  heat          Int          @default(0)
+  currentCityId String?
+  status        PlayerStatus @default(IDLE)
+  statusUntil   DateTime?
+  /// Letzte authentifizierte Anfrage (für \"online\"-Anzeige, max. 1 Update/Minute).
+  lastSeenAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user        User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentCity City? @relation(fields: [currentCityId], references: [id], onDelete: SetNull)
+
+  inventory         InventoryItem[]
+  tradeTransactions TradeTransaction[]
+  moneyTransactions MoneyTransaction[]
+  vehicles          Vehicle[]
+  travels           Travel[]
+  equipment         PlayerEquipment[]
+  attacks           Combat[]           @relation("CombatAttacker")
+  defenses          Combat[]           @relation("CombatDefender")
+  combatsWon        Combat[]           @relation("CombatWinner")
+  clanMembership    ClanMember?
+  clanInvites       ClanInvite[]       @relation("ClanInviteInvitee")
+  sentClanInvites   ClanInvite[]       @relation("ClanInviteInviter")
+  sentMessages      Message[]          @relation("MessageSender")
+  receivedMessages  Message[]          @relation("MessageRecipient")
+  notifications     Notification[]
+
+  @@index([currentCityId])
+  @@index([status, statusUntil])
+  @@index([lastSeenAt])
+}
+
+// ─────────────────────────── Welt & Wirtschaft ───────────────────────────
+
+model City {
+  id             String  @id @default(cuid())
+  slug           String  @unique
+  name           String
+  description    String?
+  country        String?
+  techLevel      Int     @default(1)
+  policeStrength Int     @default(0)
+  population     Int     @default(0)
+
+  connectionsFrom CityConnection[]    @relation("ConnectionFrom")
+  connectionsTo   CityConnection[]    @relation("ConnectionTo")
+  marketPrices    MarketPrice[]
+  priceChanges    MarketPriceChange[]
+  players         Player[]
+  trades          TradeTransaction[]
+  travelsFrom     Travel[]            @relation("TravelFrom")
+  travelsTo       Travel[]            @relation("TravelTo")
+  combats         Combat[]
+}
+
+/// Gerichtete Verbindung zwischen zwei Städten (für Hin- und Rückweg je ein Eintrag).
+model CityConnection {
+  id         String @id @default(cuid())
+  fromCityId String
+  toCityId   String
+  distanceKm Int
+
+  fromCity City @relation("ConnectionFrom", fields: [fromCityId], references: [id], onDelete: Cascade)
+  toCity   City @relation("ConnectionTo", fields: [toCityId], references: [id], onDelete: Cascade)
+
+  @@unique([fromCityId, toCityId])
+  @@index([toCityId])
+}
+
+/// Handelbare Ware.
+model Commodity {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String?
+  illegal     Boolean @default(true)
+  /// Gewicht einer Einheit in Gramm (für Transportkapazität).
+  unitWeightG Int     @default(1)
+  basePrice   BigInt
+  minPrice    BigInt
+  maxPrice    BigInt
+
+  marketPrices MarketPrice[]
+  priceChanges MarketPriceChange[]
+  inventory    InventoryItem[]
+  trades       TradeTransaction[]
+}
+
+/// Aktueller Marktpreis einer Ware in einer Stadt.
+model MarketPrice {
+  id          String   @id @default(cuid())
+  cityId      String
+  commodityId String
+  buyPrice    BigInt
+  sellPrice   BigInt
+  supply      Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  city      City      @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Cascade)
+
+  @@unique([cityId, commodityId])
+  @@index([commodityId])
+}
+
+enum MarketPriceChangeCause {
+  INITIAL
+  TRADE
+  TICK
+  EVENT
+  ADMIN
+  UNSPECIFIED
+}
+
+/// Append-only Journal aller Marktpreis-Änderungen (T-105).
+/// Wird per DB-Trigger auf "MarketPrice" geschrieben – kein Anwendungscode kann es umgehen.
+/// UPDATE/DELETE sind per Trigger verboten. Ursache/Referenz setzt die Anwendung pro
+/// Transaktion über setPriceChangeContext() (src/modules/world/price-journal.ts).
+model MarketPriceChange {
+  id           String                 @id @default(cuid())
+  cityId       String
+  commodityId  String
+  oldBuyPrice  BigInt?
+  newBuyPrice  BigInt
+  oldSellPrice BigInt?
+  newSellPrice BigInt
+  oldSupply    Int?
+  newSupply    Int
+  cause        MarketPriceChangeCause
+  /// Referenz auf den Auslöser, z. B. TradeTransaction-ID oder Tick-Nummer.
+  refId        String?
+  createdAt    DateTime               @default(now())
+
+  city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
+
+  @@index([cityId, commodityId, createdAt])
+  @@index([commodityId, createdAt])
+  @@index([cause, createdAt])
+}
+
+enum MoneyTransactionReason {
+  TRADE
+  TRAVEL
+  VEHICLE
+  EQUIPMENT
+  COMBAT
+  CLAN
+  BANK
+  ADMIN
+}
+
+/// Kontobuch aller Geldbewegungen eines Spielers (Audit / Anti-Cheat).
+model MoneyTransaction {
+  id           String                 @id @default(cuid())
+  playerId     String
+  amount       BigInt
+  balanceAfter BigInt
+  reason       MoneyTransactionReason
+  refId        String?
+  createdAt    DateTime               @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+}
+
+// ───────────────────────────────── Handel ─────────────────────────────────
+
+model InventoryItem {
+  id          String @id @default(cuid())
+  playerId    String
+  commodityId String
+  quantity    Int    @default(0)
+  /// Gewichteter Durchschnitts-Einkaufspreis pro Einheit.
+  avgBuyPrice BigInt @default(0)
+
+  player    Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
+
+  @@unique([playerId, commodityId])
+  @@index([commodityId])
+}
+
+enum TradeSide {
+  BUY
+  SELL
+}
+
+model TradeTransaction {
+  id          String    @id @default(cuid())
+  playerId    String
+  cityId      String
+  commodityId String
+  side        TradeSide
+  quantity    Int
+  unitPrice   BigInt
+  total       BigInt
+  createdAt   DateTime  @default(now())
+
+  player    Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
+
+  @@index([playerId, createdAt])
+  @@index([cityId, commodityId, createdAt])
+  @@index([commodityId])
+}
+
+// ─────────────────────────── Reisen & Fahrzeuge ───────────────────────────
+
+model VehicleType {
+  id           String  @id @default(cuid())
+  slug         String  @unique
+  name         String
+  price        BigInt
+  /// Ladekapazität in Gramm.
+  capacityG    Int
+  speedKmh     Int
+  licenseClass String?
+
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id            String   @id @default(cuid())
+  playerId      String
+  vehicleTypeId String
+  condition     Int      @default(100)
+  isActive      Boolean  @default(false)
+  purchasedAt   DateTime @default(now())
+
+  player      Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  vehicleType VehicleType @relation(fields: [vehicleTypeId], references: [id], onDelete: Restrict)
+  travels     Travel[]
+
+  @@index([playerId])
+  @@index([vehicleTypeId])
+}
+
+enum TravelStatus {
+  IN_PROGRESS
+  ARRIVED
+  CANCELLED
+}
+
+model Travel {
+  id         String       @id @default(cuid())
+  playerId   String
+  vehicleId  String?
+  fromCityId String
+  toCityId   String
+  departedAt DateTime     @default(now())
+  arrivesAt  DateTime
+  status     TravelStatus @default(IN_PROGRESS)
+
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  fromCity City     @relation("TravelFrom", fields: [fromCityId], references: [id], onDelete: Restrict)
+  toCity   City     @relation("TravelTo", fields: [toCityId], references: [id], onDelete: Restrict)
+
+  @@index([playerId, status])
+  @@index([status, arrivesAt])
+  @@index([vehicleId])
+  @@index([fromCityId])
+  @@index([toCityId])
+}
+
+// ───────────────────────────────── Kampf ─────────────────────────────────
+
+enum EquipmentSlot {
+  WEAPON
+  ARMOR
+}
+
+model EquipmentType {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String?
+  slot        EquipmentSlot
+  attack      Int           @default(0)
+  defense     Int           @default(0)
+  weightG     Int           @default(0)
+  price       BigInt
+
+  owned PlayerEquipment[]
+}
+
+model PlayerEquipment {
+  id              String   @id @default(cuid())
+  playerId        String
+  equipmentTypeId String
+  equipped        Boolean  @default(false)
+  acquiredAt      DateTime @default(now())
+
+  player        Player        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  equipmentType EquipmentType @relation(fields: [equipmentTypeId], references: [id], onDelete: Restrict)
+
+  @@index([playerId])
+  @@index([equipmentTypeId])
+}
+
+enum CombatStatus {
+  PENDING
+  RESOLVED
+}
+
+model Combat {
+  id         String       @id @default(cuid())
+  attackerId String
+  defenderId String
+  cityId     String
+  status     CombatStatus @default(PENDING)
+  winnerId   String?
+  loot       BigInt       @default(0)
+  /// Rundenprotokoll des Kampfes (Format wird mit dem Kampfsystem festgelegt).
+  log        Json?
+  createdAt  DateTime     @default(now())
+  resolvedAt DateTime?
+
+  attacker Player  @relation("CombatAttacker", fields: [attackerId], references: [id], onDelete: Cascade)
+  defender Player  @relation("CombatDefender", fields: [defenderId], references: [id], onDelete: Cascade)
+  winner   Player? @relation("CombatWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  city     City    @relation(fields: [cityId], references: [id], onDelete: Restrict)
+
+  @@index([attackerId, createdAt])
+  @@index([defenderId, createdAt])
+  @@index([winnerId])
+  @@index([cityId])
+}
+
+// ─────────────────────────── Clans & Soziales ───────────────────────────
+
+model Clan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  tag         String   @unique
+  description String?
+  bank        BigInt   @default(0)
+  createdAt   DateTime @default(now())
+
+  members ClanMember[]
+  invites ClanInvite[]
+}
+
+/// Pate / Consigliere / Capo / Soldat / Mitläufer (Anzeige-Namen macht das Frontend).
+enum ClanRole {
+  GODFATHER
+  CONSIGLIERE
+  CAPO
+  SOLDIER
+  ASSOCIATE
+}
+
+model ClanMember {
+  id       String   @id @default(cuid())
+  clanId   String
+  /// Unique: ein Spieler kann höchstens einem Clan angehören.
+  playerId String   @unique
+  role     ClanRole @default(ASSOCIATE)
+  joinedAt DateTime @default(now())
+
+  clan   Clan   @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+}
+
+enum ClanInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model ClanInvite {
+  id          String           @id @default(cuid())
+  clanId      String
+  playerId    String
+  invitedById String?
+  status      ClanInviteStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+
+  clan      Clan    @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  player    Player  @relation("ClanInviteInvitee", fields: [playerId], references: [id], onDelete: Cascade)
+  invitedBy Player? @relation("ClanInviteInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([clanId, playerId, status])
+  @@index([playerId, status])
+  @@index([invitedById])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String?
+  recipientId String
+  subject     String?
+  body        String
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  sender    Player? @relation("MessageSender", fields: [senderId], references: [id], onDelete: SetNull)
+  recipient Player  @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, createdAt])
+  @@index([senderId])
+}
+
+/// Persönliche Benachrichtigung eines Spielers (z. B. "Reise beendet", "Clan-Einladung").
+model Notification {
+  id        String    @id @default(cuid())
+  playerId  String
+  type      String
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, readAt, createdAt])
+}
+
+/// Öffentliche Meldung im Live-Ticker (z. B. "X erreicht die Stadt Y").
+model TickerEvent {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
