@@ -4,7 +4,13 @@ import type { Pagination } from '../../lib/pagination.js';
 import { serialize } from '../../lib/serialize.js';
 
 /** Hierarchy from top to bottom (Pate, Consigliere, Capo, Soldat, Mitläufer). */
-export const CLAN_ROLE_ORDER: readonly ClanRole[] = ['GODFATHER', 'CONSIGLIERE', 'CAPO', 'SOLDIER', 'ASSOCIATE'];
+export const CLAN_ROLE_ORDER: readonly ClanRole[] = [
+  'GODFATHER',
+  'CONSIGLIERE',
+  'CAPO',
+  'SOLDIER',
+  'ASSOCIATE',
+];
 
 export async function listClans(prisma: PrismaClient, page: Pagination) {
   const [clans, total] = await prisma.$transaction([

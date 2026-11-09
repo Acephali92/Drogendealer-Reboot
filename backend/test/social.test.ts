@@ -23,8 +23,8 @@ describe('authentication on game endpoints', () => {
     ['GET', '/players/me/transactions'],
     ['GET', '/players/online'],
     ['GET', '/cities'],
-    ['GET', '/cities/berlin'],
-    ['GET', '/cities/berlin/market'],
+    ['GET', '/cities/nebelstadt'],
+    ['GET', '/cities/nebelstadt/market'],
     ['GET', '/market/overview'],
     ['GET', '/inventory'],
     ['GET', '/vehicle-types'],
@@ -173,7 +173,10 @@ describe('rankings', () => {
     const rich = await createUser(app, 'rich');
     const famous = await createUser(app, 'famous');
     const veteran = await createUser(app, 'veteran');
-    await app.prisma.player.update({ where: { id: rich.playerId }, data: { cash: 5_000_000_000n, bank: 1n } });
+    await app.prisma.player.update({
+      where: { id: rich.playerId },
+      data: { cash: 5_000_000_000n, bank: 1n },
+    });
     await app.prisma.player.update({ where: { id: famous.playerId }, data: { reputation: 999, cash: 10n } });
     await app.prisma.player.update({ where: { id: veteran.playerId }, data: { level: 30, experience: 5 } });
     await createClan(app, 'RCH', [{ playerId: rich.playerId, role: 'GODFATHER' }], 100n);
@@ -229,7 +232,12 @@ describe('notifications', () => {
     const other = await createUser(app);
     const [n1] = await Promise.all([
       app.prisma.notification.create({
-        data: { playerId: me.playerId, type: 'TRAVEL_ARRIVED', title: 'Angekommen', body: 'Du bist in Hamburg.' },
+        data: {
+          playerId: me.playerId,
+          type: 'TRAVEL_ARRIVED',
+          title: 'Angekommen',
+          body: 'Du bist in Rostküste.',
+        },
       }),
       app.prisma.notification.create({
         data: { playerId: me.playerId, type: 'CLAN_INVITE', title: 'Einladung', body: '…' },
