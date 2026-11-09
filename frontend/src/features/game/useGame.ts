@@ -20,10 +20,24 @@ export function useGame() {
         used: inventory.data.usedG,
         capacity: inventory.data.capacityG,
         /** null = unbekannt (kein Fahrzeug, Kapazität bestimmt der Server) */
-        free: inventory.data.capacityG === null ? null : Math.max(0, inventory.data.capacityG - inventory.data.usedG),
+        free:
+          inventory.data.capacityG === null
+            ? null
+            : Math.max(0, inventory.data.capacityG - inventory.data.usedG),
       }
     : null;
-  return { me, player, cities, city, cityById, traveling, travel: travel.data ?? null, destination, inventory, cargo };
+  return {
+    me,
+    player,
+    cities,
+    city,
+    cityById,
+    traveling,
+    travel: travel.data ?? null,
+    destination,
+    inventory,
+    cargo,
+  };
 }
 
 /** Nach Ankunft (Countdown abgelaufen) Spielerzustand neu laden. */

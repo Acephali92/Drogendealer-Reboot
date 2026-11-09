@@ -18,8 +18,10 @@ import { TravelProgress } from '@/features/city/TravelProgress';
 import { TradeDialog } from './TradeDialog';
 
 export function TrendIcon({ trend, className }: { trend: Trend; className?: string }) {
-  if (trend === 'UP') return <ArrowUpRight className={cn('h-4 w-4 text-danger', className)} aria-label="steigt" />;
-  if (trend === 'DOWN') return <ArrowDownRight className={cn('h-4 w-4 text-neon', className)} aria-label="fällt" />;
+  if (trend === 'UP')
+    return <ArrowUpRight className={cn('h-4 w-4 text-danger', className)} aria-label="steigt" />;
+  if (trend === 'DOWN')
+    return <ArrowDownRight className={cn('h-4 w-4 text-neon', className)} aria-label="fällt" />;
   return <Minus className={cn('h-4 w-4 text-ink-faint', className)} aria-label="stabil" />;
 }
 
@@ -62,7 +64,7 @@ export function TradePage() {
   }
   if (!player || !city) return null;
 
-  const openEntry = dialog ? market.data?.find((m) => m.commodity.slug === dialog.slug) ?? null : null;
+  const openEntry = dialog ? (market.data?.find((m) => m.commodity.slug === dialog.slug) ?? null) : null;
   const close = () => {
     setDialog(null);
     if (params.has('ware')) setParams({}, { replace: true });
@@ -120,9 +122,8 @@ export function TradePage() {
                 <p className="mb-4 text-sm text-ink-muted">{m.commodity.description}</p>
                 {b?.highestSell && b.highestSell.city.id !== city.id && (
                   <p className="-mt-2 mb-4 text-xs text-ink-faint">
-                    {t('trade.bestSellHint')}{' '}
-                    <Money value={b.highestSell.price} className="text-brass" /> {t('trade.in')}{' '}
-                    <span className="text-brass">{b.highestSell.city.name}</span>
+                    {t('trade.bestSellHint')} <Money value={b.highestSell.price} className="text-brass" />{' '}
+                    {t('trade.in')} <span className="text-brass">{b.highestSell.city.name}</span>
                   </p>
                 )}
                 <div className="flex gap-4">
@@ -149,7 +150,12 @@ export function TradePage() {
                       {vsBase !== null && (
                         <div className="flex justify-between gap-2">
                           <dt className="text-ink-muted">{t('trade.vsBase')}</dt>
-                          <dd className={cn('num font-semibold', vsBase < 0 ? 'text-neon' : vsBase > 0 ? 'text-danger' : 'text-ink-muted')}>
+                          <dd
+                            className={cn(
+                              'num font-semibold',
+                              vsBase < 0 ? 'text-neon' : vsBase > 0 ? 'text-danger' : 'text-ink-muted',
+                            )}
+                          >
                             {vsBase > 0 ? '+' : ''}
                             {vsBase.toLocaleString('de-DE')} %
                           </dd>
@@ -162,7 +168,9 @@ export function TradePage() {
                         <dt className="text-ink-muted">{t('trade.owned')}</dt>
                         <dd className="num text-ink">
                           {formatNumber(ownedQty)}{' '}
-                          <span className="text-ink-faint">({formatWeight(ownedQty * m.commodity.unitWeightG)})</span>
+                          <span className="text-ink-faint">
+                            ({formatWeight(ownedQty * m.commodity.unitWeightG)})
+                          </span>
                         </dd>
                       </div>
                       <div className="flex justify-between gap-2">
@@ -174,7 +182,10 @@ export function TradePage() {
                       <div className="flex justify-between gap-2">
                         <dt className="text-ink-muted">{t('trade.value')}</dt>
                         <dd>
-                          <Money value={multiplyMoney(m.sellPrice, ownedQty)} className="font-semibold text-neon" />
+                          <Money
+                            value={multiplyMoney(m.sellPrice, ownedQty)}
+                            className="font-semibold text-neon"
+                          />
                         </dd>
                       </div>
                     </dl>

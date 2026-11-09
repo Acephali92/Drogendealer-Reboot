@@ -57,7 +57,11 @@ export const toMarket = (m: C.MarketDto): UI.MarketEntry[] =>
   }));
 
 export const toOverview = (o: C.OverviewDto): UI.OverviewRow[] =>
-  o.commodities.map((r) => ({ commodity: toCommodity(r.commodity), lowestBuy: r.lowestBuy, highestSell: r.highestSell }));
+  o.commodities.map((r) => ({
+    commodity: toCommodity(r.commodity),
+    lowestBuy: r.lowestBuy,
+    highestSell: r.highestSell,
+  }));
 
 export const toInventory = (i: C.InventoryDto): UI.Inventory => ({
   items: i.items.map((x) => ({ ...x, commodity: toCommodity(x.commodity) })),
@@ -103,7 +107,10 @@ export const toInvite = (i: C.ClanInviteDto): UI.ClanInvite => ({
   createdAt: i.createdAt,
 });
 
-export function toRanking(r: C.RankingDto, me: { playerId?: string | null; clanId?: string | null }): UI.Ranking {
+export function toRanking(
+  r: C.RankingDto,
+  me: { playerId?: string | null; clanId?: string | null },
+): UI.Ranking {
   return {
     type: r.type,
     total: r.total,
@@ -147,11 +154,18 @@ const DEFAULT_LINK: Partial<Record<UI.NotificationKind, string>> = {
 
 export function toNotification(n: C.NotificationDto): UI.GameNotification {
   const kind = KIND_RULES.find(([re]) => re.test(n.type))?.[1] ?? 'SYSTEM';
-  const link = typeof n.data?.link === 'string' && n.data.link.startsWith('/') ? n.data.link : DEFAULT_LINK[kind] ?? null;
+  const link =
+    typeof n.data?.link === 'string' && n.data.link.startsWith('/')
+      ? n.data.link
+      : (DEFAULT_LINK[kind] ?? null);
   return { id: n.id, kind, title: n.title, body: n.body, link, readAt: n.readAt, createdAt: n.createdAt };
 }
 
-export const toTicker = (e: C.TickerEventDto): UI.TickerEvent => ({ id: e.id, text: e.message, createdAt: e.createdAt });
+export const toTicker = (e: C.TickerEventDto): UI.TickerEvent => ({
+  id: e.id,
+  text: e.message,
+  createdAt: e.createdAt,
+});
 
 export const toTransaction = (t: C.MoneyTransactionDto): UI.MoneyTransaction => ({
   id: t.id,

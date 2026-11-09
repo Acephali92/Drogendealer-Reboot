@@ -7,7 +7,14 @@ export function VehicleArt({ slug, className }: { slug: string; className?: stri
   const shapes: Record<string, JSX.Element> = {
     motorroller: (
       <g>
-        <path d="M34 54 H96 Q104 54 108 46 L114 20" fill="none" stroke={body} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M34 54 H96 Q104 54 108 46 L114 20"
+          fill="none"
+          stroke={body}
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
         <path d="M30 56 Q30 42 46 42 H78 Q84 42 84 50 V56 Z" fill={body} />
         <rect x="44" y="34" width="30" height="7" rx="3.5" fill={body} />
         <path d="M108 20 H122" stroke={body} strokeWidth="5" strokeLinecap="round" />

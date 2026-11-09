@@ -32,7 +32,10 @@ export function refreshSession(): Promise<boolean> {
   if (!refreshToken) return Promise.resolve(false);
   refreshing = (async () => {
     try {
-      const tokens = await raw<AuthTokens>('POST', '/auth/refresh', { body: { refreshToken }, anonymous: true });
+      const tokens = await raw<AuthTokens>('POST', '/auth/refresh', {
+        body: { refreshToken },
+        anonymous: true,
+      });
       useAuth.getState().setSession(tokens);
       return true;
     } catch (e) {
@@ -105,7 +108,9 @@ export const del = <T>(path: string, body?: unknown) => api<T>('DELETE', path, {
 export async function download(path: string): Promise<{ blob: Blob; filename: string }> {
   const attempt = async () => {
     const token = useAuth.getState().accessToken;
-    const res = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     return res;
   };
   if (!useAuth.getState().accessToken) await refreshSession();
@@ -113,7 +118,11 @@ export async function download(path: string): Promise<{ blob: Blob; filename: st
   if (res.status === 401 && (await refreshSession())) res = await attempt();
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-    throw new ApiError(res.status, body?.error?.code ?? `HTTP_${res.status}`, body?.error?.message ?? res.statusText);
+    throw new ApiError(
+      res.status,
+      body?.error?.code ?? `HTTP_${res.status}`,
+      body?.error?.message ?? res.statusText,
+    );
   }
   const cd = res.headers.get('content-disposition') ?? '';
   const filename = /filename="?([^";]+)"?/i.exec(cd)?.[1] ?? 'export.json';

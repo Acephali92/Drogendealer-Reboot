@@ -6,7 +6,14 @@ export type LimitReason = 'limitCash' | 'limitCargo' | 'limitSupply' | 'limitOwn
 /** Maximal handelbare Menge und der begrenzende Faktor. */
 export function tradeLimit(
   side: TradeSide,
-  o: { cash: Money; unitPrice: Money; supply: number; owned: number; freeG: number | null; unitWeightG: number },
+  o: {
+    cash: Money;
+    unitPrice: Money;
+    supply: number;
+    owned: number;
+    freeG: number | null;
+    unitWeightG: number;
+  },
 ): { max: number; reason: LimitReason } {
   if (side === 'SELL') return { max: Math.max(0, o.owned), reason: 'limitOwned' };
   const candidates: [number, LimitReason][] = [
@@ -14,7 +21,8 @@ export function tradeLimit(
     [Math.max(0, o.supply), 'limitSupply'],
   ];
   // Unbekannte Kapazität (kein Fahrzeug): Der Server prüft den Laderaum.
-  if (o.freeG !== null) candidates.push([Math.floor(Math.max(0, o.freeG) / Math.max(1, o.unitWeightG)), 'limitCargo']);
+  if (o.freeG !== null)
+    candidates.push([Math.floor(Math.max(0, o.freeG) / Math.max(1, o.unitWeightG)), 'limitCargo']);
   candidates.sort((a, b) => a[0] - b[0]);
   const [max, reason] = candidates[0]!;
   return { max, reason };

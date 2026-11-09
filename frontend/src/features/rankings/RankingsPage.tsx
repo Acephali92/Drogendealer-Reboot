@@ -27,7 +27,11 @@ function Row({ r, type }: { r: RankingRow; type: RankingType }) {
       )}
     >
       <span className="num w-8 shrink-0 text-center font-semibold text-ink-muted">
-        {r.rank <= 3 ? <Medal className={cn('mx-auto h-5 w-5', MEDALS[r.rank - 1])} aria-label={`Platz ${r.rank}`} /> : r.rank}
+        {r.rank <= 3 ? (
+          <Medal className={cn('mx-auto h-5 w-5', MEDALS[r.rank - 1])} aria-label={`Platz ${r.rank}`} />
+        ) : (
+          r.rank
+        )}
       </span>
       {type === 'clans' ? (
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brass/10 text-xs font-bold text-brass ring-1 ring-brass/30">
@@ -46,7 +50,12 @@ function Row({ r, type }: { r: RankingRow; type: RankingType }) {
           <span className="ml-2 text-xs text-ink-faint">Level {r.level}</span>
         )}
       </span>
-      <span className={cn('num text-right font-semibold', type === 'wealth' || type === 'clans' ? 'text-neon' : 'text-ink')}>
+      <span
+        className={cn(
+          'num text-right font-semibold',
+          type === 'wealth' || type === 'clans' ? 'text-neon' : 'text-ink',
+        )}
+      >
         {formatValue(type, r.value)}
       </span>
     </li>
@@ -66,7 +75,10 @@ export function RankingsPage() {
         className="mb-5"
         value={type}
         onChange={setType}
-        items={(['wealth', 'reputation', 'level', 'clans'] as const).map((v) => ({ value: v, label: t(`rankings.${v}`) }))}
+        items={(['wealth', 'reputation', 'level', 'clans'] as const).map((v) => ({
+          value: v,
+          label: t(`rankings.${v}`),
+        }))}
       />
 
       {r.isError && <ErrorState error={r.error} onRetry={() => r.refetch()} />}
@@ -91,7 +103,11 @@ export function RankingsPage() {
                   <div
                     className={cn(
                       'panel grid w-full place-items-center rounded-b-none font-display text-2xl font-bold',
-                      i === 0 ? 'h-28 text-[#ffd23f] shadow-glow' : i === 1 ? 'h-20 text-[#c9d1d9]' : 'h-14 text-[#cd7f32]',
+                      i === 0
+                        ? 'h-28 text-[#ffd23f] shadow-glow'
+                        : i === 1
+                          ? 'h-20 text-[#c9d1d9]'
+                          : 'h-14 text-[#cd7f32]',
                     )}
                   >
                     {i + 1}
@@ -108,7 +124,9 @@ export function RankingsPage() {
               ))}
             </ul>
             {!meVisible && (
-              <p className="border-t border-line/10 px-4 py-3 text-xs text-ink-faint">{t('rankings.notListed')}</p>
+              <p className="border-t border-line/10 px-4 py-3 text-xs text-ink-faint">
+                {t('rankings.notListed')}
+              </p>
             )}
           </div>
         </div>

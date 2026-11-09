@@ -38,7 +38,11 @@ export function TopBar() {
             >
               <Route className="h-4 w-4 shrink-0" aria-hidden />
               <span className="truncate">{destination?.name ?? '…'}</span>
-              <Countdown to={travel.arrivesAt} onDone={() => onArrive(destination?.name)} className="num font-semibold" />
+              <Countdown
+                to={travel.arrivesAt}
+                onDone={() => onArrive(destination?.name)}
+                className="num font-semibold"
+              />
             </Link>
           ) : (
             <Link
@@ -74,10 +78,14 @@ export function TopBar() {
                 <dt className="sr-only">{t('stats.cargo')}</dt>
                 <dd className="w-full">
                   <div className="num flex justify-between text-[11px] text-ink-muted">
-                    <span>{formatWeight(cargo.free)}</span>
-                    <span className="text-ink-faint">frei</span>
+                    <span>{cargo.free !== null ? formatWeight(cargo.free) : t('stats.backpack')}</span>
+                    {cargo.free !== null && <span className="text-ink-faint">frei</span>}
                   </div>
-                  <ProgressBar value={cargo.capacity ? cargo.used / cargo.capacity : 0} tone="auto" size="xs" />
+                  <ProgressBar
+                    value={cargo.capacity ? cargo.used / cargo.capacity : 0}
+                    tone="auto"
+                    size="xs"
+                  />
                 </dd>
               </div>
             )}
@@ -130,7 +138,9 @@ export function TopBar() {
           {cargo && (
             <span className="flex shrink-0 items-center gap-1.5 text-ink-muted">
               <Package className="h-3.5 w-3.5" aria-hidden />
-              <span className="num">{formatWeight(cargo.free)} frei</span>
+              <span className="num">
+                {cargo.free !== null ? `${formatWeight(cargo.free)} frei` : t('stats.backpack')}
+              </span>
             </span>
           )}
           <span className="flex shrink-0 items-center gap-1.5 text-ink-muted">

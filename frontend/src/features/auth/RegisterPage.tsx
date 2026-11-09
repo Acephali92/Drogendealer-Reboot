@@ -33,7 +33,12 @@ export function RegisterPage() {
     setError(null);
     setBusy(true);
     try {
-      const res = await authApi.register(form.email.trim(), form.username.trim(), form.password, form.ageConfirmed);
+      const res = await authApi.register(
+        form.email.trim(),
+        form.username.trim(),
+        form.password,
+        form.ageConfirmed,
+      );
       qc.clear();
       useAuth.getState().setSession(res);
       navigate('/start', { replace: true });
@@ -102,12 +107,18 @@ export function RegisterPage() {
               {t('auth.ageConfirm')} <span className="text-danger">*</span>
             </span>
           </label>
-          <p id="age-msg" className={show('ageConfirmed') ? 'mt-1 text-xs text-danger' : 'mt-1 text-xs text-ink-faint'}>
+          <p
+            id="age-msg"
+            className={show('ageConfirmed') ? 'mt-1 text-xs text-danger' : 'mt-1 text-xs text-ink-faint'}
+          >
             {show('ageConfirmed') ?? t('auth.ageHint')}
           </p>
         </div>
         {error && (
-          <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger ring-1 ring-danger/30">
+          <p
+            role="alert"
+            className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger ring-1 ring-danger/30"
+          >
             {error}
           </p>
         )}

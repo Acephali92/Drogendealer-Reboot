@@ -127,7 +127,11 @@ export interface PricePointDto {
   updatedAt: ISO;
 }
 export interface OverviewDto {
-  commodities: { commodity: CommodityDto; lowestBuy: PricePointDto | null; highestSell: PricePointDto | null }[];
+  commodities: {
+    commodity: CommodityDto;
+    lowestBuy: PricePointDto | null;
+    highestSell: PricePointDto | null;
+  }[];
 }
 
 /* Besitz */
@@ -208,7 +212,11 @@ export interface ClanInviteDto {
 }
 export type RankingTypeDto = 'wealth' | 'reputation' | 'level' | 'clans';
 export type RankingEntryDto =
-  | { rank: number; player: { id: string; name: string; level: number; clanTag: string | null }; value: string }
+  | {
+      rank: number;
+      player: { id: string; name: string; level: number; clanTag: string | null };
+      value: string;
+    }
   | { rank: number; clan: { id: string; name: string; tag: string; memberCount: number }; value: string };
 export interface RankingDto extends Page {
   type: RankingTypeDto;

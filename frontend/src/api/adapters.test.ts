@@ -28,8 +28,14 @@ describe('adapters', () => {
 
   it('ordnet Meldungstypen und Links zu', () => {
     const base = { id: '1', title: 't', body: null, readAt: null, createdAt: '' };
-    expect(toNotification({ ...base, type: 'CLAN_INVITE', data: null })).toMatchObject({ kind: 'CLAN_INVITE', link: '/clans' });
-    expect(toNotification({ ...base, type: 'X', data: { link: '/konto' } })).toMatchObject({ kind: 'SYSTEM', link: '/konto' });
+    expect(toNotification({ ...base, type: 'CLAN_INVITE', data: null })).toMatchObject({
+      kind: 'CLAN_INVITE',
+      link: '/clans',
+    });
+    expect(toNotification({ ...base, type: 'X', data: { link: '/konto' } })).toMatchObject({
+      kind: 'SYSTEM',
+      link: '/konto',
+    });
     expect(toNotification({ ...base, type: 'X', data: { link: 'https://evil.example' } }).link).toBeNull();
   });
 

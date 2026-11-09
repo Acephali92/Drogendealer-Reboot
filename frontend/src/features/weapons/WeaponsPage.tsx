@@ -25,13 +25,18 @@ export function WeaponsPage() {
   const buy = useBuyEquipment();
   const [slot, setSlot] = useState<'WEAPON' | 'ARMOR'>('WEAPON');
   if (!player) return null;
-  const list = (types.data ?? []).filter((e) => e.slot === slot).sort((a, b) => Number(toCents(a.price) - toCents(b.price)));
+  const list = (types.data ?? [])
+    .filter((e) => e.slot === slot)
+    .sort((a, b) => Number(toCents(a.price) - toCents(b.price)));
   const maxPower = Math.max(1, ...(types.data ?? []).map((e) => Math.max(e.attack, e.defense)));
   const free = cargo?.free ?? null;
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('weapons.title')} subtitle={city ? t('weapons.subtitle', { city: city.name }) : undefined} />
+      <PageHeader
+        title={t('weapons.title')}
+        subtitle={city ? t('weapons.subtitle', { city: city.name }) : undefined}
+      />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Panel title={t('weapons.balance')} className="lg:col-span-1">
@@ -78,7 +83,11 @@ export function WeaponsPage() {
           const heavy = free !== null && e.weightG !== null && e.weightG > free;
           const hidden = e.weightG !== null && e.weightG < VISIBLE_FROM_G;
           return (
-            <article key={e.id} className="panel animate-fade-up overflow-hidden" style={{ animationDelay: `${i * 30}ms` }}>
+            <article
+              key={e.id}
+              className="panel animate-fade-up overflow-hidden"
+              style={{ animationDelay: `${i * 30}ms` }}
+            >
               <header className="panel-header">
                 <h2 className="font-display font-semibold text-ink">{e.name}</h2>
                 {count > 0 && <Badge tone="brass">{t('weapons.owned', { n: count })}</Badge>}
@@ -91,22 +100,34 @@ export function WeaponsPage() {
                   <p className="text-sm text-ink-muted">{e.description}</p>
                   <div>
                     <div className="mb-1 flex justify-between text-xs">
-                      <span className="label">{e.slot === 'WEAPON' ? t('weapons.firepower') : t('weapons.defense')}</span>
+                      <span className="label">
+                        {e.slot === 'WEAPON' ? t('weapons.firepower') : t('weapons.defense')}
+                      </span>
                       <span className="num font-semibold text-ink">{power}</span>
                     </div>
                     <ProgressBar value={power / maxPower} tone={e.slot === 'WEAPON' ? 'danger' : 'info'} />
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-ink-muted">
                     <span className="flex items-center gap-1">
-                      <Weight className="h-3.5 w-3.5" aria-hidden /> <span className="num">{formatWeight(e.weightG)}</span>
+                      <Weight className="h-3.5 w-3.5" aria-hidden />{' '}
+                      <span className="num">{formatWeight(e.weightG)}</span>
                     </span>
                     <span className="flex items-center gap-1" title={t('weapons.warning')}>
-                      {hidden ? <EyeOff className="h-3.5 w-3.5 text-neon" /> : <Eye className="h-3.5 w-3.5 text-warn" />}
+                      {hidden ? (
+                        <EyeOff className="h-3.5 w-3.5 text-neon" />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5 text-warn" />
+                      )}
                       {hidden ? 'unauffällig' : 'sichtbar'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-3 pt-1">
-                    <Money value={e.price} className={poor ? 'text-lg font-semibold text-danger' : 'text-lg font-semibold text-brass'} />
+                    <Money
+                      value={e.price}
+                      className={
+                        poor ? 'text-lg font-semibold text-danger' : 'text-lg font-semibold text-brass'
+                      }
+                    />
                     <Button
                       size="sm"
                       variant="primary"

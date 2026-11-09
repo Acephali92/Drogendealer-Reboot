@@ -14,7 +14,10 @@ export function Tabs<T extends string>({ value, onChange, items, className, labe
     <div
       role="tablist"
       aria-label={label}
-      className={cn('scrollbar-none inline-flex max-w-full gap-1 overflow-x-auto rounded-xl bg-surface-2 p-1 ring-1 ring-line/10', className)}
+      className={cn(
+        'scrollbar-none inline-flex max-w-full gap-1 overflow-x-auto rounded-xl bg-surface-2 p-1 ring-1 ring-line/10',
+        className,
+      )}
       onKeyDown={(e) => {
         const i = items.findIndex((x) => x.value === value);
         if (e.key === 'ArrowRight') onChange(items[(i + 1) % items.length]!.value);

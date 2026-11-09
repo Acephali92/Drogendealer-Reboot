@@ -50,7 +50,8 @@ export const useTransactions = () => useQuery({ queryKey: qk.transactions, query
 export const useOnline = () =>
   useQuery({ queryKey: qk.online, queryFn: playerApi.online, refetchInterval: 60_000 });
 
-export const useCities = () => useQuery({ queryKey: qk.cities, queryFn: worldApi.cities, staleTime: 10 * 60_000 });
+export const useCities = () =>
+  useQuery({ queryKey: qk.cities, queryFn: worldApi.cities, staleTime: 10 * 60_000 });
 
 export function useCity(slug: string | undefined) {
   return useQuery({ queryKey: qk.city(slug ?? ''), queryFn: () => worldApi.city(slug!), enabled: !!slug });

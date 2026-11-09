@@ -12,6 +12,7 @@ import { Logo } from './Logo';
 import { Ticker } from './Ticker';
 import { TopBar } from './TopBar';
 import { mockMode } from '@/lib/env';
+import { LegalLinks } from '@/features/legal/LegalLinks';
 
 function SideLink({ item, badge }: { item: NavItem; badge?: number }) {
   const { t } = useTranslation();
@@ -32,7 +33,11 @@ function SideLink({ item, badge }: { item: NavItem; badge?: number }) {
           {isActive && <span className="absolute -left-3 top-1.5 h-6 w-1 rounded-r bg-brass shadow-glow" />}
           <Icon className="h-[18px] w-[18px]" aria-hidden />
           <span className="flex-1">{t(`nav.${item.key}`)}</span>
-          {!!badge && <span className="num rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">{badge}</span>}
+          {!!badge && (
+            <span className="num rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
+              {badge}
+            </span>
+          )}
         </>
       )}
     </NavLink>
@@ -63,7 +68,11 @@ export function AppShell() {
               <p className="label mb-2 px-3">{t(`nav.${g.key}`)}</p>
               <div className="space-y-0.5">
                 {g.items.map((item) => (
-                  <SideLink key={item.to} item={item} badge={item.key === 'notifications' ? unread : undefined} />
+                  <SideLink
+                    key={item.to}
+                    item={item}
+                    badge={item.key === 'notifications' ? unread : undefined}
+                  />
                 ))}
               </div>
             </div>
@@ -84,6 +93,7 @@ export function AppShell() {
             <LogOut className="h-4 w-4" aria-hidden />
             {t('nav.logout')}
           </button>
+          <LegalLinks className="px-3" />
         </div>
       </aside>
 
@@ -172,6 +182,7 @@ export function AppShell() {
             <LogOut className="h-4 w-4" aria-hidden />
             {t('nav.logout')}
           </button>
+          <LegalLinks className="justify-center" />
         </div>
       </Modal>
     </div>

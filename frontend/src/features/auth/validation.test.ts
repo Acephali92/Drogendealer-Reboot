@@ -2,7 +2,14 @@ import { validateRegistration } from './validation';
 
 describe('Registrierungsvalidierung', () => {
   it('akzeptiert gültige Eingaben', () => {
-    expect(validateRegistration({ email: 'a@b.de', username: 'Dealer_1', password: '12345678', ageConfirmed: true })).toEqual({
+    expect(
+      validateRegistration({
+        email: 'a@b.de',
+        username: 'Dealer_1',
+        password: '12345678',
+        ageConfirmed: true,
+      }),
+    ).toEqual({
       ageConfirmed: null,
       email: null,
       username: null,
@@ -16,7 +23,12 @@ describe('Registrierungsvalidierung', () => {
     expect(r.username).not.toBeNull();
     expect(r.password).not.toBeNull();
     expect(
-      validateRegistration({ email: 'a@b.de', username: 'mit leer', password: '12345678', ageConfirmed: true }).username,
+      validateRegistration({
+        email: 'a@b.de',
+        username: 'mit leer',
+        password: '12345678',
+        ageConfirmed: true,
+      }).username,
     ).not.toBeNull();
   });
 });

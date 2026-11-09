@@ -104,7 +104,12 @@ export function ClansPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => answer.mutate({ id: inv.id, accept: false }, { onError: (e) => toast.error(errorMessage(e)) })}
+                    onClick={() =>
+                      answer.mutate(
+                        { id: inv.id, accept: false },
+                        { onError: (e) => toast.error(errorMessage(e)) },
+                      )
+                    }
                   >
                     <X className="h-4 w-4" />
                     {t('clans.decline')}
@@ -119,7 +124,9 @@ export function ClansPage() {
       {clans.isError && <ErrorState error={clans.error} onRetry={() => clans.refetch()} />}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {clans.isPending && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-40" />)}
-        {clans.data?.length === 0 && <EmptyState title={t('clans.noClans')} className="sm:col-span-2 xl:col-span-3" />}
+        {clans.data?.length === 0 && (
+          <EmptyState title={t('clans.noClans')} className="sm:col-span-2 xl:col-span-3" />
+        )}
         {clans.data?.map((c, i) => (
           <Link
             key={c.id}
@@ -134,7 +141,7 @@ export function ClansPage() {
               <div className="grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-brass/30 to-brass-dim/10 font-display text-lg font-bold text-brass ring-1 ring-brass/30">
                 {c.tag}
               </div>
-                          </div>
+            </div>
             <h3 className="mt-4 font-display text-lg font-semibold text-ink">{c.name}</h3>
             {c.description && <p className="mt-1 line-clamp-2 text-sm text-ink-muted">{c.description}</p>}
             <div className="mt-4 flex items-center justify-between text-sm text-ink-muted">
@@ -167,13 +174,20 @@ export function ClansPage() {
         }
       >
         <form id="create-clan" onSubmit={submit} className="space-y-4">
-          <Field label={t('clans.name')} value={form.name} maxLength={32} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Field
+            label={t('clans.name')}
+            value={form.name}
+            maxLength={32}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
           <Field
             label={t('clans.tag')}
             value={form.tag}
             maxLength={5}
             hint={t('clans.tagHint')}
-            onChange={(e) => setForm({ ...form, tag: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
+            onChange={(e) =>
+              setForm({ ...form, tag: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })
+            }
           />
           <Field
             label={t('clans.description')}
@@ -181,7 +195,9 @@ export function ClansPage() {
             maxLength={200}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
-          <p className="text-xs text-ink-muted">{t('clans.createCost', { cost: formatMoney(FOUNDING_COST) })}</p>
+          <p className="text-xs text-ink-muted">
+            {t('clans.createCost', { cost: formatMoney(FOUNDING_COST) })}
+          </p>
         </form>
       </Modal>
     </div>

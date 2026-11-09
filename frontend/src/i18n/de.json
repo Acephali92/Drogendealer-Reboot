@@ -54,7 +54,8 @@
     "police": "Polizeipräsenz",
     "population": "Einwohner",
     "country": "Land",
-    "noVehicle": "nur Rucksack"
+    "noVehicle": "nur Rucksack",
+    "backpack": "Rucksack"
   },
   "heat": {
     "0": "Unauffällig",
@@ -66,7 +67,7 @@
     "loginTitle": "Zurück auf die Straße",
     "loginSubtitle": "Melde dich an und schau, was deine Ware macht.",
     "registerTitle": "Neu im Geschäft",
-    "registerSubtitle": "30.000 € Startkapital, eine alte Rostlaube und ganz Europa als Markt.",
+    "registerSubtitle": "2.000 € Startkapital, ein Rucksack und acht Städte voller zwielichtiger Gelegenheiten.",
     "login": "E-Mail oder Name",
     "email": "E-Mail",
     "username": "Dealername",
@@ -82,7 +83,7 @@
     "toRegister": "Noch kein Konto? Jetzt einsteigen",
     "toLogin": "Schon dabei? Anmelden",
     "features": {
-      "trade": "Kaufe billig, verkaufe teuer – in über einem Dutzend Städten.",
+      "trade": "Kaufe billig, verkaufe teuer – von Pleitenberg bis Qualmsterdam.",
       "travel": "Fahr durch Europa, aber pass auf die Bullen auf.",
       "clans": "Gründe eine Familie oder schließ dich einem Paten an."
     },
@@ -329,7 +330,9 @@
       "TRADE": "Handel",
       "TRAVEL": "Reise",
       "VEHICLE": "Fahrzeug",
-      "COMBAT": "Ausrüstung/Kampf",
+      "EQUIPMENT": "Ausrüstung",
+      "COMBAT": "Kampf",
+      "OTHER": "Sonstiges",
       "CLAN": "Clan",
       "BANK": "Bank",
       "ADMIN": "System"
@@ -342,7 +345,24 @@
     "resetWorld": "Demo-Welt zurücksetzen",
     "resetConfirm": "Alle Demo-Daten löschen und neu starten?",
     "email": "E-Mail",
+    "privacy": "Deine Daten",
+    "export": "Daten exportieren",
+    "exportText": "Lade alle Daten herunter, die zu deinem Konto gespeichert sind (JSON-Datei).",
+    "exportDone": "Export heruntergeladen",
+    "delete": "Konto löschen",
+    "deleteText": "Löscht dein Konto und deinen Spielstand endgültig.",
+    "deleteWarning": "Das kann nicht rückgängig gemacht werden. Dein Spielstand wird gelöscht, dein Vermögen verfällt ersatzlos, Name und E-Mail werden wieder frei.",
+    "deleteKeyword": "LÖSCHEN",
+    "deleteConfirm": "Zur Bestätigung „{{word}}“ eingeben",
+    "deleteFinal": "Endgültig löschen",
+    "deleted": "Dein Konto wurde gelöscht. Mach's gut.",
     "nextLevel": "Noch {{xp}} XP bis Level {{level}}"
+  },
+  "legal": {
+    "nav": "Rechtliches",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz",
+    "placeholder": "Platzhalter: Die Betreiberangaben fehlen noch. Der Betreiber muss sie in /legal.json auf dem Server eintragen. Text vor Veröffentlichung rechtlich prüfen lassen."
   },
   "errors": {
     "generic": "Da ist was schiefgelaufen.",
@@ -366,6 +386,11 @@
     "CLAN_NAME_TAKEN": "Name oder Kürzel ist vergeben.",
     "FORBIDDEN": "Dafür fehlen dir die Rechte.",
     "RATE_LIMITED": "Zu viele Versuche. Kurz durchatmen.",
-    "NETWORK_ERROR": "Server nicht erreichbar."
+    "NETWORK_ERROR": "Server nicht erreichbar.",
+    "INVALID_PASSWORD": "Das Passwort ist falsch.",
+    "INVALID_ACCESS_TOKEN": "Bitte melde dich erneut an.",
+    "INVALID_REFRESH_TOKEN": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
+    "INTERNAL_ERROR": "Fehler auf dem Server. Versuch es gleich nochmal.",
+    "TAKEN": "Das ist schon vergeben."
   }
 }

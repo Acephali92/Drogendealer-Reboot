@@ -21,10 +21,18 @@ export function MarketPage() {
     ...r,
     margin: r.lowestBuy && r.highestSell ? percentDelta(r.highestSell.price, r.lowestBuy.price) : null,
   }));
-  const top = [...rows].filter((r) => (r.margin ?? 0) > 0).sort((a, b) => (b.margin ?? 0) - (a.margin ?? 0)).slice(0, 3);
+  const top = [...rows]
+    .filter((r) => (r.margin ?? 0) > 0)
+    .sort((a, b) => (b.margin ?? 0) - (a.margin ?? 0))
+    .slice(0, 3);
 
   const CityLink = ({ id, name, tone }: { id: string; name: string; tone: 'neon' | 'brass' }) => (
-    <span className={cn('inline-flex items-center gap-1 font-medium', tone === 'neon' ? 'text-neon' : 'text-brass')}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 font-medium',
+        tone === 'neon' ? 'text-neon' : 'text-brass',
+      )}
+    >
       {id === city?.id && <MapPin className="h-3 w-3" aria-label={t('market.here')} />}
       {name}
     </span>
@@ -51,7 +59,9 @@ export function MarketPage() {
                     <CityLink id={r.highestSell!.city.id} name={r.highestSell!.city.name} tone="brass" />
                   </p>
                 </div>
-                <span className="num text-lg font-bold text-neon">+{r.margin?.toLocaleString('de-DE')} %</span>
+                <span className="num text-lg font-bold text-neon">
+                  +{r.margin?.toLocaleString('de-DE')} %
+                </span>
               </div>
             ))}
           </div>
@@ -104,7 +114,9 @@ export function MarketPage() {
                         (r.margin ?? 0) > 0 ? 'text-neon' : 'text-ink-faint',
                       )}
                     >
-                      {r.margin !== null ? `${r.margin > 0 ? '+' : ''}${r.margin.toLocaleString('de-DE')} %` : '—'}
+                      {r.margin !== null
+                        ? `${r.margin > 0 ? '+' : ''}${r.margin.toLocaleString('de-DE')} %`
+                        : '—'}
                     </td>
                   </tr>
                 ))}
@@ -118,8 +130,15 @@ export function MarketPage() {
                       <CommodityIcon slug={r.commodity.slug} size={32} />
                       {r.commodity.name}
                     </span>
-                    <span className={cn('num font-semibold', (r.margin ?? 0) > 0 ? 'text-neon' : 'text-ink-faint')}>
-                      {r.margin !== null ? `${r.margin > 0 ? '+' : ''}${r.margin.toLocaleString('de-DE')} %` : '—'}
+                    <span
+                      className={cn(
+                        'num font-semibold',
+                        (r.margin ?? 0) > 0 ? 'text-neon' : 'text-ink-faint',
+                      )}
+                    >
+                      {r.margin !== null
+                        ? `${r.margin > 0 ? '+' : ''}${r.margin.toLocaleString('de-DE')} %`
+                        : '—'}
                     </span>
                   </div>
                   {r.lowestBuy && r.highestSell && (

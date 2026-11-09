@@ -28,7 +28,9 @@ export function EmptyState({
 }) {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-3 px-4 py-10 text-center', className)}>
-      {icon && <div className="grid h-14 w-14 place-items-center rounded-2xl bg-surface-3 text-brass">{icon}</div>}
+      {icon && (
+        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-surface-3 text-brass">{icon}</div>
+      )}
       <p className="font-display text-base font-semibold text-ink">{title}</p>
       {hint && <p className="max-w-sm text-sm text-ink-muted">{hint}</p>}
       {action}

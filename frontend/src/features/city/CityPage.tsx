@@ -1,5 +1,15 @@
 import { Link } from 'react-router-dom';
-import { Car, Crosshair, Handshake, HeartPulse, Landmark, LineChart, Route, ShieldAlert, Wallet } from 'lucide-react';
+import {
+  Car,
+  Crosshair,
+  Handshake,
+  HeartPulse,
+  Landmark,
+  LineChart,
+  Route,
+  ShieldAlert,
+  Wallet,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
 import { useEquipment, useVehicles } from '@/api/queries';
@@ -23,7 +33,19 @@ function Row({ label, children }: { label: ReactNode; children: ReactNode }) {
   );
 }
 
-function ActionCard({ to, icon, title, sub, accent }: { to: string; icon: ReactNode; title: string; sub?: ReactNode; accent?: boolean }) {
+function ActionCard({
+  to,
+  icon,
+  title,
+  sub,
+  accent,
+}: {
+  to: string;
+  icon: ReactNode;
+  title: string;
+  sub?: ReactNode;
+  accent?: boolean;
+}) {
   return (
     <Link
       to={to}
@@ -75,7 +97,9 @@ export function CityPage() {
           <div className="flex gap-2">
             {city.country && <Badge tone="neutral">{city.country}</Badge>}
             {city.policeStrength !== null && (
-              <Badge tone={city.policeStrength >= 60 ? 'danger' : city.policeStrength >= 40 ? 'warn' : 'neon'}>
+              <Badge
+                tone={city.policeStrength >= 60 ? 'danger' : city.policeStrength >= 40 ? 'warn' : 'neon'}
+              >
                 <ShieldAlert className="h-3 w-3" /> {city.policeStrength}
               </Badge>
             )}
@@ -120,7 +144,9 @@ export function CityPage() {
             </Row>
             {cargo && (
               <Row label={t('stats.freeCargo')}>
-                <span className="num">{cargo.free !== null ? formatWeight(cargo.free) : t('stats.noVehicle')}</span>
+                <span className="num">
+                  {cargo.free !== null ? formatWeight(cargo.free) : t('stats.noVehicle')}
+                </span>
               </Row>
             )}
           </dl>
@@ -128,13 +154,23 @@ export function CityPage() {
 
         <div className="space-y-3 lg:col-span-2">
           <p className="label px-1">{t('city.actions')}</p>
-          <ActionCard to="/handel" icon={<Handshake className="h-5 w-5" />} title={t('city.toMarket')} sub={t('trade.subtitle')} accent />
+          <ActionCard
+            to="/handel"
+            icon={<Handshake className="h-5 w-5" />}
+            title={t('city.toMarket')}
+            sub={t('trade.subtitle')}
+            accent
+          />
           <ActionCard to="/reisen" icon={<Route className="h-5 w-5" />} title={t('city.toTravel')} />
           <ActionCard
             to="/fahrzeuge"
             icon={<Car className="h-5 w-5" />}
             title={t('city.toVehicles')}
-            sub={active ? `${active.vehicleType.name} · ${formatWeight(active.vehicleType.capacityG)}` : t('vehicles.noVehicle')}
+            sub={
+              active
+                ? `${active.vehicleType.name} · ${formatWeight(active.vehicleType.capacityG)}`
+                : t('vehicles.noVehicle')
+            }
           />
           <ActionCard
             to="/waffen"

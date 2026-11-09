@@ -1,5 +1,17 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bell, Flame, Handshake, Landmark, Newspaper, Route, Star, TrendingUp, Users, Wallet } from 'lucide-react';
+import {
+  ArrowRight,
+  Bell,
+  Flame,
+  Handshake,
+  Landmark,
+  Newspaper,
+  Route,
+  Star,
+  TrendingUp,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useClan, useMarket, useNotifications, useTicker } from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
@@ -43,7 +55,9 @@ export function DashboardPage() {
         <div className="relative flex flex-col gap-5 p-6 sm:p-8 md:flex-row md:items-end md:justify-between">
           <div className="max-w-xl">
             <p className="label text-brass/90">{shown?.country}</p>
-            <h1 className="mt-1 text-3xl font-bold text-ink sm:text-4xl">{t('dashboard.greeting', { name: player.name })}</h1>
+            <h1 className="mt-1 text-3xl font-bold text-ink sm:text-4xl">
+              {t('dashboard.greeting', { name: player.name })}
+            </h1>
             <p className="mt-2 text-ink-muted">
               {traveling
                 ? t('dashboard.subtitleTravel', { city: destination?.name ?? '…' })
@@ -69,16 +83,27 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {traveling && travel && <TravelProgress travel={travel} from={cityById(travel.fromCityId)} to={destination} />}
+      {traveling && travel && (
+        <TravelProgress travel={travel} from={cityById(travel.fromCityId)} to={destination} />
+      )}
 
       {/* Kennzahlen */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label={t('stats.cash')} value={formatMoney(player.cash)} tone="neon" icon={<Wallet className="h-4 w-4" />} />
+        <StatTile
+          label={t('stats.cash')}
+          value={formatMoney(player.cash)}
+          tone="neon"
+          icon={<Wallet className="h-4 w-4" />}
+        />
         <StatTile
           label={t('stats.bank')}
           value={formatMoney(player.bank)}
           icon={<Landmark className="h-4 w-4" />}
-          hint={<Link to="/konto" className="text-brass hover:underline">{t('account.history')}</Link>}
+          hint={
+            <Link to="/konto" className="text-brass hover:underline">
+              {t('account.history')}
+            </Link>
+          }
         />
         <StatTile
           label={t('stats.level')}
@@ -88,7 +113,10 @@ export function DashboardPage() {
           hint={
             player.experienceForNextLevel !== null ? (
               <div className="space-y-1">
-                <ProgressBar value={player.experience / Math.max(1, player.experienceForNextLevel)} size="xs" />
+                <ProgressBar
+                  value={player.experience / Math.max(1, player.experienceForNextLevel)}
+                  size="xs"
+                />
                 <span className="num">
                   {formatNumber(player.experience)} / {formatNumber(player.experienceForNextLevel)} XP
                 </span>
@@ -114,7 +142,11 @@ export function DashboardPage() {
             <Panel
               title={t('dashboard.bestDeals', { city: city.name })}
               icon={<TrendingUp className="h-4 w-4" />}
-              actions={<span className="hidden text-xs text-ink-faint sm:inline">{t('dashboard.bestDealsHint')}</span>}
+              actions={
+                <span className="hidden text-xs text-ink-faint sm:inline">
+                  {t('dashboard.bestDealsHint')}
+                </span>
+              }
               padded={false}
             >
               {market.isPending ? (
@@ -148,7 +180,10 @@ export function DashboardPage() {
                   ))}
                 </ul>
               ) : (
-                <EmptyState title="Heute keine Schnäppchen." hint="Vielleicht lohnt sich eine andere Stadt." />
+                <EmptyState
+                  title="Heute keine Schnäppchen."
+                  hint="Vielleicht lohnt sich eine andere Stadt."
+                />
               )}
             </Panel>
           )}
@@ -217,12 +252,16 @@ export function DashboardPage() {
                 <li key={n.id} className="flex gap-3 px-4 py-3">
                   <NotificationIcon kind={n.kind} />
                   <div className="min-w-0">
-                    <p className={n.readAt ? 'text-sm text-ink-muted' : 'text-sm font-semibold text-ink'}>{n.title}</p>
+                    <p className={n.readAt ? 'text-sm text-ink-muted' : 'text-sm font-semibold text-ink'}>
+                      {n.title}
+                    </p>
                     <p className="text-xs text-ink-faint">{formatRelative(n.createdAt)}</p>
                   </div>
                 </li>
               ))}
-              {notifications.data?.items.length === 0 && <li className="p-4 text-sm text-ink-muted">{t('notifications.empty')}</li>}
+              {notifications.data?.items.length === 0 && (
+                <li className="p-4 text-sm text-ink-muted">{t('notifications.empty')}</li>
+              )}
             </ul>
           </Panel>
 

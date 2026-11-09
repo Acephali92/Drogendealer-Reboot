@@ -10,7 +10,9 @@ import type { RankingType, TradeSide } from './types';
 
 export const authApi = {
   login: async (login: string, password: string) =>
-    A.toAuth(await api<C.AuthResponseDto>('POST', '/auth/login', { body: { login, password }, anonymous: true })),
+    A.toAuth(
+      await api<C.AuthResponseDto>('POST', '/auth/login', { body: { login, password }, anonymous: true }),
+    ),
   register: async (email: string, username: string, password: string, ageConfirmed: boolean) =>
     A.toAuth(
       await api<C.AuthResponseDto>('POST', '/auth/register', {
@@ -18,7 +20,8 @@ export const authApi = {
         anonymous: true,
       }),
     ),
-  logout: (refreshToken: string) => api<void>('POST', '/auth/logout', { body: { refreshToken }, anonymous: true }),
+  logout: (refreshToken: string) =>
+    api<void>('POST', '/auth/logout', { body: { refreshToken }, anonymous: true }),
 };
 
 export const playerApi = {
@@ -38,8 +41,15 @@ export const playerApi = {
 export const worldApi = {
   cities: async () => (await get<{ cities: C.CityDto[] }>('/cities')).cities.map(A.toCity),
   city: async (slug: string) =>
-    A.toCityDetail((await get<{ city: C.CityDto & { connections: C.ConnectionDto[] } }>(`/cities/${encodeURIComponent(slug)}`)).city),
-  market: async (slug: string) => A.toMarket(await get<C.MarketDto>(`/cities/${encodeURIComponent(slug)}/market`)),
+    A.toCityDetail(
+      (
+        await get<{ city: C.CityDto & { connections: C.ConnectionDto[] } }>(
+          `/cities/${encodeURIComponent(slug)}`,
+        )
+      ).city,
+    ),
+  market: async (slug: string) =>
+    A.toMarket(await get<C.MarketDto>(`/cities/${encodeURIComponent(slug)}/market`)),
   overview: async () => A.toOverview(await get<C.OverviewDto>('/market/overview')),
   ticker: async () => (await get<{ events: C.TickerEventDto[] }>('/ticker?limit=30')).events.map(A.toTicker),
 };
@@ -58,12 +68,15 @@ export const vehicleApi = {
   mine: async () => (await get<{ vehicles: C.VehicleDto[] }>('/vehicles')).vehicles.map(A.toVehicle),
   /** (draft) */
   buy: async (vehicleTypeId: string) =>
-    A.toPlayer((await post<{ vehicle: C.VehicleDto; player: C.PlayerDto }>('/vehicles', { vehicleTypeId })).player),
+    A.toPlayer(
+      (await post<{ vehicle: C.VehicleDto; player: C.PlayerDto }>('/vehicles', { vehicleTypeId })).player,
+    ),
   /** (draft) */
   activate: async (id: string) =>
     (await post<{ vehicles: C.VehicleDto[] }>(`/vehicles/${id}/activate`)).vehicles.map(A.toVehicle),
   /** (draft) */
-  sell: async (id: string) => A.toPlayer((await post<{ player: C.PlayerDto }>(`/vehicles/${id}/sell`)).player),
+  sell: async (id: string) =>
+    A.toPlayer((await post<{ player: C.PlayerDto }>(`/vehicles/${id}/sell`)).player),
 };
 
 export const equipmentApi = {
@@ -71,17 +84,22 @@ export const equipmentApi = {
   mine: async () => (await get<{ equipment: C.EquipmentDto[] }>('/equipment')).equipment.map(A.toEquipment),
   /** (draft) */
   buy: async (equipmentTypeId: string) =>
-    A.toPlayer((await post<{ equipment: C.EquipmentDto; player: C.PlayerDto }>('/equipment', { equipmentTypeId })).player),
+    A.toPlayer(
+      (await post<{ equipment: C.EquipmentDto; player: C.PlayerDto }>('/equipment', { equipmentTypeId }))
+        .player,
+    ),
 };
 
 export const travelApi = {
   /** (draft) */
-  start: async (toCityId: string) => A.toTravel((await post<{ travel: C.TravelDto }>('/travel', { toCityId })).travel)!,
+  start: async (toCityId: string) =>
+    A.toTravel((await post<{ travel: C.TravelDto }>('/travel', { toCityId })).travel)!,
   current: async () => A.toTravel((await get<{ travel: C.TravelDto | null }>('/travel/current')).travel),
 };
 
 export const clanApi = {
-  list: async () => (await get<{ clans: C.ClanListItemDto[] } & C.Page>('/clans?limit=100')).clans.map(A.toClanSummary),
+  list: async () =>
+    (await get<{ clans: C.ClanListItemDto[] } & C.Page>('/clans?limit=100')).clans.map(A.toClanSummary),
   get: async (id: string) => A.toClanDetail((await get<{ clan: C.ClanDetailDto }>(`/clans/${id}`)).clan),
   /** (draft) */
   create: async (b: { name: string; tag: string; description?: string }) =>
@@ -92,7 +110,8 @@ export const clanApi = {
   leave: (id: string) => post<void>(`/clans/${id}/leave`),
   invites: async () => (await get<{ invites: C.ClanInviteDto[] }>('/clan-invites')).invites.map(A.toInvite),
   /** (draft) */
-  accept: async (id: string) => A.toClanDetail((await post<{ clan: C.ClanDetailDto }>(`/clan-invites/${id}/accept`)).clan),
+  accept: async (id: string) =>
+    A.toClanDetail((await post<{ clan: C.ClanDetailDto }>(`/clan-invites/${id}/accept`)).clan),
   /** (draft) */
   decline: (id: string) => post<void>(`/clan-invites/${id}/decline`),
 };
@@ -104,7 +123,9 @@ export const rankingApi = {
 
 export const notificationApi = {
   list: async () => {
-    const r = await get<{ items: C.NotificationDto[]; unreadCount: number } & C.Page>('/notifications?limit=50');
+    const r = await get<{ items: C.NotificationDto[]; unreadCount: number } & C.Page>(
+      '/notifications?limit=50',
+    );
     return { items: r.items.map(A.toNotification), unreadCount: r.unreadCount, total: r.total };
   },
   read: (id: string) => post<unknown>(`/notifications/${id}/read`),

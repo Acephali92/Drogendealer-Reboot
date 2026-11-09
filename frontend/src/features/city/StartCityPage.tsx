@@ -29,7 +29,8 @@ export function StartCityPage() {
 
       {cities.isError && <ErrorState error={cities.error} onRetry={() => cities.refetch()} />}
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-        {cities.isPending && Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="aspect-[4/3]" />)}
+        {cities.isPending &&
+          Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="aspect-[4/3]" />)}
         {cities.data?.map((c, i) => (
           <button
             key={c.id}
@@ -46,7 +47,10 @@ export function StartCityPage() {
             style={{ animationDelay: `${i * 30}ms` }}
             className="group panel relative aspect-[4/3] animate-fade-up overflow-hidden text-left transition hover:-translate-y-0.5 hover:shadow-glow disabled:opacity-60"
           >
-            <CityArt slug={c.slug} className="absolute inset-0 transition duration-500 group-hover:scale-105" />
+            <CityArt
+              slug={c.slug}
+              className="absolute inset-0 transition duration-500 group-hover:scale-105"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-3">
               <p className="font-display text-lg font-bold text-ink">{c.name}</p>

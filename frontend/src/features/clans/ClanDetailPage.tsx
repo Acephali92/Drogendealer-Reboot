@@ -17,7 +17,6 @@ import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
 import { canInvite as roleCanInvite, ROLE_ICON, ROLE_ORDER, ROLE_TONE } from './roles';
 
-
 export function ClanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
@@ -95,13 +94,15 @@ export function ClanDetailPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-ink">
                     {m.name}
-                    {m.playerId === player?.id && <span className="ml-2 text-xs text-brass">({t('rankings.you')})</span>}
+                    {m.playerId === player?.id && (
+                      <span className="ml-2 text-xs text-brass">({t('rankings.you')})</span>
+                    )}
                   </p>
                   <p className="text-xs text-ink-faint">Level {m.level}</p>
                 </div>
                 <Badge tone={ROLE_TONE[m.role]}>
                   {ROLE_ICON[m.role]}
-                  {t(`clans.roles.${m.role}`)}
+                  {t(`clans.roles.${m.role}`, { defaultValue: t('clans.roles.ASSOCIATE') })}
                 </Badge>
               </li>
             ))}

@@ -12,16 +12,12 @@ interface MoneyProps {
 }
 
 export function Money({ value, signed, colored, cents, className }: MoneyProps) {
-  if (value === null || value === undefined) return <span className={cn('num text-ink-faint', className)}>—</span>;
+  if (value === null || value === undefined)
+    return <span className={cn('num text-ink-faint', className)}>—</span>;
   const v = toCents(value);
   return (
     <span
-      className={cn(
-        'num',
-        colored && v > 0n && 'text-neon',
-        colored && v < 0n && 'text-danger',
-        className,
-      )}
+      className={cn('num', colored && v > 0n && 'text-neon', colored && v < 0n && 'text-danger', className)}
     >
       {formatMoney(v, { signed, cents })}
     </span>
