@@ -17,6 +17,7 @@ implementieren können – ohne Interpretationsspielraum.
 | [money-laundering.md](money-laundering.md) | Geldwäsche | Illegales und legales Vermögen | `F-ML` |
 | [real-estate.md](real-estate.md) | Immobilien | Bordelle und weitere Geschäftsmodelle, Produktion | `F-RE` |
 | [space.md](space.md) | Weltraum | Fortgeschrittene Spielwelt und besondere Waren | `F-SPC` |
+| [npc.md](npc.md) | NPCs | NPC-Händler, Kuriere, Banden, Rückbau bei wachsender Spielerzahl | `F-NPC` |
 
 Ergänzend:
 
@@ -53,15 +54,15 @@ vollständig, wenn Dokument, `parameters.toml`, `verify.py` und die Beispielwert
 | R-1 | Anfangs nur **wenige Spieler** pro Server (≈ 10–30) | Märkte und Kampfziele dürfen nicht von vielen Mitspielern abhängen |
 | R-2 | **Keine Resets** der Welt, keine Saisons | Vermögen und Vorsprung wachsen unbegrenzt, wenn nichts dagegen wirkt |
 
-Daraus folgen **Pflicht-Erweiterungen**, die noch nicht spezifiziert sind (offene Arbeitspakete):
+Daraus folgen **Pflicht-Erweiterungen** (Status in Klammern):
 
-1. **NPC-Händler** schöpfen profitable Routen mit fester Rate ab, damit ein einzelner Spieler eine Route nicht
-   allein ausbeutet ([economy.md](economy.md)). Ihre Stärke sinkt mit der Spielerzahl.
-2. **NPC-Ziele und -Gegner** (Kuriere, Banden, Überfälle) für das Feld Gewalt ([combat.md](combat.md)).
+1. **NPC-Händler** konkurrieren um profitable Routen (**spezifiziert**, [npc.md](npc.md), F-NPC-01).
+2. **NPC-Ziele und -Gegner**: Kuriere und Banden (**spezifiziert**, F-NPC-02/03). Rückbau über die
+   NPC-Intensität $k$, sobald genug Spieler aktiv sind (**spezifiziert**, F-NPC-04, Q12).
 3. **Mit dem Vermögen wachsende Geldsenken** (progressiver Unterhalt, Ausbau, Clan, Weltraum), damit es ohne
-   Resets nicht zu Inflation kommt.
-4. **Aufhol-XP** für Spieler unter dem Server-Median ([professions.md](professions.md)).
-5. **Ranglisten nach Zuwachs** (z. B. „Aufsteiger der Woche/des Monats“) statt Saisons.
+   Resets nicht zu Inflation kommt (offen, T-505).
+4. **Aufhol-XP** für Spieler unter dem Server-Median ([professions.md](professions.md); offen, T-505).
+5. **Ranglisten nach Zuwachs** (z. B. „Aufsteiger der Woche/des Monats“) statt Saisons (offen, T-508).
 
 Bereits umgesetzt gegen Ausnutzung bei wenigen Spielern: Beute-Tageslimit und Hehlerabschlag (F-CMB-05),
 Vermögensband mit 7-Tage-Höchstwert (F-CMB-06).
@@ -128,13 +129,17 @@ Die Reihenfolge ist verbindlich, weil Systeme voneinander abhängen. Alle Schrit
 denselben Tick-Index `t`.
 
 1. **Ereignisse** – Marktereignisse würfeln/auslaufen lassen (F-ECO-09).
+   Danach **NPC-Händlerflüsse** (F-NPC-01).
 2. **Märkte** – Rauschen (F-ECO-05), Bestand Richtung Ziel (F-ECO-04), Preis neu (F-ECO-06).
 3. **Reisen** – Ankünfte verarbeiten; Kontrollen (F-TRV-04) und Piraten (F-SPC-04) werden **bei Abfahrt**
    pro Segment vorab gewürfelt und beim Erreichen des Segment-Ticks ausgelöst.
 4. **Betriebe** – Erträge und Unterhalt (F-RE-01, F-RE-02), Produktion (F-RE-06), Razzien (F-RE-05).
 5. **Geldwäsche** – Gutschriften (F-ML-01) und Entdeckung (F-ML-03).
-6. **Clans** – Schutzgeld (F-CLN-04), Steuern (F-CLN-03), Kriegsstatus.
+6. **Clans** – Schutzgeld (F-CLN-04), Steuern (F-CLN-03), Kriegsstatus, Wahlen (F-CLN-08/09).
+   Danach **NPC-Kuriere und -Banden** (F-NPC-02/03).
 7. **Spielerzustand** – Crew-Unterhalt, HP-Regeneration (F-CMB-07), Heat-Zerfall (F-CTY-01).
+
+Am Tageswechsel zusätzlich: NPC-Kennzahlen und Intensität $k$ (F-NPC-04).
 
 Kein Schritt darf Zustand aus einem späteren Schritt desselben Ticks lesen.
 

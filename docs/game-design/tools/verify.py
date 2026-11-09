@@ -36,6 +36,7 @@ CLN = P["clans"]
 LAU = P["laundering"]
 RE = P["real_estate"]
 SPC = P["space"]
+NPC = P["npc"]
 HEAT = P["heat"]
 
 TICKS_PER_DAY = P["meta"]["ticks_per_day"]
@@ -697,6 +698,84 @@ def piracy(a: str, b: str, ship: str, cargo: dict[str, int], crew: dict[str, int
 
 
 # =============================================================================
+# NPCs (npc.md)
+# =============================================================================
+EARTH = list(P["city"])
+
+
+def npc_route_flow(a: str, b: str, g: str, Sa: float, Sb: float, k: float) -> dict:
+    """F-NPC-01: NPC-Handelsfluss a → b pro Tick.
+
+    m = P_b(1 − s/2) / (P_a(1 + s/2)) − 1;  θ = θ_0 + θ_km · d;  f = clamp((m − θ)/θ_scale, 0, 1);
+    q = k · η · min(A_a, D_b) · f.
+    """
+    s = spread(0)
+    m = market_price(b, g, Sb) * (1 - s / 2) / (market_price(a, g, Sa) * (1 + s / 2)) - 1
+    theta = NPC["trader_threshold_base"] + NPC["trader_threshold_per_km"] * distance(a, b)
+    f = clamp((m - theta) / NPC["trader_threshold_scale"], 0.0, 1.0)
+    q = k * NPC["trader_intensity"] * min(supply_level(a, g), demand(b, g)) * f
+    return {"margin": m, "theta": theta, "f": f, "q": q}
+
+
+def npc_trader_step(g: str, S: dict[str, float], k: float) -> dict[str, float]:
+    """F-NPC-01 (Tick): alle Flüsse aus dem aktuellen Zustand berechnen, dann anwenden, dann F-ECO-04."""
+    delta = {c: 0.0 for c in S}
+    for a in S:
+        for b in S:
+            if a != b:
+                q = npc_route_flow(a, b, g, S[a], S[b], k)["q"]
+                delta[a] -= q
+                delta[b] += q
+    return {c: stock_step(max(ECO["min_stock"], S[c] + delta[c]), target_stock(c, g)) for c in S}
+
+
+def npc_equilibrium(g: str, k: float, ticks: int = 3_000) -> dict[str, float]:
+    S = {c: target_stock(c, g) for c in EARTH}
+    for _ in range(ticks):
+        S = npc_trader_step(g, S, k)
+    return S
+
+
+def courier(tier: int) -> dict:
+    """F-NPC-02: Kurier der Stufe t: Stärke K_0 · g_K^(t−1), Bargeld C_0 · g_C^(t−1)."""
+    return {"strength": NPC["courier_strength_base"] * NPC["courier_strength_growth"] ** (tier - 1),
+            "cash": round_half_up(NPC["courier_cash_base"] * NPC["courier_cash_growth"] ** (tier - 1))}
+
+
+def courier_raid(KA: float, tier: int) -> dict:
+    """F-NPC-02 (Kampf): Siegchance nach F-CMB-03, Beute ⌊Bargeld · (1 − Hehlerabschlag)⌋."""
+    c = courier(tier)
+    return {"p_win": win_chance(KA, c["strength"]), "gain": floor_ct(c["cash"] * (1 - CMB["loot_fence_rate"]))}
+
+
+def gang_risk(k: float, cash_black: int, protected: bool) -> float:
+    """F-NPC-03: Überfallwahrscheinlichkeit pro Tick durch eine NPC-Bande."""
+    if protected or cash_black < NPC["gang_min_cash"]:
+        return 0.0
+    return k * NPC["gang_attack_base"]
+
+
+def handover_update(k: float, met_streak: int, miss_streak: int) -> float:
+    """F-NPC-04: k sinkt bei met_streak = 14, 21, 28 …; steigt bei miss_streak = 7, 14, …"""
+    step, sd = NPC["handover_step"], NPC["handover_step_days"]
+    if met_streak >= NPC["handover_hold_days"] and (met_streak - NPC["handover_hold_days"]) % sd == 0:
+        k -= step
+    if miss_streak >= NPC["handover_miss_days"] and (miss_streak - NPC["handover_miss_days"]) % sd == 0:
+        k += step
+    return round(clamp(k, NPC["k_min"], NPC["k_max"]), 10)
+
+
+def handover_run(days_met: list[bool], k: float = NPC["k_start"]) -> list[float]:
+    met = miss = 0
+    out = []
+    for ok in days_met:
+        met, miss = (met + 1, 0) if ok else (0, miss + 1)
+        k = handover_update(k, met, miss)
+        out.append(k)
+    return out
+
+
+# =============================================================================
 # Beispielrechnungen (EX-*) – Werte müssen mit den Markdown-Dokumenten übereinstimmen
 # =============================================================================
 def r(x: float, nd: int = 4) -> float:
@@ -1031,6 +1110,51 @@ def ex_spc_05():
             "fee": fee, "T": T, "profit": rev - cost - fuel - fee}
 
 
+def ex_npc_01():
+    out = {}
+    for k in (0.0, 1.0):
+        S = npc_equilibrium("kokain", k)
+        pr, pm = market_price("rotterdam", "kokain", S["rotterdam"]), market_price("muenchen", "kokain", S["muenchen"])
+        tag = f"k{int(k)}"
+        out[f"S_rot_{tag}"] = r(S["rotterdam"], 1)
+        out[f"S_mue_{tag}"] = r(S["muenchen"], 1)
+        out[f"P_rot_{tag}"] = r(pr, 2)
+        out[f"P_mue_{tag}"] = r(pm, 2)
+        out[f"ratio_{tag}"] = r(pm / pr)
+    f = npc_route_flow("rotterdam", "muenchen", "kokain", target_stock("rotterdam", "kokain"),
+                       target_stock("muenchen", "kokain"), 1.0)
+    out.update({"m_start": r(f["margin"]), "theta": r(f["theta"]), "f_start": r(f["f"]), "q_start": r(f["q"])})
+    return out
+
+
+def ex_npc_02():
+    out = {}
+    for t in range(1, NPC["courier_tiers"] + 1):
+        c = courier(t)
+        out[f"K_{t}"] = r(c["strength"], 2)
+        out[f"cash_{t}"] = c["cash"]
+    raid = courier_raid(87.084, 2)
+    out["p_win_t2"] = r(raid["p_win"])
+    out["gain_t2"] = raid["gain"]
+    out["per_city_day"] = NPC["couriers_per_city_day"]
+    return out
+
+
+def ex_npc_03():
+    p = gang_risk(1.0, 2_000_000, False)
+    KD = 49.076
+    lt = loot(2_000_000, {})
+    return {"p_tick": p, "p_day": r(risk_over(p)), "p_tick_k05": gang_risk(0.5, 2_000_000, False),
+            "p_low_cash": gang_risk(1.0, 900_000, False), "K_gang": r(NPC["gang_strength_factor"] * KD, 3),
+            "p_gang_wins": r(win_chance(NPC["gang_strength_factor"] * KD, KD)), "cash_lost": lt["cash_lost"]}
+
+
+def ex_npc_04():
+    run = handover_run([True] * 35 + [False] * 14)
+    return {"day13": run[12], "day14": run[13], "day21": run[20], "day35": run[34],
+            "day42": run[41], "day49": run[48]}
+
+
 EXAMPLES = {
     "EX-GLB-01": ex_glb_01, "EX-GLB-02": ex_glb_02,
     "EX-ECO-01": ex_eco_01, "EX-ECO-02": ex_eco_02, "EX-ECO-03": ex_eco_03,
@@ -1047,6 +1171,7 @@ EXAMPLES = {
     "EX-RE-01": ex_re_01, "EX-RE-02": ex_re_02, "EX-RE-03": ex_re_03, "EX-RE-04": ex_re_04,
     "EX-SPC-01": ex_spc_01, "EX-SPC-02": ex_spc_02, "EX-SPC-03": ex_spc_03, "EX-SPC-04": ex_spc_04,
     "EX-SPC-05": ex_spc_05,
+    "EX-NPC-01": ex_npc_01, "EX-NPC-02": ex_npc_02, "EX-NPC-03": ex_npc_03, "EX-NPC-04": ex_npc_04,
 }
 
 # Erwartete Werte – identisch mit den Beispielrechnungen in den .md-Dateien.
@@ -1097,6 +1222,10 @@ EXPECTED: dict[str, dict] = {
     'EX-SPC-03': {'T': 158, 'n': 7, 'danger': 0.55, 'g': 1.8734, 'p_seg': 0.0309, 'p_encounter': 0.1973, 'K_ship': 104.0, 'K_pirates': 66.0, 'p_win': 0.6642, 'p_loss': 0.0663},
     'EX-SPC-04': {'ceres': 26998.3, 'orbit': 97804.31, 'mars': 91471.33, 'frankfurt': 126264.83},
     'EX-SPC-05': {'S_ceres': 518.4, 'S_frankfurt': 332.64, 'cost': 7469143, 'revenue': 23984549, 'fuel': 1315000, 'fee': 500000, 'T': 161, 'profit': 14700406},
+    'EX-NPC-01': {'S_rot_k0': 936.0, 'S_mue_k0': 691.2, 'P_rot_k0': 5059.64, 'P_mue_k0': 15413.63, 'ratio_k0': 3.0464, 'S_rot_k1': 663.3, 'S_mue_k1': 1161.9, 'P_rot_k1': 6010.53, 'P_mue_k1': 11888.32, 'ratio_k1': 1.9779, 'm_start': 1.7563, 'theta': 0.314, 'f_start': 1.0, 'q_start': 3.25},
+    'EX-NPC-02': {'K_1': 40.0, 'cash_1': 50000, 'K_2': 72.0, 'cash_2': 100000, 'K_3': 129.6, 'cash_3': 200000, 'K_4': 233.28, 'cash_4': 400000, 'K_5': 419.9, 'cash_5': 800000, 'p_win_t2': 0.5708, 'gain_t2': 85000, 'per_city_day': 4},
+    'EX-NPC-03': {'p_tick': 0.0007, 'p_day': 0.0959, 'p_tick_k05': 0.00035, 'p_low_cash': 0.0, 'K_gang': 39.261, 'p_gang_wins': 0.4171, 'cash_lost': 500000},
+    'EX-NPC-04': {'day13': 1.0, 'day14': 0.9, 'day21': 0.8, 'day35': 0.6, 'day42': 0.7, 'day49': 0.8},
 }
 
 
@@ -1268,6 +1397,41 @@ def inv_election_unique():
     return True, "500 Zufallswahlen liefern genau einen Paten"
 
 
+def inv_npc_traders():
+    """Mit k = 1: Preise im Rahmen, Referenzrouten rentabel, Top-Marge sinkt spürbar."""
+    eq = {g: npc_equilibrium(g, 1.0, 1_500) for g in GOODS if GOODS[g]["realm"] == "earth"}
+    for g, S in eq.items():
+        lo, hi = price_bounds(g)
+        for c, st in S.items():
+            if not lo <= market_price(c, g, st) <= hi or st < ECO["min_stock"]:
+                return False, f"{c}/{g} außerhalb"
+    msgs = []
+    for a, b, g, v in [("amsterdam", "koeln", "gras", "kleinwagen"), ("rotterdam", "muenchen", "kokain", "transporter"),
+                       ("leipzig", "berlin", "speed", None)]:
+        Sa, Sb = eq[g][a], eq[g][b]
+        q = min(carry_capacity(v) // GOODS[g]["volume"], max_order(Sa) // 2)
+        cost, _ = buy_cost(a, g, Sa, q)
+        rev, _ = sell_revenue(b, g, Sb, q)
+        travel = fuel_cost(distance(a, b), v, a) if v else train_cost(distance(a, b))
+        if rev - cost - travel <= 0:
+            return False, f"{a}→{b} {g} mit NPCs unrentabel"
+        msgs.append(f"{a}→{b} {g}: +{(rev - cost - travel) / 100:.0f} €")
+    r0 = equilibrium_price("muenchen", "kokain") / equilibrium_price("rotterdam", "kokain")
+    S = eq["kokain"]
+    r1 = market_price("muenchen", "kokain", S["muenchen"]) / market_price("rotterdam", "kokain", S["rotterdam"])
+    ok = (r1 - 1) <= 0.8 * (r0 - 1)
+    return ok, f"Top-Marge {r0 - 1:.0%} → {r1 - 1:.0%}; " + "; ".join(msgs)
+
+
+def inv_handover_bounds():
+    for trial in range(200):
+        days = [rng_uniform("inv15", trial, f"d{i}") < 0.5 + 0.4 * math.sin(i / 9) for i in range(400)]
+        ks = handover_run(days)
+        if not all(NPC["k_min"] <= k <= NPC["k_max"] for k in ks):
+            return False, f"k außerhalb in Versuch {trial}"
+    return True, "k bleibt in [k_min, k_max]"
+
+
 def inv_strawman_expensive():
     fees = [b["wash_fee"] for b in P["businesses"].values() if "wash_fee" in b]
     return LAU["strawman_fee"] > max(fees), "Strohmann teurer als jeder Betrieb"
@@ -1293,6 +1457,8 @@ INVARIANTS = {
     "INV-11 Weltraumroute": inv_space_route,
     "INV-12 Beute-Tageslimit": inv_loot_cap,
     "INV-13 Eindeutige Pate-Wahl": inv_election_unique,
+    "INV-14 NPC-Händler": inv_npc_traders,
+    "INV-15 NPC-Rückbau": inv_handover_bounds,
 }
 
 

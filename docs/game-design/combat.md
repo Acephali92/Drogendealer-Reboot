@@ -253,7 +253,6 @@ deterministischem RNG vollständig auditierbar.
 ## 10. Offene Fragen
 
 - Soll der Verteidiger einen Teil der Angreifer-Ausrüstung erbeuten können?
-- **Pflicht wegen R-1 (wenige Spieler, siehe README):** NPC-Ziele (Kuriere, Banden) für Gewalt-Spieler und
-  NPC-Überfälle als Risiko, damit es trotz Vermögensband, Anfängerschutz und Cooldowns gültige Ziele gibt.
-  Ihre Häufigkeit soll mit wachsender Spielerzahl sinken. Noch nicht spezifiziert.
+- NPC-Ziele (Kuriere) und NPC-Überfälle (Banden) wegen R-1 sind in [npc.md](npc.md) spezifiziert
+  (F-NPC-02/03) und nutzen die Kampfformeln dieses Dokuments.
 - NPC-Gegner (Polizei-Einsatzkommando bei sehr hohem Heat)?

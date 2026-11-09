@@ -743,6 +743,42 @@ strength = 200.0
 range = 300_000
 
 # -----------------------------------------------------------------------------
+# NPCs (npc.md) – alle Raten werden mit der NPC-Intensität k ∈ [0, 1] skaliert
+# -----------------------------------------------------------------------------
+[npc]
+k_start = 1.0
+k_min = 0.0
+k_max = 1.0
+# NPC-Händler (F-NPC-01)
+trader_intensity = 0.5            # η: Anteil von min(A_a, D_b), den NPCs pro Tick verschieben
+trader_threshold_base = 0.15      # θ_0: Mindestmarge
+trader_threshold_per_km = 0.0002  # θ_km: Zuschlag je km (Reisekosten/Risiko)
+trader_threshold_scale = 0.5      # volle NPC-Aktivität bei Marge θ + 0,5
+# NPC-Kuriere als Ziele (F-NPC-02)
+couriers_per_city_day = 4
+courier_tiers = 5
+courier_strength_base = 40.0
+courier_strength_growth = 1.8
+courier_cash_base = 50_000
+courier_cash_growth = 2.0
+courier_cooldown_ticks = 18
+# NPC-Banden als Risiko (F-NPC-03)
+gang_attack_base = 0.0007         # pro Tick
+gang_min_cash = 1_000_000         # nur ab 10 000 € Bargeld
+gang_cooldown_ticks = 144
+gang_strength_factor = 0.8        # K_Bande = 0,8 · K_D des Spielers
+# Rückbau der NPCs (F-NPC-04, Q12)
+handover_route_competition = 0.5
+handover_target_availability = 0.3
+handover_market_activity = 0.6
+handover_min_peak_online = 15
+handover_hold_days = 14           # so lange müssen alle Kennzahlen am Stück erfüllt sein
+handover_miss_days = 7            # so lange verfehlt → k steigt wieder
+handover_step = 0.1
+handover_step_days = 7            # weitere Schritte im Wochenabstand
+handover_top_routes = 10
+
+# -----------------------------------------------------------------------------
 # Wertebereiche für die Invariantenprüfung: "abschnitt.schluessel" = [min, max]
 # -----------------------------------------------------------------------------
 [bounds]
@@ -765,3 +801,6 @@ range = 300_000
 "laundering.strawman_fee" = [0.1, 0.5]
 "real_estate.upgrade_cost_factor" = [0.05, 1.0]
 "space.piracy_base" = [0.0, 0.2]
+"npc.trader_intensity" = [0.0, 2.0]
+"npc.handover_step" = [0.01, 0.5]
+"npc.gang_attack_base" = [0.0, 0.005]
