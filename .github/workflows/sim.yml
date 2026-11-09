@@ -1,0 +1,41 @@
+# Balancing-Simulation (ADR-012)
+# sim-fast: Typecheck, RNG-Test, Golden Vectors (Sollwerte live aus docs/game-design/tools/verify.py)
+# und Invarianten. Agent 5 – Game Balancing & Simulation.
+name: sim
+
+on:
+  push:
+    paths:
+      - "sim/**"
+      - "docs/game-design/parameters.toml"
+      - "docs/game-design/tools/verify.py"
+      - ".github/workflows/sim.yml"
+  pull_request:
+    paths:
+      - "sim/**"
+      - "docs/game-design/parameters.toml"
+      - "docs/game-design/tools/verify.py"
+      - ".github/workflows/sim.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  sim-fast:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sim
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sim/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm test
