@@ -7,7 +7,7 @@ Basis-URL: `/api/v1`. Alle Antworten sind JSON.
 - **Auth:** Alle Endpunkte außer `/health` und `/auth/*` brauchen den Header `Authorization: Bearer <accessToken>`. Ohne gültiges Token kommt `401 INVALID_ACCESS_TOKEN`.
 - **Fehler:** `{ "error": { "code": "STRING", "message": "…", "details"?: [{ "path", "message" }] } }`.
   `400 VALIDATION_ERROR`, `401`, `404 *_NOT_FOUND`, `409 *_TAKEN`, `429 RATE_LIMITED`, `500 INTERNAL_ERROR`.
-- **Geld:** Strings in **ganzen Spielwährungs-Einheiten**, **nicht** in Cent (`"cash": "1500"` = 1500). Grund: In der DB ist Geld `BigInt` und kann die Genauigkeit von JS-Zahlen übersteigen.
+- **Geld (ADR-019):** Alle Beträge sind **ganzzahlige Cent** als String (`"cash": "150000"` = 1.500,00 €). Das gilt für alle Geldfelder (`cash`, `bank`, Preise, `amount`, `balanceAfter`, `value` in Ranglisten …). Gleitkommazahlen kommen nicht vor; in Euro umgerechnet wird nur bei der Anzeige. Grund für den String: In der DB ist Geld `BigInt` und kann die Genauigkeit von JS-Zahlen übersteigen.
 - **Zeit:** ISO-8601-Strings in UTC.
 - **Pagination:** `?limit=20&offset=0` (`limit` 1–100). Antworten enthalten `total`, `limit` und `offset`.
 - **Clan-Rollen:** `GODFATHER | CONSIGLIERE | CAPO | SOLDIER | ASSOCIATE`, angezeigt als Pate / Consigliere / Capo / Soldat / Mitläufer.

@@ -64,7 +64,7 @@ Die vollständige Referenz mit allen Antwortformaten steht in [`docs/api/API-CON
   - Clans und Soziales: `/clans`, `/clans/:id`, `/clan-invites`, `/rankings`, `/notifications` (inkl. Gelesen-Markierung), `/ticker`
 
 Bisher gibt es fast nur Lese-Endpunkte. Aktionen wie Handeln, Reisen, Kaufen oder Clan-Verwaltung folgen, sobald die Spielregeln feststehen.
-Fehler kommen immer als `{ "error": { "code": "...", "message": "..." } }`. Geldbeträge sind Strings in **ganzen** Spielwährungs-Einheiten, nicht in Cent.
+Fehler kommen immer als `{ "error": { "code": "...", "message": "..." } }`. Geldbeträge sind Strings in **ganzzahligen Cent** (`"150000"` = 1.500,00 €, ADR-019).
 
 ### Authentifizierung
 
