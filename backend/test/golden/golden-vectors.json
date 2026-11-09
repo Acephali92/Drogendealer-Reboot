@@ -1,0 +1,1847 @@
+{
+  "examples": {
+    "EX-CLN-01": {
+      "cost_1": 5000000,
+      "cost_2": 10000000,
+      "cost_3": 20000000,
+      "cost_4": 40000000,
+      "cost_5": 80000000,
+      "cost_total": 155000000,
+      "limit_1": 12,
+      "limit_2": 16,
+      "limit_3": 20,
+      "limit_4": 24,
+      "limit_5": 28
+    },
+    "EX-CLN-02": {
+      "berlin_day": 175104,
+      "berlin_tick": 1216,
+      "muenchen_day": 178416,
+      "muenchen_tick": 1239
+    },
+    "EX-CLN-03": {
+      "bully": 14,
+      "equal": 20,
+      "reparation": 3000000,
+      "underdog": 23
+    },
+    "EX-CLN-04": {
+      "capos": 3,
+      "payout": 5000000,
+      "tax": 80000,
+      "tax_capped": 100000
+    },
+    "EX-CLN-05": {
+      "candidates": "AB",
+      "majority": "B",
+      "no_votes": "A",
+      "single": "D",
+      "tie": "A"
+    },
+    "EX-CLN-06": {
+      "eligible_14": 14,
+      "needed_14": 10,
+      "needed_3": 2,
+      "nine_yes": false,
+      "small_passed": true,
+      "ten_yes": true
+    },
+    "EX-CMB-01": {
+      "K_A": 87.084,
+      "K_D": 49.076,
+      "cash_gained": 106250,
+      "cash_lost": 125000,
+      "f_loser": 0.5117,
+      "f_winner": 0.1442,
+      "hp_def": 50,
+      "kokain_gained": 8,
+      "kokain_lost": 10,
+      "lost_att": 0,
+      "lost_def": 1,
+      "p_win": 0.7027
+    },
+    "EX-CMB-02": {
+      "a": "Vermögensband",
+      "b": "erlaubt",
+      "c": "erlaubt",
+      "d": "Ziel-Cooldown",
+      "e": "Vermögensband"
+    },
+    "EX-CMB-03": {
+      "day_share": 0.35,
+      "day_total": 350000,
+      "loss_1": 250000,
+      "loss_2": 100000,
+      "loss_3": 0,
+      "loss_4": 0,
+      "repeat_k1": 81250
+    },
+    "EX-CTY-01": {
+      "D": 47.36,
+      "P_eq": 1032.8,
+      "S_ref": 6819.84,
+      "S_target": 6393.6
+    },
+    "EX-CTY-02": {
+      "H_amsterdam": 14.63,
+      "H_muenchen": 21.02
+    },
+    "EX-CTY-03": {
+      "label": "gut",
+      "v": 1.9658
+    },
+    "EX-ECO-01": {
+      "P_amsterdam": 624.63,
+      "P_muenchen": 1486.48,
+      "ratio": 2.3798
+    },
+    "EX-ECO-02": {
+      "A": 6.5,
+      "D": 2.6,
+      "P": 5059.64,
+      "S_ref": 374.4,
+      "S_target": 936.0
+    },
+    "EX-ECO-03": {
+      "P0": 5705.83,
+      "P144": 5089.38,
+      "P34": 5355.72,
+      "S0": 736.0,
+      "S144": 925.1,
+      "S34": 835.37
+    },
+    "EX-ECO-04": {
+      "hours": 5.72,
+      "ticks": 34.31
+    },
+    "EX-ECO-05": {
+      "P_after": 1414.21,
+      "P_before": 1000.0,
+      "S_after": 5328.0,
+      "S_target": 10656.0,
+      "factor": 1.4142
+    },
+    "EX-ECO-06": {
+      "N": 1.004008,
+      "x1": 0.004
+    },
+    "EX-GLB-01": {
+      "U": 0.525072,
+      "Z": -1.191398
+    },
+    "EX-GLB-02": {
+      "NW": 8620000
+    },
+    "EX-ML-01": {
+      "R": 6000,
+      "credit": 5460,
+      "fee": 0.09,
+      "p_day": 0.1441,
+      "p_tick": 0.00108,
+      "x_max": 18000
+    },
+    "EX-ML-02": {
+      "p_day_0_5": 0.0381,
+      "p_day_2_0": 0.4639
+    },
+    "EX-ML-03": {
+      "accepted": 1000000,
+      "credit": 700000
+    },
+    "EX-ML-04": {
+      "confiscated": 786240,
+      "fine": 393120
+    },
+    "EX-NPC-01": {
+      "P_mue_k0": 15413.63,
+      "P_mue_k1": 11888.32,
+      "P_rot_k0": 5059.64,
+      "P_rot_k1": 6010.53,
+      "S_mue_k0": 691.2,
+      "S_mue_k1": 1161.9,
+      "S_rot_k0": 936.0,
+      "S_rot_k1": 663.3,
+      "f_start": 1.0,
+      "m_start": 1.7563,
+      "q_start": 3.25,
+      "ratio_k0": 3.0464,
+      "ratio_k1": 1.9779,
+      "theta": 0.314
+    },
+    "EX-NPC-02": {
+      "K_1": 40.0,
+      "K_2": 72.0,
+      "K_3": 129.6,
+      "K_4": 233.28,
+      "K_5": 419.9,
+      "cash_1": 50000,
+      "cash_2": 100000,
+      "cash_3": 200000,
+      "cash_4": 400000,
+      "cash_5": 800000,
+      "gain_t2": 85000,
+      "p_win_t2": 0.5708,
+      "per_city_day": 4
+    },
+    "EX-NPC-03": {
+      "K_gang": 39.261,
+      "cash_lost": 500000,
+      "p_day": 0.0959,
+      "p_gang_wins": 0.4171,
+      "p_low_cash": 0.0,
+      "p_tick": 0.0007,
+      "p_tick_k05": 0.00035
+    },
+    "EX-NPC-04": {
+      "day13": 1.0,
+      "day14": 0.9,
+      "day21": 0.8,
+      "day35": 0.6,
+      "day42": 0.7,
+      "day49": 0.8
+    },
+    "EX-PRF-01": {
+      "L_2500": 5,
+      "L_9999": 9,
+      "XP_L10": 10000,
+      "XP_L20": 40000
+    },
+    "EX-PRF-02": {
+      "finanzen": 8,
+      "handel": 112,
+      "schmuggel": 106
+    },
+    "EX-PRF-03": {
+      "control_red_L10": 0.25,
+      "fee_red_L10": 0.2,
+      "spread_L10": 0.07,
+      "spread_L20": 0.04,
+      "strength_L10": 0.3
+    },
+    "EX-RE-01": {
+      "R": 17708,
+      "U": 6600,
+      "invest": 80000000,
+      "net_day": 1599552,
+      "payback_days": 50.01
+    },
+    "EX-RE-02": {
+      "autowerkstatt": 92.59,
+      "bar": 80.13,
+      "bordell": 77.16,
+      "spielhalle": 74.4,
+      "waschsalon": 69.44
+    },
+    "EX-RE-03": {
+      "p_day": 0.056,
+      "p_tick": 0.0004
+    },
+    "EX-RE-04": {
+      "material": 114000,
+      "units": 760,
+      "upkeep_day": 95040
+    },
+    "EX-SPC-01": {
+      "a": true,
+      "b": false,
+      "c": false
+    },
+    "EX-SPC-02": {
+      "T_launch": 3,
+      "T_mars": 47,
+      "fee_launch": 500000,
+      "fuel_mars": 234000
+    },
+    "EX-SPC-03": {
+      "K_pirates": 66.0,
+      "K_ship": 104.0,
+      "T": 158,
+      "danger": 0.55,
+      "g": 1.8734,
+      "n": 7,
+      "p_encounter": 0.1973,
+      "p_loss": 0.0663,
+      "p_seg": 0.0309,
+      "p_win": 0.6642
+    },
+    "EX-SPC-04": {
+      "ceres": 26998.3,
+      "frankfurt": 126264.83,
+      "mars": 91471.33,
+      "orbit": 97804.31
+    },
+    "EX-SPC-05": {
+      "S_ceres": 518.4,
+      "S_frankfurt": 332.64,
+      "T": 161,
+      "cost": 7469143,
+      "fee": 500000,
+      "fuel": 1315000,
+      "profit": 14700406,
+      "revenue": 23984549
+    },
+    "EX-TRD-01": {
+      "S_after": 736.0,
+      "avg": 5631.52,
+      "cost": 1126303
+    },
+    "EX-TRD-02": {
+      "S_after": 891.2,
+      "avg": 13713.86,
+      "revenue": 2742772
+    },
+    "EX-TRD-03": {
+      "cost": 1126303,
+      "loss": 107268,
+      "revenue": 1019035
+    },
+    "EX-TRD-04": {
+      "Q_day": 74,
+      "Q_week": 13
+    },
+    "EX-TRD-05": {
+      "H": 8.4473
+    },
+    "EX-TRD-06": {
+      "capacity": 360,
+      "max_gras": 180,
+      "max_kokain": 360
+    },
+    "EX-TRV-01": {
+      "T_car": 18,
+      "T_train": 15,
+      "fuel": 3208,
+      "train": 4335
+    },
+    "EX-TRV-02": {
+      "g": 1.324324,
+      "hv": 24.0,
+      "n": 9,
+      "p_seg": 0.016389,
+      "p_total": 0.138188,
+      "police_avg": 0.625
+    },
+    "EX-TRV-03": {
+      "bribe_chance": 0.3475,
+      "bribe_cost": 1300000,
+      "cargo_base_value": 1600000,
+      "fine": 320000
+    },
+    "EX-TRV-04": {
+      "EV": 1176831,
+      "T": 58,
+      "fuel": 16400,
+      "profit_no_bust": 1600069
+    }
+  },
+  "generatedBy": "backend/scripts/export-golden-vectors.py",
+  "parameters": {
+    "account": {
+      "deletion_policy": "forfeit"
+    },
+    "armor": {
+      "lederjacke": {
+        "price": 30000,
+        "strength": 5
+      },
+      "plattenweste": {
+        "price": 1200000,
+        "strength": 35
+      },
+      "weste": {
+        "price": 250000,
+        "strength": 15
+      }
+    },
+    "bounds": {
+      "clans.tax_max": [
+        0.0,
+        0.25
+      ],
+      "combat.alpha": [
+        0.5,
+        3.0
+      ],
+      "combat.loot_cash_rate": [
+        0.0,
+        0.5
+      ],
+      "combat.loot_daily_cap_rate": [
+        0.1,
+        0.7
+      ],
+      "combat.loot_fence_rate": [
+        0.0,
+        0.5
+      ],
+      "economy.elasticity": [
+        0.2,
+        1.0
+      ],
+      "economy.noise_rho": [
+        0.0,
+        0.99
+      ],
+      "economy.price_max_factor": [
+        1.0,
+        10.0
+      ],
+      "economy.price_min_factor": [
+        0.05,
+        1.0
+      ],
+      "economy.reversion_rate": [
+        0.001,
+        0.2
+      ],
+      "economy.wealth_price_exponent": [
+        0.0,
+        1.0
+      ],
+      "heat.decay_base": [
+        0.001,
+        0.1
+      ],
+      "laundering.risk_base": [
+        0.0,
+        0.01
+      ],
+      "laundering.strawman_fee": [
+        0.1,
+        0.5
+      ],
+      "npc.gang_attack_base": [
+        0.0,
+        0.005
+      ],
+      "npc.handover_step": [
+        0.01,
+        0.5
+      ],
+      "npc.trader_intensity": [
+        0.0,
+        2.0
+      ],
+      "real_estate.upgrade_cost_factor": [
+        0.05,
+        1.0
+      ],
+      "space.piracy_base": [
+        0.0,
+        0.2
+      ],
+      "trade.max_trade_share": [
+        0.1,
+        1.0
+      ],
+      "trade.spread_base": [
+        0.02,
+        0.3
+      ],
+      "travel.control_base": [
+        0.0,
+        0.1
+      ]
+    },
+    "businesses": {
+      "autowerkstatt": {
+        "hide_bonus": 0.1,
+        "income": 3500,
+        "name": "Autowerkstatt",
+        "price": 20000000,
+        "raid_risk": 0.0002,
+        "upkeep": 2000,
+        "wash_fee": 0.18
+      },
+      "bar": {
+        "income": 3000,
+        "name": "Bar",
+        "price": 15000000,
+        "raid_risk": 0.0002,
+        "upkeep": 1700,
+        "wash_fee": 0.15
+      },
+      "bordell": {
+        "income": 10000,
+        "name": "Bordell",
+        "price": 50000000,
+        "raid_risk": 0.0005,
+        "upkeep": 5500,
+        "wash_fee": 0.12
+      },
+      "labor": {
+        "income": 0,
+        "material_cost_ratio": 0.3,
+        "name": "Labor",
+        "output_per_tick": 3.0,
+        "price": 25000000,
+        "produces": [
+          "speed",
+          "ecstasy"
+        ],
+        "raid_risk": 0.0008,
+        "upkeep": 1500
+      },
+      "lagerhaus": {
+        "capacity": 5000,
+        "income": 0,
+        "name": "Lagerhaus",
+        "price": 8000000,
+        "raid_risk": 0.0001,
+        "upkeep": 300
+      },
+      "plantage": {
+        "income": 0,
+        "material_cost_ratio": 0.15,
+        "name": "Plantage",
+        "output_per_tick": 4.0,
+        "price": 12000000,
+        "produces": [
+          "gras"
+        ],
+        "raid_risk": 0.0006,
+        "upkeep": 600
+      },
+      "spielhalle": {
+        "income": 6000,
+        "name": "Spielhalle",
+        "price": 30000000,
+        "raid_risk": 0.0003,
+        "upkeep": 3200,
+        "wash_fee": 0.1
+      },
+      "waschsalon": {
+        "income": 1500,
+        "name": "Waschsalon",
+        "price": 6000000,
+        "raid_risk": 0.0001,
+        "upkeep": 900,
+        "wash_fee": 0.2
+      }
+    },
+    "cities": {
+      "demand_wealth_exponent": 1.0
+    },
+    "city": {
+      "amsterdam": {
+        "demand": {},
+        "fuel_price": 200,
+        "name": "Qualmsterdam",
+        "police": 0.3,
+        "pop": 900,
+        "spaceport": false,
+        "supply": {
+          "ecstasy": 2.0,
+          "gras": 3.0,
+          "haschisch": 3.0,
+          "pilze": 3.0
+        },
+        "wealth": 1.3
+      },
+      "berlin": {
+        "demand": {
+          "ecstasy": 1.6,
+          "speed": 1.4
+        },
+        "fuel_price": 185,
+        "name": "Pleitenberg",
+        "police": 0.55,
+        "pop": 3700,
+        "spaceport": false,
+        "supply": {
+          "ecstasy": 1.5,
+          "speed": 1.5
+        },
+        "wealth": 1.0
+      },
+      "frankfurt": {
+        "demand": {
+          "kokain": 1.5,
+          "marsmoos": 1.0,
+          "mondkristall": 1.0,
+          "nullgrav": 1.0,
+          "sternenstaub": 1.0
+        },
+        "fuel_price": 185,
+        "name": "Bankfurt",
+        "police": 0.7,
+        "pop": 770,
+        "spaceport": true,
+        "supply": {
+          "heroin": 1.3,
+          "marsmoos": 0.2,
+          "mondkristall": 0.2,
+          "nullgrav": 0.2,
+          "sternenstaub": 0.2
+        },
+        "wealth": 1.5
+      },
+      "hamburg": {
+        "demand": {},
+        "fuel_price": 185,
+        "name": "Schmuddelhafen",
+        "police": 0.65,
+        "pop": 1850,
+        "spaceport": false,
+        "supply": {
+          "heroin": 1.5,
+          "kokain": 2.0
+        },
+        "wealth": 1.2
+      },
+      "koeln": {
+        "demand": {
+          "gras": 1.3
+        },
+        "fuel_price": 185,
+        "name": "Klüngelheim",
+        "police": 0.6,
+        "pop": 1080,
+        "spaceport": false,
+        "supply": {},
+        "wealth": 1.1
+      },
+      "leipzig": {
+        "demand": {},
+        "fuel_price": 180,
+        "name": "Plattenhausen",
+        "police": 0.5,
+        "pop": 620,
+        "spaceport": false,
+        "supply": {
+          "speed": 2.5
+        },
+        "wealth": 0.8
+      },
+      "muenchen": {
+        "demand": {
+          "kokain": 1.4
+        },
+        "fuel_price": 190,
+        "name": "Protzingen",
+        "police": 0.8,
+        "pop": 1500,
+        "spaceport": false,
+        "supply": {
+          "gras": 0.6,
+          "haschisch": 0.7,
+          "kokain": 0.5
+        },
+        "wealth": 1.6
+      },
+      "rotterdam": {
+        "demand": {},
+        "fuel_price": 200,
+        "name": "Containerdam",
+        "police": 0.45,
+        "pop": 650,
+        "spaceport": false,
+        "supply": {
+          "heroin": 1.8,
+          "kokain": 2.5
+        },
+        "wealth": 1.0
+      }
+    },
+    "clans": {
+      "capo_daily_payout_limit": 0.05,
+      "capo_per_members": 8,
+      "consigliere_max": 1,
+      "district_abandon_ticks": 1008,
+      "district_claim_cost": 2000000,
+      "district_income_base": 20,
+      "district_min_members": 3,
+      "districts_per_city": 4,
+      "election_candidate_min_rank": "CAPO",
+      "election_candidate_min_tenure_ticks": 1008,
+      "election_duration_ticks": 72,
+      "election_voter_min_rank": "SOLDAT",
+      "founding_cost": 5000000,
+      "inactive_pate_ticks": 1008,
+      "leave_cooldown_ticks": 432,
+      "leave_cooldown_war_ticks": 1008,
+      "max_level": 5,
+      "member_base": 8,
+      "member_per_level": 4,
+      "networth_treasury_share": 1.0,
+      "no_confidence_cooldown_ticks": 1008,
+      "no_confidence_duration_ticks": 72,
+      "no_confidence_min_rank": "CAPO",
+      "no_confidence_quorum_den": 3,
+      "no_confidence_quorum_num": 2,
+      "presence_bonus_max": 0.25,
+      "presence_bonus_per_member": 0.05,
+      "probation_ticks": 144,
+      "ranks": [
+        "PATE",
+        "CONSIGLIERE",
+        "CAPO",
+        "SOLDAT",
+        "MITLAEUFER"
+      ],
+      "tax_max": 0.1,
+      "upgrade_base_cost": 10000000,
+      "upgrade_growth": 2.0,
+      "war_declaration_cost": 1000000,
+      "war_duration_ticks": 1008,
+      "war_lead_ticks": 36,
+      "war_points_base": 10.0,
+      "war_points_upset": 10.0,
+      "war_reparation_rate": 0.1
+    },
+    "combat": {
+      "alpha": 1.5,
+      "armor_attack_weight": 0.5,
+      "attack_cooldown_ticks": 3,
+      "base_strength": 10.0,
+      "heat_attack": 15.0,
+      "home_defense_bonus": 1.2,
+      "hospital_ticks": 18,
+      "hp_loss_loser": 30,
+      "hp_loss_winner": 10,
+      "hp_regen_per_tick": 2,
+      "loot_cap_window_ticks": 144,
+      "loot_cash_rate": 0.25,
+      "loot_daily_cap_rate": 0.35,
+      "loot_fence_rate": 0.15,
+      "loot_goods_rate": 0.25,
+      "loot_repeat_decay": 0.5,
+      "loot_repeat_window_ticks": 1008,
+      "loss_coeff_loser": 0.8,
+      "loss_coeff_winner": 0.4,
+      "loss_max_loser": 0.8,
+      "loss_max_winner": 0.5,
+      "morale_min": 0.8,
+      "morale_span": 0.4,
+      "networth_band": 0.5,
+      "networth_history_ticks": 1008,
+      "newbie_protection_networth": 5000000,
+      "newbie_protection_ticks": 1008,
+      "target_cooldown_ticks": 36,
+      "weapon_defense_weight": 0.5,
+      "win_chance_max": 0.95,
+      "win_chance_min": 0.05
+    },
+    "crew": {
+      "profi": {
+        "hire": 500000,
+        "strength": 20,
+        "upkeep": 400
+      },
+      "schlaeger": {
+        "hire": 100000,
+        "strength": 8,
+        "upkeep": 150
+      }
+    },
+    "distances": {
+      "amsterdam-berlin": 655,
+      "amsterdam-frankfurt": 440,
+      "amsterdam-hamburg": 465,
+      "amsterdam-koeln": 260,
+      "amsterdam-leipzig": 650,
+      "amsterdam-muenchen": 830,
+      "amsterdam-rotterdam": 80,
+      "berlin-frankfurt": 545,
+      "berlin-hamburg": 289,
+      "berlin-koeln": 575,
+      "berlin-leipzig": 190,
+      "berlin-muenchen": 585,
+      "berlin-rotterdam": 700,
+      "frankfurt-hamburg": 490,
+      "frankfurt-koeln": 190,
+      "frankfurt-leipzig": 395,
+      "frankfurt-muenchen": 395,
+      "frankfurt-rotterdam": 440,
+      "hamburg-koeln": 425,
+      "hamburg-leipzig": 395,
+      "hamburg-muenchen": 775,
+      "hamburg-rotterdam": 490,
+      "koeln-leipzig": 500,
+      "koeln-muenchen": 575,
+      "koeln-rotterdam": 250,
+      "leipzig-muenchen": 430,
+      "leipzig-rotterdam": 680,
+      "muenchen-rotterdam": 820
+    },
+    "economy": {
+      "cover_ticks": 144,
+      "elasticity": 0.5,
+      "min_stock": 1.0,
+      "noise_rho": 0.95,
+      "price_max_factor": 4.0,
+      "price_min_factor": 0.25,
+      "reversion_rate": 0.02,
+      "wealth_price_exponent": 0.3
+    },
+    "events": {
+      "lieferung": {
+        "demand_mult": 1.0,
+        "duration": 36,
+        "name": "Container vom Laster gefallen",
+        "probability": 0.0005,
+        "stock_shock": 2.0,
+        "supply_mult": 1.5
+      },
+      "party": {
+        "demand_mult": 1.8,
+        "duration": 72,
+        "name": "Stadtfest mit Kontrollverlust",
+        "probability": 0.0003,
+        "stock_shock": 1.0,
+        "supply_mult": 1.0
+      },
+      "razzia": {
+        "demand_mult": 1.0,
+        "duration": 36,
+        "name": "Medienwirksame Razzia",
+        "probability": 0.0005,
+        "stock_shock": 0.5,
+        "supply_mult": 0.5
+      }
+    },
+    "goods": {
+      "ecstasy": {
+        "base_price": 1000,
+        "consumption": 0.008,
+        "heat": 1.0,
+        "name": "Grinsepillen",
+        "realm": "earth",
+        "spoil_rate": 0.0,
+        "volatility": 0.02,
+        "volume": 1
+      },
+      "gras": {
+        "base_price": 1000,
+        "consumption": 0.02,
+        "heat": 0.5,
+        "name": "Grünzeug",
+        "realm": "earth",
+        "spoil_rate": 0.0001,
+        "volatility": 0.015,
+        "volume": 2
+      },
+      "haschisch": {
+        "base_price": 1200,
+        "consumption": 0.01,
+        "heat": 0.6,
+        "name": "Krümelbrocken",
+        "realm": "earth",
+        "spoil_rate": 0.0,
+        "volatility": 0.015,
+        "volume": 1
+      },
+      "heroin": {
+        "base_price": 6000,
+        "consumption": 0.002,
+        "heat": 2.0,
+        "name": "Dämmerpulver",
+        "realm": "earth",
+        "spoil_rate": 0.0,
+        "volatility": 0.025,
+        "volume": 1
+      },
+      "kokain": {
+        "base_price": 8000,
+        "consumption": 0.004,
+        "heat": 1.5,
+        "name": "Schneegestöber",
+        "realm": "earth",
+        "spoil_rate": 0.0,
+        "volatility": 0.02,
+        "volume": 1
+      },
+      "lsd": {
+        "base_price": 1500,
+        "consumption": 0.003,
+        "heat": 1.0,
+        "name": "Bunte Briefmarken",
+        "realm": "earth",
+        "spoil_rate": 0.0,
+        "volatility": 0.025,
+        "volume": 1
+      },
+      "marsmoos": {
+        "base_price": 20000,
+        "consumption": 0.015,
+        "heat": 1.5,
+        "name": "Marsmoos",
+        "realm": "space",
+        "spoil_rate": 0.001,
+        "volatility": 0.035,
+        "volume": 2
+      },
+      "mondkristall": {
+        "base_price": 30000,
+        "consumption": 0.01,
+        "heat": 1.0,
+        "name": "Mondkristall",
+        "realm": "space",
+        "spoil_rate": 0.0,
+        "volatility": 0.03,
+        "volume": 1
+      },
+      "nullgrav": {
+        "base_price": 80000,
+        "consumption": 0.005,
+        "heat": 2.5,
+        "name": "Nullgrav-Kapseln",
+        "realm": "space",
+        "spoil_rate": 0.0,
+        "volatility": 0.04,
+        "volume": 1
+      },
+      "pilze": {
+        "base_price": 1500,
+        "consumption": 0.004,
+        "heat": 0.7,
+        "name": "Zauberschwammerl",
+        "realm": "earth",
+        "spoil_rate": 0.002,
+        "volatility": 0.02,
+        "volume": 2
+      },
+      "speed": {
+        "base_price": 2000,
+        "consumption": 0.008,
+        "heat": 1.0,
+        "name": "Turboflocken",
+        "realm": "earth",
+        "spoil_rate": 0.0,
+        "volatility": 0.02,
+        "volume": 1
+      },
+      "sternenstaub": {
+        "base_price": 50000,
+        "consumption": 0.01,
+        "heat": 3.0,
+        "name": "Sternenstaub",
+        "realm": "space",
+        "spoil_rate": 0.0,
+        "volatility": 0.04,
+        "volume": 1
+      }
+    },
+    "heat": {
+      "decay_base": 0.01,
+      "max": 100.0,
+      "police_decay_damping": 0.5,
+      "trade_heat_per_keur": 0.5
+    },
+    "laundering": {
+      "closure_ticks": 144,
+      "fee_min": 0.05,
+      "heat_on_detection": 40.0,
+      "lookback_ticks": 144,
+      "max_ratio": 3.0,
+      "penalty_fine_rate": 0.5,
+      "risk_base": 0.001,
+      "risk_exponent": 2.0,
+      "risk_max_per_tick": 0.5,
+      "strawman_daily_cap": 1000000,
+      "strawman_fee": 0.3
+    },
+    "meta": {
+      "currency": "EUR",
+      "tick_minutes": 10,
+      "ticks_per_day": 144,
+      "version": "0.1.0"
+    },
+    "npc": {
+      "courier_cash_base": 50000,
+      "courier_cash_growth": 2.0,
+      "courier_cooldown_ticks": 18,
+      "courier_strength_base": 40.0,
+      "courier_strength_growth": 1.8,
+      "courier_tiers": 5,
+      "couriers_per_city_day": 4,
+      "gang_attack_base": 0.0007,
+      "gang_cooldown_ticks": 144,
+      "gang_min_cash": 1000000,
+      "gang_strength_factor": 0.8,
+      "handover_hold_days": 14,
+      "handover_market_activity": 0.6,
+      "handover_min_peak_online": 15,
+      "handover_miss_days": 7,
+      "handover_route_competition": 0.5,
+      "handover_step": 0.1,
+      "handover_step_days": 7,
+      "handover_target_availability": 0.3,
+      "handover_top_routes": 10,
+      "k_max": 1.0,
+      "k_min": 0.0,
+      "k_start": 1.0,
+      "trader_intensity": 0.5,
+      "trader_threshold_base": 0.15,
+      "trader_threshold_per_km": 0.0002,
+      "trader_threshold_scale": 0.5
+    },
+    "player": {
+      "backpack_capacity": 60,
+      "hp_max": 100,
+      "start_cash_black": 200000,
+      "start_cash_white": 0
+    },
+    "professions": {
+      "fields": [
+        "handel",
+        "schmuggel",
+        "gewalt",
+        "produktion",
+        "finanzen"
+      ],
+      "finanzen_fee_reduction": 0.02,
+      "finanzen_fee_reduction_cap": 0.4,
+      "finanzen_risk_reduction": 0.02,
+      "finanzen_risk_reduction_cap": 0.4,
+      "finanzen_xp_per_eur": 0.001,
+      "gewalt_strength_bonus": 0.03,
+      "gewalt_strength_bonus_cap": 0.6,
+      "gewalt_xp_loss": 10,
+      "gewalt_xp_win": 50,
+      "handel_spread_reduction": 0.03,
+      "handel_spread_reduction_cap": 0.6,
+      "handel_xp_per_eur": 0.01,
+      "level_max": 20,
+      "produktion_xp_per_unit": 0.1,
+      "produktion_yield_bonus": 0.025,
+      "produktion_yield_bonus_cap": 0.5,
+      "schmuggel_bribe_bonus": 0.015,
+      "schmuggel_control_reduction": 0.025,
+      "schmuggel_control_reduction_cap": 0.5,
+      "schmuggel_xp_per_cargo_heat": 1.0,
+      "schmuggel_xp_per_km": 0.1,
+      "xp_per_level_k": 100
+    },
+    "real_estate": {
+      "foreclosure_rate": 0.5,
+      "max_per_type_city": 3,
+      "max_upgrade": 5,
+      "production_max_ticks": 288,
+      "raid_closure_ticks": 72,
+      "raid_fine_rate": 0.05,
+      "resale_rate": 0.7,
+      "roi_target_max_days": 120,
+      "roi_target_min_days": 20,
+      "unpaid_upkeep_ticks": 144,
+      "upgrade_cost_factor": 0.2,
+      "upgrade_income_bonus": 0.2,
+      "upgrade_upkeep_bonus": 0.1,
+      "wealth_exponent": 0.5
+    },
+    "ships": {
+      "frachter": {
+        "capacity": 5000,
+        "consumption": 0.2,
+        "name": "Frachter",
+        "price": 300000000,
+        "range": 300000,
+        "speed": 10000.0,
+        "strength": 40.0
+      },
+      "kreuzer": {
+        "capacity": 1500,
+        "consumption": 0.4,
+        "name": "Kreuzer",
+        "price": 800000000,
+        "range": 300000,
+        "speed": 20000.0,
+        "strength": 200.0
+      },
+      "shuttle": {
+        "capacity": 200,
+        "consumption": 2.0,
+        "name": "Shuttle",
+        "price": 50000000,
+        "range": 500,
+        "speed": 200.0,
+        "strength": 20.0
+      }
+    },
+    "space": {
+      "launch_fee": 500000,
+      "launch_ticks": 3,
+      "piracy_base": 0.03,
+      "piracy_segment_ticks": 24,
+      "pirate_loot_rate": 0.5,
+      "pirate_strength": 120.0
+    },
+    "space_distances": {
+      "ceres-mars": 190000,
+      "ceres-mond": 263000,
+      "ceres-orbit": 263000,
+      "mars-mond": 78000,
+      "mars-orbit": 78000,
+      "mond-orbit": 384
+    },
+    "space_location": {
+      "ceres": {
+        "danger": 1.0,
+        "demand": {
+          "marsmoos": 3.0,
+          "nullgrav": 2.0
+        },
+        "fuel_price": 2500,
+        "name": "Ceres-Schrottplatz",
+        "police": 0.0,
+        "pop": 150,
+        "supply": {
+          "sternenstaub": 3.0
+        },
+        "wealth": 0.8
+      },
+      "mars": {
+        "danger": 0.5,
+        "demand": {
+          "kokain": 4.0,
+          "nullgrav": 2.0,
+          "sternenstaub": 3.0
+        },
+        "fuel_price": 2000,
+        "name": "Mars-Reihenhaussiedlung",
+        "police": 0.05,
+        "pop": 1000,
+        "supply": {
+          "kokain": 0.5,
+          "marsmoos": 3.0
+        },
+        "wealth": 1.2
+      },
+      "mond": {
+        "danger": 0.3,
+        "demand": {
+          "gras": 4.0,
+          "sternenstaub": 2.0
+        },
+        "fuel_price": 1800,
+        "name": "Mondbasis Käseloch",
+        "police": 0.05,
+        "pop": 300,
+        "supply": {
+          "gras": 0.5,
+          "mondkristall": 3.0
+        },
+        "wealth": 1.2
+      },
+      "orbit": {
+        "danger": 0.1,
+        "demand": {
+          "kokain": 4.0,
+          "marsmoos": 2.0,
+          "mondkristall": 2.0,
+          "sternenstaub": 3.0
+        },
+        "fuel_price": 1500,
+        "name": "Raststätte Letzte Ausfahrt",
+        "police": 0.1,
+        "pop": 200,
+        "supply": {
+          "kokain": 0.5,
+          "nullgrav": 2.0
+        },
+        "wealth": 1.5
+      }
+    },
+    "trade": {
+      "max_trade_share": 0.9,
+      "slippage_tolerance": 0.02,
+      "spread_base": 0.1
+    },
+    "travel": {
+      "bribe_base_success": 0.6,
+      "bribe_cost_rate": 0.5,
+      "bribe_police_penalty": 0.5,
+      "bribe_success_max": 0.9,
+      "bribe_success_min": 0.05,
+      "cargo_heat_half": 50.0,
+      "control_base": 0.02,
+      "control_decision_timeout_ticks": 3,
+      "control_segment_max": 0.5,
+      "debt_repayment_rate": 0.5,
+      "fine_rate": 0.2,
+      "heat_on_bust": 30.0,
+      "segment_km": 100,
+      "train_price_per_km": 15,
+      "train_speed": 120,
+      "vehicle_resale_rate": 0.6
+    },
+    "unlocks": {
+      "bordell": {
+        "field": "finanzen",
+        "level": 5
+      },
+      "clan_gruendung": {
+        "level_sum": 15,
+        "white_cash": 5000000
+      },
+      "labor": {
+        "field": "produktion",
+        "level": 3
+      },
+      "lkw": {
+        "field": "schmuggel",
+        "level": 5
+      },
+      "mp": {
+        "field": "gewalt",
+        "level": 5
+      },
+      "plantage": {
+        "field": "produktion",
+        "level": 1
+      },
+      "profi": {
+        "field": "gewalt",
+        "level": 8
+      },
+      "spielhalle": {
+        "field": "finanzen",
+        "level": 3
+      },
+      "sturmgewehr": {
+        "field": "gewalt",
+        "level": 10
+      },
+      "weltraum": {
+        "field": "schmuggel",
+        "level": 10,
+        "networth": 500000000,
+        "requires_spaceport": true
+      }
+    },
+    "vehicles": {
+      "kleinwagen": {
+        "capacity": 300,
+        "consumption": 6.0,
+        "hide": 0.1,
+        "name": "Kleinwagen",
+        "price": 800000,
+        "speed": 100
+      },
+      "lkw": {
+        "capacity": 6000,
+        "consumption": 30.0,
+        "hide": 0.3,
+        "name": "LKW mit Schmuggelversteck",
+        "price": 9000000,
+        "speed": 75
+      },
+      "sportwagen": {
+        "capacity": 150,
+        "consumption": 12.0,
+        "hide": 0.2,
+        "name": "Sportwagen",
+        "price": 6000000,
+        "speed": 150
+      },
+      "transporter": {
+        "capacity": 1500,
+        "consumption": 10.0,
+        "hide": 0.0,
+        "name": "Transporter",
+        "price": 2500000,
+        "speed": 85
+      }
+    },
+    "weapons": {
+      "messer": {
+        "price": 50000,
+        "strength": 5
+      },
+      "mp": {
+        "price": 1500000,
+        "strength": 45
+      },
+      "pistole": {
+        "price": 300000,
+        "strength": 20
+      },
+      "sturmgewehr": {
+        "price": 4000000,
+        "strength": 80
+      }
+    }
+  },
+  "rng": [
+    {
+      "entity": "berlin/gras",
+      "k": 0,
+      "normal": 1.3227920776386768,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.8215912815075889
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 1,
+      "normal": -0.27835668412243625,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.12379495697084969
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 7,
+      "normal": 0.7364778938796422,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.32701016593497984
+    },
+    {
+      "entity": "fight/8812",
+      "k": 0,
+      "normal": -0.24153533369417812,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.1474343591674247
+    },
+    {
+      "entity": "fight/8812",
+      "k": 1,
+      "normal": 2.2437408005850354,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.6796725337120747
+    },
+    {
+      "entity": "fight/8812",
+      "k": 7,
+      "normal": 1.1316769064546144,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.8303109244802789
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 0,
+      "normal": 0.4314896235660918,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.12485022910527194
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 1,
+      "normal": 0.6053569374039435,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.09259144764211848
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 7,
+      "normal": -0.40256148665567776,
+      "seed": "demo-server",
+      "tick": 0,
+      "uniform": 0.0007795572154385031
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 0,
+      "normal": -1.1913978927027609,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.525072454940393
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 1,
+      "normal": 0.37798163128299556,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.5347208413820853
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 7,
+      "normal": -0.9272524524929708,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.9945986794428457
+    },
+    {
+      "entity": "fight/8812",
+      "k": 0,
+      "normal": -0.7895895865514793,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.8614881915221906
+    },
+    {
+      "entity": "fight/8812",
+      "k": 1,
+      "normal": -0.8086975488125501,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.6850074813829896
+    },
+    {
+      "entity": "fight/8812",
+      "k": 7,
+      "normal": -1.1626692600358028,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.27661797625899726
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 0,
+      "normal": 0.4778481948513341,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.6441436350073749
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 1,
+      "normal": 1.165256290836609,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.19606875888084743
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 7,
+      "normal": 1.0865962464883019,
+      "seed": "demo-server",
+      "tick": 1,
+      "uniform": 0.12354396949950394
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 0,
+      "normal": -0.524567294590196,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.5153214185278463
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 1,
+      "normal": 0.06992670662453333,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.32177593479041655
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 7,
+      "normal": -0.427528908945907,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.4289790143279337
+    },
+    {
+      "entity": "fight/8812",
+      "k": 0,
+      "normal": -0.6696585193349069,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.2729162162941481
+    },
+    {
+      "entity": "fight/8812",
+      "k": 1,
+      "normal": 0.48984339250555115,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.40835970605583416
+    },
+    {
+      "entity": "fight/8812",
+      "k": 7,
+      "normal": 1.41047030640026,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.3822494677321883
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 0,
+      "normal": -1.200986151739859,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.5150908118743566
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 1,
+      "normal": 1.1459852339675571,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.5095625976714768
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 7,
+      "normal": 1.0894572243835738,
+      "seed": "demo-server",
+      "tick": 144,
+      "uniform": 0.08767691204129524
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 0,
+      "normal": 0.657193412633614,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.20157568435145273
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 1,
+      "normal": 1.4182780547487033,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.03233255945069564
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 7,
+      "normal": 0.0842558761611751,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.8446199451179879
+    },
+    {
+      "entity": "fight/8812",
+      "k": 0,
+      "normal": 1.591220494990496,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.751129457165102
+    },
+    {
+      "entity": "fight/8812",
+      "k": 1,
+      "normal": 1.2727692350970727,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.04842473903894708
+    },
+    {
+      "entity": "fight/8812",
+      "k": 7,
+      "normal": 0.28695469315987276,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.16470150445451306
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 0,
+      "normal": 0.033605985280735974,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.06760133407835531
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 1,
+      "normal": -0.19759912139144203,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.2356855538790754
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 7,
+      "normal": -0.08739212979350876,
+      "seed": "demo-server",
+      "tick": 1000000,
+      "uniform": 0.5954051993142625
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 0,
+      "normal": 0.46566747671562964,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.9266759441947209
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 1,
+      "normal": -1.1155030892182254,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.21735078299738844
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 7,
+      "normal": -0.26465514773366583,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.798230983066299
+    },
+    {
+      "entity": "fight/8812",
+      "k": 0,
+      "normal": 0.20568327364814665,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.020936261567350713
+    },
+    {
+      "entity": "fight/8812",
+      "k": 1,
+      "normal": 0.5488380351370061,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.9973811341429917
+    },
+    {
+      "entity": "fight/8812",
+      "k": 7,
+      "normal": 1.2818147289479782,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.5596699473564933
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 0,
+      "normal": 0.3773850645954603,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.08506734015380543
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 1,
+      "normal": 0.9237014695264832,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.9264005714811356
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 7,
+      "normal": 0.14150843649818715,
+      "seed": "s3cr3t-server-seed",
+      "tick": 0,
+      "uniform": 0.3972639479621242
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 0,
+      "normal": -1.6220552141483118,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.7365818948181652
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 1,
+      "normal": -0.12496318278535566,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.4812235669680944
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 7,
+      "normal": 1.227112386942312,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.48118473545758256
+    },
+    {
+      "entity": "fight/8812",
+      "k": 0,
+      "normal": 0.10306666245692546,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.025832173429945315
+    },
+    {
+      "entity": "fight/8812",
+      "k": 1,
+      "normal": -0.8255059935468925,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.1756242372943064
+    },
+    {
+      "entity": "fight/8812",
+      "k": 7,
+      "normal": -0.45360629177188755,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.13366250215966857
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 0,
+      "normal": 0.04613039801416372,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.29415032202005814
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 1,
+      "normal": 3.5603560001513674,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.7588004301410377
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 7,
+      "normal": -1.0385994181547311,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1,
+      "uniform": 0.4134780877718323
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 0,
+      "normal": -0.17003385825564177,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.014355512839000793
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 1,
+      "normal": -0.6028558621678125,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.4974219696574399
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 7,
+      "normal": 0.5115627503599733,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.5483545704338016
+    },
+    {
+      "entity": "fight/8812",
+      "k": 0,
+      "normal": 1.0552897750464005,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.4465118302167749
+    },
+    {
+      "entity": "fight/8812",
+      "k": 1,
+      "normal": -0.179465109028898,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.9610667036750346
+    },
+    {
+      "entity": "fight/8812",
+      "k": 7,
+      "normal": -0.22103059690627974,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.1697149046436062
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 0,
+      "normal": -1.7608338154778476,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.816344912820507
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 1,
+      "normal": 0.8295934752914236,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.5471488287295191
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 7,
+      "normal": -0.5694306226784853,
+      "seed": "s3cr3t-server-seed",
+      "tick": 144,
+      "uniform": 0.08670754670560538
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 0,
+      "normal": -0.6850379505585245,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.7570046770232884
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 1,
+      "normal": -0.3133712421458149,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.3167568250677544
+    },
+    {
+      "entity": "berlin/gras",
+      "k": 7,
+      "normal": 0.3373807990908234,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.6689381659703908
+    },
+    {
+      "entity": "fight/8812",
+      "k": 0,
+      "normal": -1.0857074033551866,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.6263329521807576
+    },
+    {
+      "entity": "fight/8812",
+      "k": 1,
+      "normal": -1.07646310456831,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.39081671731520384
+    },
+    {
+      "entity": "fight/8812",
+      "k": 7,
+      "normal": -0.3472610778908759,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.5457392569602083
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 0,
+      "normal": -2.530293379453488,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.9594014453263882
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 1,
+      "normal": 0.5905979567024556,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.49526882138540407
+    },
+    {
+      "entity": "player/ä€😀",
+      "k": 7,
+      "normal": 0.3969269743093309,
+      "seed": "s3cr3t-server-seed",
+      "tick": 1000000,
+      "uniform": 0.5583669046374689
+    }
+  ],
+  "sources": {
+    "parameters.toml": "1072bd27076269fcf2eb471aca68bb1e4faa0a40d12db0a67b88b7bc75ee6669",
+    "verify.py": "7315452cffc15f7dff5b41a547e3d7699409ae7cedfe9d38890e2629b4f449d5"
+  }
+}

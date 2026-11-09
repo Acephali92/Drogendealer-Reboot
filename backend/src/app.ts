@@ -4,6 +4,8 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { corsOrigins, type Env } from './config/env.js';
 import prismaPlugin from './plugins/prisma.js';
+import { loadGameParameters } from './config/parameters.js';
+import type { GameParameters } from './domain/index.js';
 import authPlugin from './plugins/auth.js';
 import errorsPlugin from './plugins/errors.js';
 import healthRoutes from './modules/health/health.routes.js';
@@ -22,12 +24,33 @@ import tickerRoutes from './modules/ticker/ticker.routes.js';
 
 export const API_PREFIX = '/api/v1';
 
-export async function buildApp(env: Env): Promise<FastifyInstance> {
+declare module 'fastify' {
+  interface FastifyInstance {
+    /** Validated, frozen game parameters (T-101). */
+    gameParams: GameParameters;
+  }
+}
+
+export interface BuildAppOptions {
+  /** Pre-loaded parameters (tests); otherwise loaded from env.GAME_PARAMETERS_PATH. */
+  gameParams?: GameParameters;
+}
+
+export async function buildApp(env: Env, options: BuildAppOptions = {}): Promise<FastifyInstance> {
+  // Fail fast before anything else starts: an invalid parameter file must not boot a server.
+  const gameParams = options.gameParams ?? loadGameParameters(env.GAME_PARAMETERS_PATH);
+
   const app = Fastify({
     logger: { level: env.LOG_LEVEL },
     trustProxy: env.TRUST_PROXY,
     bodyLimit: 64 * 1024,
   });
+
+  app.decorate('gameParams', gameParams);
+  app.log.info(
+    { parametersVersion: gameParams.meta.version, tickMinutes: gameParams.meta.tick_minutes },
+    'Game parameters loaded',
+  );
 
   await app.register(errorsPlugin);
   await app.register(helmet);
