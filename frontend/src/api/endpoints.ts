@@ -64,7 +64,8 @@ export const tradeApi = {
 };
 
 export const vehicleApi = {
-  types: async () => (await get<{ vehicleTypes: C.VehicleTypeDto[] }>('/vehicle-types')).vehicleTypes,
+  types: async () =>
+    (await get<{ vehicleTypes: C.VehicleTypeDto[] }>('/vehicle-types')).vehicleTypes.map(A.toVehicleType),
   mine: async () => (await get<{ vehicles: C.VehicleDto[] }>('/vehicles')).vehicles.map(A.toVehicle),
   /** (draft) */
   buy: async (vehicleTypeId: string) =>
@@ -80,7 +81,10 @@ export const vehicleApi = {
 };
 
 export const equipmentApi = {
-  types: async () => (await get<{ equipmentTypes: C.EquipmentTypeDto[] }>('/equipment-types')).equipmentTypes,
+  types: async () =>
+    (await get<{ equipmentTypes: C.EquipmentTypeDto[] }>('/equipment-types')).equipmentTypes.map(
+      A.toEquipmentType,
+    ),
   mine: async () => (await get<{ equipment: C.EquipmentDto[] }>('/equipment')).equipment.map(A.toEquipment),
   /** (draft) */
   buy: async (equipmentTypeId: string) =>

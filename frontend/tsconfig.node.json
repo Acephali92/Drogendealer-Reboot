@@ -13,5 +13,11 @@
     "strict": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "tailwind.config.ts", "src/lib/mockMode.ts"]
+  "include": [
+    "vite.config.ts",
+    "tailwind.config.ts",
+    "src/lib/mockMode.ts",
+    "vite/**/*.ts",
+    "src/lib/imagePath.ts"
+  ]
 }

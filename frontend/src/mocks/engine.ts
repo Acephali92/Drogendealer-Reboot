@@ -138,6 +138,7 @@ export const commodities: C.CommodityDto[] = COMMODITIES.map((c) => ({
   illegal: true,
   unitWeightG: c.volume * VOLUME_G,
   basePrice: String(c.basePrice),
+  image: c.image,
 }));
 
 export const vehicleTypes: C.VehicleTypeDto[] = VEHICLES.map((v) => ({
@@ -148,6 +149,7 @@ export const vehicleTypes: C.VehicleTypeDto[] = VEHICLES.map((v) => ({
   capacityG: v.capacity * VOLUME_G,
   speedKmh: v.speedKmh,
   licenseClass: null,
+  image: v.image,
 }));
 
 export const equipmentTypes: C.EquipmentTypeDto[] = EQUIPMENT.map((e) => ({
@@ -160,6 +162,7 @@ export const equipmentTypes: C.EquipmentTypeDto[] = EQUIPMENT.map((e) => ({
   defense: e.slot === 'ARMOR' ? e.strength : 0,
   weightG: e.weightG,
   price: String(e.price),
+  image: e.image,
 }));
 
 const citySeed = new Map(CITIES.map((c) => [cityId(c.slug), c]));

@@ -7,3 +7,15 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** Aus docs/game-design/parameters.toml beim Build erzeugt (vite/gameParams.ts, ADR-020). */
+declare module 'virtual:game-images' {
+  export const imageFallbacks: Record<
+    'goods' | 'vehicles' | 'weapons' | 'armor' | 'crew' | 'ships',
+    string | null
+  >;
+}
+declare module 'virtual:game-params' {
+  const params: Record<string, unknown>;
+  export default params;
+}

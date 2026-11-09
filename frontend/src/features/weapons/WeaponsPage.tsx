@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, Crosshair, Eye, EyeOff, Shield, Weight } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, Weight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useBuyEquipment, useEquipment, useEquipmentTypes } from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Tabs } from '@/components/ui/Tabs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Skeleton } from '@/components/ui/Feedback';
+import { EquipmentImage } from '@/components/ui/GameImages';
 import { formatWeight, toCents } from '@/lib/money';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
@@ -93,9 +94,7 @@ export function WeaponsPage() {
                 {count > 0 && <Badge tone="brass">{t('weapons.owned', { n: count })}</Badge>}
               </header>
               <div className="flex gap-4 p-4">
-                <span className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-surface-3 text-brass ring-1 ring-line/10">
-                  {e.slot === 'WEAPON' ? <Crosshair className="h-7 w-7" /> : <Shield className="h-7 w-7" />}
-                </span>
+                <EquipmentImage type={e} size={64} />
                 <div className="min-w-0 flex-1 space-y-3">
                   <p className="text-sm text-ink-muted">{e.description}</p>
                   <div>

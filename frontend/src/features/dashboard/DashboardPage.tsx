@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { CityArt } from '@/components/ui/CityArt';
 import { Money } from '@/components/ui/Money';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { CommodityIcon } from '@/components/ui/CommodityIcon';
+import { CommodityImage } from '@/components/ui/GameImages';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState, Skeleton } from '@/components/ui/Feedback';
 import { formatMoney, formatNumber, percentDelta, toCents } from '@/lib/money';
@@ -163,7 +163,7 @@ export function DashboardPage() {
                         to={`/handel?ware=${m.commodity.slug}`}
                         className="flex items-center gap-3 px-4 py-3 transition hover:bg-surface-2"
                       >
-                        <CommodityIcon slug={m.commodity.slug} size={40} />
+                        <CommodityImage commodity={m.commodity} size={40} />
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-ink">{m.commodity.name}</p>
                           <p className="text-xs text-ink-muted">

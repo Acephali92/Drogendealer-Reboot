@@ -2,3 +2,5 @@ dist
 node_modules
 public/mockServiceWorker.js
 package-lock.json
+# Pflegt der Product Owner direkt (ADR-020) – Formatprüfung darf seine Uploads nicht blockieren
+public/images

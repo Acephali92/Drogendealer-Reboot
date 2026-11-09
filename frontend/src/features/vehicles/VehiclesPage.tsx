@@ -22,7 +22,7 @@ import { formatMoney, formatWeight, toCents } from '@/lib/money';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
 import { cn } from '@/lib/cn';
-import { VehicleArt } from './VehicleArt';
+import { VehicleImage } from '@/components/ui/GameImages';
 
 function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
@@ -73,7 +73,7 @@ export function VehiclesPage() {
                     <p className="font-display text-lg font-semibold text-ink">{v.vehicleType.name}</p>
                     {v.isActive && <Badge tone="brass">{t('vehicles.active')}</Badge>}
                   </div>
-                  <VehicleArt slug={v.vehicleType.slug} className="h-14 w-28 shrink-0" />
+                  <VehicleImage type={v.vehicleType} size={72} />
                 </div>
                 <dl className="mt-3 grid grid-cols-3 gap-2">
                   <Spec
@@ -144,7 +144,7 @@ export function VehiclesPage() {
                 style={{ animationDelay: `${i * 40}ms` }}
               >
                 <div className="relative grid h-32 place-items-center bg-gradient-to-b from-surface-3/60 to-surface">
-                  <VehicleArt slug={vt.slug} className="h-24 w-48" />
+                  <VehicleImage type={vt} size={112} />
                   {vt.licenseClass !== null && (
                     <Badge tone={locked ? 'danger' : 'neutral'} className="absolute left-3 top-3">
                       {locked && <Lock className="h-3 w-3" />}

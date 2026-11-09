@@ -8,7 +8,7 @@ import { Money } from '@/components/ui/Money';
 import { NumberStepper } from '@/components/ui/NumberStepper';
 import { Tabs } from '@/components/ui/Tabs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { CommodityIcon } from '@/components/ui/CommodityIcon';
+import { CommodityImage } from '@/components/ui/GameImages';
 import { formatNumber, formatWeight, multiplyMoney, toCents } from '@/lib/money';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
@@ -72,7 +72,7 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
     <Modal open={!!entry} onClose={onClose} title={c.name}>
       <div className="space-y-5">
         <div className="flex items-center gap-3">
-          <CommodityIcon slug={c.slug} size={52} />
+          <CommodityImage commodity={c} size={52} />
           <div className="min-w-0 flex-1">
             <Tabs
               value={side}

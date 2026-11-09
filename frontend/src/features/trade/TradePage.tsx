@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Money } from '@/components/ui/Money';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs } from '@/components/ui/Tabs';
-import { CommodityIcon } from '@/components/ui/CommodityIcon';
+import { CommodityImage } from '@/components/ui/GameImages';
 import { ErrorState, Skeleton } from '@/components/ui/Feedback';
 import { formatNumber, formatWeight, multiplyMoney, percentDelta, toCents } from '@/lib/money';
 import { cn } from '@/lib/cn';
@@ -127,7 +127,9 @@ export function TradePage() {
                   </p>
                 )}
                 <div className="flex gap-4">
-                  <CommodityIcon slug={m.commodity.slug} size={64} className="hidden sm:inline-grid" />
+                  <span className="hidden shrink-0 sm:block">
+                    <CommodityImage commodity={m.commodity} size={64} />
+                  </span>
                   <div className="grid flex-1 grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                     <dl className="space-y-1.5 text-sm">
                       <p className="mb-1 font-semibold text-ink">{city.name}</p>

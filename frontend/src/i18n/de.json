@@ -222,7 +222,7 @@
     "licenseLocked": "Ab Level {{n}}",
     "bought": "{{name}} gekauft",
     "activated": "Du fährst jetzt {{name}}",
-    "noVehicle": "Du hast kein Fahrzeug. Ohne Auto bleibt dir nur der Fernbus."
+    "noVehicle": "Du hast kein Fahrzeug. Ohne Auto bleiben dir Rucksack und Bahn."
   },
   "weapons": {
     "title": "Waffe kaufen",

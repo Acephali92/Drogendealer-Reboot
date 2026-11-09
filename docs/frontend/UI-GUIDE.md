@@ -36,6 +36,11 @@ JetBrains Mono mit Tabellenziffern (`.num`) für **alle** Zahlen, Preise und Zei
 Bottom-Sheet), `NumberStepper` (mit „Max“), `ProgressBar`, `Countdown`, `Money`, `Field`, `Toaster`,
 `Skeleton`/`EmptyState`/`ErrorState`. Neue Seiten setzen sich aus diesen Bausteinen zusammen.
 
+**Spielbilder (ADR-020):** immer über `GameImage` bzw. die Hüllen `CommodityImage`, `VehicleImage`,
+`EquipmentImage` (`components/ui/GameImages.tsx`). Fallback-Kette: Bild aus `parameters.toml` (API-Feld `image`)
+→ Kategorie-Platzhalter aus `[images]` → eingebautes Symbol. Quadratisch, `loading="lazy"`, `alt` = Anzeigename.
+Kein Bildpfad im Code.
+
 ## Regeln
 
 1. **Texte nur aus `src/i18n/de.json`.** Keine deutschen Strings in Komponenten (Ausnahme: Rechtstexte unter
@@ -54,5 +59,7 @@ Bottom-Sheet), `NumberStepper` (mit „Max“), `ProgressBar`, `Countdown`, `Mon
 10. **Datenschutz (ADR-015):** keine externen Ressourcen (Fonts, CDNs, Bilder), keine Tracker, keine Cookies.
     Im Browser gespeichert werden nur Refresh-Token und Nutzer (`stores/auth.ts`).
 11. **Ab 18 (ADR-013):** Registrierung nur mit Bestätigung; Hinweis „18+“ in Footer und Login.
-12. **Mocks** laufen nur in der Entwicklung. Ein Production-Build enthält keinen Mock-Code (CI-Schritt
+12. **Spieldaten im Mock** (Namen, Preise, Bildpfade) kommen beim Build aus `docs/game-design/parameters.toml`
+    (`vite/gameParams.ts`). Nur reine Demo-Würze (Beschreibungen, Bots) steht in `mocks/data.ts`.
+13. **Mocks** laufen nur in der Entwicklung. Ein Production-Build enthält keinen Mock-Code (CI-Schritt
     `check:no-mocks`).

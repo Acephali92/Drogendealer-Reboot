@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { rmSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { resolveMockMode } from './src/lib/mockMode';
+import { gameParamsPlugin } from './vite/gameParams';
 
 /** Entfernt den MSW-Service-Worker aus dem Build, wenn keine Mocks ausgeliefert werden. */
 function stripMockWorker(enabled: boolean): Plugin {
@@ -20,7 +21,7 @@ export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const mockMode = resolveMockMode(env.VITE_USE_MOCKS, command === 'build' && mode === 'production');
   return {
-    plugins: [react(), stripMockWorker(mockMode === 'off')],
+    plugins: [react(), gameParamsPlugin(), stripMockWorker(mockMode === 'off')],
     define: { __MOCK_MODE__: JSON.stringify(mockMode) },
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
