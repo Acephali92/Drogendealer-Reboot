@@ -36,8 +36,47 @@ const nonNegReal = real.pipe(z.number().min(0, 'must not be negative'));
 const unit = real.pipe(z.number().min(0, 'must be in [0, 1]').max(1, 'must be in [0, 1]'));
 
 const name = z.string().min(1, 'must not be empty');
-/** Clan rank: upper-case API value, e.g. "PATE" (clans.md). */
-const rank = z.string().regex(/^[A-Z][A-Z0-9_]*$/, 'rank must be upper case [A-Z0-9_]');
+/**
+ * Clan ranks: technical values per ADR-021 (same as the DB enum `ClanRole`); German names are
+ * display-only. Order = hierarchy from top to bottom.
+ */
+export const CLAN_RANKS = ['GODFATHER', 'CONSIGLIERE', 'CAPO', 'SOLDIER', 'ASSOCIATE'] as const;
+export type ClanRank = (typeof CLAN_RANKS)[number];
+
+/**
+ * TRANSITIONAL (until T-117): parameters.toml still uses the former German values. They are
+ * mapped to the technical values and reported as warnings (see legacyRankWarnings).
+ */
+export const LEGACY_CLAN_RANKS: Readonly<Record<string, ClanRank>> = {
+  PATE: 'GODFATHER',
+  SOLDAT: 'SOLDIER',
+  MITLAEUFER: 'ASSOCIATE',
+};
+
+const rank = z
+  .enum([...CLAN_RANKS, ...(Object.keys(LEGACY_CLAN_RANKS) as [string, ...string[]])], {
+    error: `rank must be one of ${CLAN_RANKS.join(', ')}`,
+  })
+  .transform((v): ClanRank => LEGACY_CLAN_RANKS[v] ?? (v as ClanRank));
+
+/** Image categories (ADR-020) = folder under frontend/public/images/. */
+export const IMAGE_CATEGORIES = ['goods', 'vehicles', 'weapons', 'armor', 'crew', 'ships'] as const;
+export type ImageCategory = (typeof IMAGE_CATEGORIES)[number];
+
+/**
+ * Image path relative to `images/` (ADR-020): no "..", no leading "/", no scheme or backslash,
+ * extension .webp/.png/.svg. Same rules as safeImagePath() in the frontend; the category prefix
+ * is checked in validate.ts.
+ */
+const imagePath = z
+  .string()
+  .trim()
+  .refine((s) => !s.startsWith('/') && !s.includes('..') && !s.includes('://') && !s.includes('\\'), {
+    message: 'image must be a relative path without ".." or leading "/"',
+  })
+  .refine((s) => /^[a-z0-9_\-/.]+\.(webp|png|svg)$/i.test(s), {
+    message: 'image must end in .webp, .png or .svg and use only [a-z0-9_-/.]',
+  });
 /** Technical key (lower case, used in code and as DB slug). */
 const KEY = /^[a-z][a-z0-9_]*$/;
 /** Map of good key → multiplier (city supply/demand). */
@@ -100,6 +139,7 @@ const good = z
     volume: posInt,
     spoil_rate: unit,
     heat: nonNegReal,
+    image: imagePath.optional(),
   })
   .strict();
 
@@ -159,6 +199,7 @@ const vehicle = z
     consumption: nonNegReal,
     capacity: posInt,
     hide: unit,
+    image: imagePath.optional(),
   })
   .strict();
 
@@ -240,8 +281,10 @@ const combat = z
   })
   .strict();
 
-const gear = z.object({ strength: nonNegInt, price: money }).strict();
-const crewMember = z.object({ strength: nonNegInt, hire: money, upkeep: money }).strict();
+const gear = z.object({ strength: nonNegInt, price: money, image: imagePath.optional() }).strict();
+const crewMember = z
+  .object({ strength: nonNegInt, hire: money, upkeep: money, image: imagePath.optional() })
+  .strict();
 
 const clans = z
   .object({
@@ -370,6 +413,21 @@ const ship = z
     capacity: posInt,
     strength: nonNegReal,
     range: posInt,
+    image: imagePath.optional(),
+  })
+  .strict();
+
+/** [images] fallback.<category> – placeholder per category (ADR-020). Optional until T-113. */
+const images = z
+  .object({
+    fallback: z
+      .object(
+        Object.fromEntries(IMAGE_CATEGORIES.map((c) => [c, imagePath.optional()])) as Record<
+          ImageCategory,
+          z.ZodOptional<typeof imagePath>
+        >,
+      )
+      .strict(),
   })
   .strict();
 
@@ -444,6 +502,7 @@ export const gameParametersSchema = z
     ships: catalog(ship),
     npc,
     bounds,
+    images: images.optional(),
   })
   .strict();
 

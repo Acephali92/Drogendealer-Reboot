@@ -38,7 +38,12 @@ export interface BuildAppOptions {
 
 export async function buildApp(env: Env, options: BuildAppOptions = {}): Promise<FastifyInstance> {
   // Fail fast before anything else starts: an invalid parameter file must not boot a server.
-  const gameParams = options.gameParams ?? loadGameParameters(env.GAME_PARAMETERS_PATH);
+  const parameterWarnings: string[] = [];
+  const gameParams =
+    options.gameParams ??
+    loadGameParameters(env.GAME_PARAMETERS_PATH, (warnings) =>
+      parameterWarnings.push(...warnings.map((w) => `${w.path}: ${w.message}`)),
+    );
 
   const app = Fastify({
     logger: { level: env.LOG_LEVEL },
@@ -51,6 +56,7 @@ export async function buildApp(env: Env, options: BuildAppOptions = {}): Promise
     { parametersVersion: gameParams.meta.version, tickMinutes: gameParams.meta.tick_minutes },
     'Game parameters loaded',
   );
+  for (const warning of parameterWarnings) app.log.warn({ warning }, 'Game parameter warning');
 
   await app.register(errorsPlugin);
   await app.register(helmet);

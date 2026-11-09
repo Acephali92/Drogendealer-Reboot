@@ -131,3 +131,20 @@
   - Für das Deployment (T-602) muss die Datei ins Container-Image kopiert werden.
   - Ändert Agent 2 die Parameter, schlägt die Backend-CI fehl, bis `test/golden/golden-vectors.json` neu erzeugt ist. Das ist gewollt: Jede Parameteränderung wird im Backend bewusst übernommen.
   - Parameteränderungen im Live-Betrieb treffen eine dauerhafte Welt (ADR-016). Eine Versionierung der Parameter wird später nötig.
+
+## TD-016 – Bildfelder im Parameter-Schema (T-114a) und Übergang der Clan-Ränge (ADR-021)
+
+- **Kontext:** ADR-020 führt optionale `image`-Felder und `[images]` mit `fallback.<kategorie>` in `parameters.toml` ein. Das strikte Schema (TD-015) würde diese Felder ablehnen. ADR-021 legt die Clan-Ränge technisch auf `GODFATHER/CONSIGLIERE/CAPO/SOLDIER/ASSOCIATE` fest; `parameters.toml` verwendet noch `PATE/SOLDAT/MITLAEUFER`, bis Agent 2 T-117 umsetzt.
+- **Entscheidung:**
+  - **`image`** ist optional bei Waren, Fahrzeugen, Waffen, Rüstungen, Crew und Schiffen.
+    - Der Pfad muss relativ sein: kein `..`, kein führendes `/`, kein `://` und kein Backslash.
+    - Erlaubte Zeichen sind `[a-z0-9_-/.]`, die Endung ist `.webp`, `.png` oder `.svg`. Das sind dieselben Regeln wie bei `safeImagePath` im Frontend.
+    - Der Pfad muss im Ordner der eigenen Kategorie liegen, zum Beispiel eine Ware unter `goods/`.
+  - **`[images]`** ist optional und enthält nur `fallback.<kategorie>` mit denselben Regeln.
+  - Anders als das Frontend lehnt das Backend ungültige Pfade beim Start ab (Fail-fast), statt sie still zu ignorieren.
+  - **Ränge:** Akzeptiert werden die Enum-Werte und **übergangsweise** die alten deutschen Werte. Letztere werden abgebildet (`PATE→GODFATHER`, `SOLDAT→SOLDIER`, `MITLAEUFER→ASSOCIATE`) und beim Start als Warnung geloggt.
+  - Ein Test sichert ab, dass `CLAN_RANKS` exakt dem DB-Enum `ClanRole` entspricht.
+- **Konsequenzen:**
+  - Agent 2 kann T-113 (Bildpfade) eintragen, ohne dass der Start bricht.
+  - Nach T-117 entfernt ein Folge-Commit `LEGACY_CLAN_RANKS`, dann gilt die strikte Prüfung.
+  - Die Auslieferung der Bilder über die API ist T-114.

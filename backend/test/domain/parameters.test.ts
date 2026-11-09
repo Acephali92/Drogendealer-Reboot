@@ -1,7 +1,13 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'smol-toml';
-import { validateGameParameters, type GameParameters } from '../../src/domain/index.js';
+import { $Enums } from '@prisma/client';
+import {
+  CLAN_RANKS,
+  IMAGE_CATEGORIES,
+  validateGameParameters,
+  type GameParameters,
+} from '../../src/domain/index.js';
 import {
   DEFAULT_GAME_PARAMETERS_PATH,
   loadGameParameters,
@@ -108,9 +114,54 @@ describe('invalid parameters are rejected with a precise path', () => {
       'unlocks.lkw.field',
     ],
     ['k_start outside [k_min, k_max]', (r: Raw) => (section(r, 'npc').k_max = 0.5), 'npc.k_start'],
+    [
+      'image with ".."',
+      (r: Raw) => (section(r, 'goods', 'gras').image = 'goods/../../etc/x.webp'),
+      'goods.gras.image',
+    ],
+    [
+      'absolute image path',
+      (r: Raw) => (section(r, 'goods', 'gras').image = '/goods/gras.webp'),
+      'goods.gras.image',
+    ],
+    [
+      'image with wrong extension',
+      (r: Raw) => (section(r, 'goods', 'gras').image = 'goods/gras.gif'),
+      'goods.gras.image',
+    ],
+    [
+      'image in a foreign category',
+      (r: Raw) => (section(r, 'goods', 'gras').image = 'vehicles/gras.webp'),
+      'goods.gras.image',
+    ],
+    [
+      'image on a weapon outside weapons/',
+      (r: Raw) => (section(r, 'weapons', 'messer').image = 'armor/messer.png'),
+      'weapons.messer.image',
+    ],
+    [
+      'unknown fallback category',
+      (r: Raw) => (r.images = { fallback: { food: 'goods/_fallback.svg' } }),
+      'images.fallback',
+    ],
+    [
+      'fallback in a foreign category',
+      (r: Raw) => (r.images = { fallback: { goods: 'armor/_fallback.svg' } }),
+      'images.fallback.goods',
+    ],
+    [
+      'duplicate rank after mapping legacy names',
+      (r: Raw) => (section(r, 'clans').ranks = ['PATE', 'GODFATHER', 'CAPO', 'SOLDAT', 'MITLAEUFER']),
+      'clans.ranks',
+    ],
   ])('%s', (_name, mutate, path) => {
     const issues = issuesFor(mutate);
     expect(issues.map((i) => i.path)).toContain(path);
+  });
+
+  it('rejects ranks that are neither technical nor legacy values', () => {
+    const issues = issuesFor((r) => (section(r, 'clans').ranks = ['GODFATHER', 'BOSS']));
+    expect(issues.map((i) => i.path)).toContain('clans.ranks.1');
   });
 
   it('reports all problems at once', () => {
@@ -129,5 +180,57 @@ describe('invalid parameters are rejected with a precise path', () => {
     expect(() =>
       parseGameParameters(PARAMETERS_TOML.replace('base_price = 1_000', 'base_price = 10.5')),
     ).toThrow(/goods\.gras\.base_price/);
+  });
+});
+
+describe('images (ADR-020, T-114a)', () => {
+  it('accepts image fields on every category and the [images] fallbacks', () => {
+    const r = raw();
+    section(r, 'goods', 'gras').image = 'goods/gras.webp';
+    section(r, 'vehicles', 'kleinwagen').image = 'vehicles/kleinwagen.png';
+    section(r, 'weapons', 'messer').image = 'weapons/messer.svg';
+    section(r, 'armor', 'weste').image = 'armor/weste.webp';
+    section(r, 'crew', 'profi').image = 'crew/profi.webp';
+    section(r, 'ships', 'shuttle').image = 'ships/shuttle.webp';
+    r.images = { fallback: Object.fromEntries(IMAGE_CATEGORIES.map((c) => [c, `${c}/_fallback.svg`])) };
+    const result = validateGameParameters(r);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues, null, 2));
+    expect(result.params.goods.gras?.image).toBe('goods/gras.webp');
+    expect(result.params.images?.fallback.ships).toBe('ships/_fallback.svg');
+  });
+
+  it('keeps images optional (current parameters.toml has none)', () => {
+    const result = validateGameParameters(raw());
+    expect(result.ok && result.params.images).toBeUndefined();
+    expect(result.ok && result.params.goods.gras?.image).toBeUndefined();
+  });
+});
+
+describe('clan ranks (ADR-021)', () => {
+  it('uses exactly the values of the database enum ClanRole', () => {
+    expect([...CLAN_RANKS].sort()).toEqual(Object.values($Enums.ClanRole).sort());
+  });
+
+  it('maps the legacy German values and reports them as warnings (until T-117)', () => {
+    const result = validateGameParameters(raw());
+    if (!result.ok) throw new Error('unexpected');
+    expect(result.params.clans.ranks).toEqual(['GODFATHER', 'CONSIGLIERE', 'CAPO', 'SOLDIER', 'ASSOCIATE']);
+    expect(result.params.clans.election_voter_min_rank).toBe('SOLDIER');
+    expect(result.warnings.map((w) => w.path)).toEqual([
+      'clans.ranks.0',
+      'clans.ranks.3',
+      'clans.ranks.4',
+      'clans.election_voter_min_rank',
+    ]);
+  });
+
+  it('accepts the technical values without warnings (state after T-117)', () => {
+    const r = raw();
+    const clans = section(r, 'clans');
+    clans.ranks = [...CLAN_RANKS];
+    clans.election_voter_min_rank = 'SOLDIER';
+    const result = validateGameParameters(r);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues));
+    expect(result.warnings).toEqual([]);
   });
 });
