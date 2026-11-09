@@ -1499,7 +1499,67 @@ def doc_param_keys():
     return not bad, f"{count} Parameterverweise gültig" if not bad else f"unbekannt: {bad}"
 
 
-DOC_CHECKS = {"DOC-01 Formel-/Beispiel-IDs": doc_ids, "DOC-02 Parameterverweise": doc_param_keys}
+IMAGE_CATEGORIES = ("goods", "vehicles", "weapons", "armor", "crew", "ships")
+IMAGE_NAME_RE = re.compile(r"^[a-z0-9_-]+$")
+WARNINGS: list[str] = []
+
+
+def image_path_errors(path: str, category: str, key: str | None) -> list[str]:
+    """Regeln für Bildpfade (ADR-020); key=None bedeutet Fallback der Kategorie."""
+    errs = []
+    if not isinstance(path, str) or not path:
+        return ["leer oder kein Text"]
+    if path.startswith("/") or "\\" in path or re.match(r"^[A-Za-z]:", path):
+        errs.append("nicht relativ")
+    parts = path.split("/")
+    if ".." in parts or "." in parts or "" in parts:
+        errs.append("ungültige Segmente")
+    if parts[0] != category:
+        errs.append(f"Präfix muss {category}/ sein")
+    stem, dot, ext = parts[-1].rpartition(".")
+    if not dot or "." + ext not in P["images"]["allowed_extensions"]:
+        errs.append("Endung nicht erlaubt")
+    if not IMAGE_NAME_RE.match(stem):
+        errs.append("Dateiname nur a–z, 0–9, _ und -")
+    if key is not None and stem != key:
+        errs.append(f"Dateiname muss {key} heißen")
+    if key is None and not stem.startswith("_"):
+        errs.append("Fallback-Datei muss mit _ beginnen")
+    return errs
+
+
+def doc_images():
+    base = DOC_DIR.parent.parent / P["images"]["base_dir"]
+    bad, paths = [], []
+    for cat in IMAGE_CATEGORIES:
+        fb = P["images"]["fallback"].get(cat)
+        if fb is None:
+            bad.append(f"images.fallback.{cat}: fehlt")
+        else:
+            bad += [f"images.fallback.{cat}: {e}" for e in image_path_errors(fb, cat, None)]
+            paths.append(fb)
+        for key, entry in P[cat].items():
+            if "image" in entry:
+                bad += [f"{cat}.{key}.image: {e}" for e in image_path_errors(entry["image"], cat, key)]
+                paths.append(entry["image"])
+    if not base.is_dir():
+        WARNINGS.append(f"Bildverzeichnis {P['images']['base_dir']} fehlt – alle Bilder nutzen den Fallback")
+        missing = len(paths)
+    else:
+        missing_list = [x for x in paths if not (base / x).is_file()]
+        missing = len(missing_list)
+        fb_missing = [x for x in missing_list if x.split("/")[-1].startswith("_")]
+        img_missing = [x for x in missing_list if x not in fb_missing]
+        if fb_missing:
+            WARNINGS.append(f"{len(fb_missing)} Platzhalter des Frontends fehlen: " + ", ".join(fb_missing))
+        if img_missing:
+            WARNINGS.append(f"{len(img_missing)} Bilddatei(en) fehlen, Fallback greift: " + ", ".join(img_missing))
+    return not bad, (f"{len(paths)} Bildpfade gültig, {missing} Dateien fehlen (nur Warnung)"
+                     if not bad else f"ungültig: {bad}")
+
+
+DOC_CHECKS = {"DOC-01 Formel-/Beispiel-IDs": doc_ids, "DOC-02 Parameterverweise": doc_param_keys,
+              "DOC-03 Bildpfade": doc_images}
 
 
 # =============================================================================
@@ -1559,6 +1619,10 @@ def main(argv: list[str]) -> int:
             ok, msg = fn()
             failures += not ok
             print(f"  [{'OK' if ok else 'FAIL'}] {name}: {msg}")
+    if WARNINGS:
+        print("Warnungen")
+        for w in WARNINGS:
+            print(f"  [WARN] {w}")
     print(f"\n{'ALLE PRÜFUNGEN BESTANDEN' if not failures else f'{failures} PRÜFUNG(EN) FEHLGESCHLAGEN'}")
     return 1 if failures else 0
 
