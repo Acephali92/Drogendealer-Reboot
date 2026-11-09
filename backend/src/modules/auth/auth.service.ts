@@ -33,8 +33,7 @@ export interface AuthResult {
 
 type UserWithPlayer = User & { player: { id: string } | null };
 
-const invalidCredentials = () =>
-  unauthorized('INVALID_CREDENTIALS', 'Invalid login or password');
+const invalidCredentials = () => unauthorized('INVALID_CREDENTIALS', 'Invalid login or password');
 const invalidRefreshToken = () =>
   unauthorized('INVALID_REFRESH_TOKEN', 'Refresh token is invalid or expired');
 
@@ -76,8 +75,7 @@ export function createAuthService({ prisma, signAccessToken, refreshTokenTtlDays
     };
   }
 
-  const strip = ({ refreshTokenId: _ignored, ...result }: AuthResult & { refreshTokenId: string }) =>
-    result;
+  const strip = ({ refreshTokenId: _ignored, ...result }: AuthResult & { refreshTokenId: string }) => result;
 
   async function assertAvailable(email: string, username: string) {
     const existing = await prisma.user.findFirst({

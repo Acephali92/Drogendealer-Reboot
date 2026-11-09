@@ -61,7 +61,11 @@ describe('GET /api/v1/players/me/export', () => {
     });
     expect(body.sessions).toHaveLength(1);
     expect(body.player).toMatchObject({ name: 'exporter', currentCityId: city.id });
-    expect(body.player.inventory[0]).toMatchObject({ quantity: 3, avgBuyPrice: '50', commodity: { slug: 'weed' } });
+    expect(body.player.inventory[0]).toMatchObject({
+      quantity: 3,
+      avgBuyPrice: '50',
+      commodity: { slug: 'weed' },
+    });
     expect(body.player.moneyTransactions[0]).toMatchObject({ amount: '-150', reason: 'TRADE' });
     expect(body.player.notifications).toHaveLength(1);
 
@@ -93,8 +97,12 @@ describe('DELETE /api/v1/players/me', () => {
         payload: { login: 'leaver', password: PASSWORD },
       })
     ).json();
-    await app.prisma.notification.create({ data: { playerId: me.playerId, type: 'X', title: 'X', body: 'X' } });
-    await app.prisma.message.create({ data: { senderId: me.playerId, recipientId: other.playerId, body: 'Hi' } });
+    await app.prisma.notification.create({
+      data: { playerId: me.playerId, type: 'X', title: 'X', body: 'X' },
+    });
+    await app.prisma.message.create({
+      data: { senderId: me.playerId, recipientId: other.playerId, body: 'Hi' },
+    });
 
     const res = await deleteAccount(me.token, { password: PASSWORD });
     expect(res.statusCode).toBe(204);
@@ -109,9 +117,15 @@ describe('DELETE /api/v1/players/me', () => {
     expect(msg.senderId).toBeNull();
 
     // Old sessions are gone; the still-valid access token finds no player any more.
-    const refresh = await app.inject({ method: 'POST', url: '/api/v1/auth/refresh', payload: { refreshToken } });
+    const refresh = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      payload: { refreshToken },
+    });
     expect(refresh.statusCode).toBe(401);
-    expect((await app.inject({ method: 'GET', url: '/api/v1/players/me', headers: auth(me.token) })).statusCode).toBe(404);
+    expect(
+      (await app.inject({ method: 'GET', url: '/api/v1/players/me', headers: auth(me.token) })).statusCode,
+    ).toBe(404);
 
     // Username and email become available again.
     const again = await app.inject({

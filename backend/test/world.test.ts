@@ -96,7 +96,9 @@ describe('market', () => {
     await seedWorld();
     const res = await get('/market/overview');
     expect(res.statusCode).toBe(200);
-    const weed = res.json().commodities.find((c: { commodity: { slug: string } }) => c.commodity.slug === 'weed');
+    const weed = res
+      .json()
+      .commodities.find((c: { commodity: { slug: string } }) => c.commodity.slug === 'weed');
     expect(weed.lowestBuy).toMatchObject({ price: '80', city: { slug: 'hamburg' } });
     expect(weed.highestSell).toMatchObject({ price: '140', city: { slug: 'muenchen' } });
   });
@@ -137,7 +139,9 @@ describe('vehicles and equipment', () => {
     const pistol = await app.prisma.equipmentType.create({
       data: { slug: 'pistol', name: 'Pistole', slot: 'WEAPON', attack: 5, weightG: 900, price: 700n },
     });
-    await app.prisma.playerEquipment.create({ data: { playerId, equipmentTypeId: pistol.id, equipped: true } });
+    await app.prisma.playerEquipment.create({
+      data: { playerId, equipmentTypeId: pistol.id, equipped: true },
+    });
 
     const types = (await get('/vehicle-types')).json().vehicleTypes;
     expect(types.map((t: { slug: string }) => t.slug)).toEqual(['bike', 'van']);

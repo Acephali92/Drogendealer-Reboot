@@ -26,14 +26,14 @@ Der Server läuft dann unter `http://localhost:3000/api/v1`.
 
 ### Scripts
 
-| Script | Zweck |
-|---|---|
-| `npm run dev` | Dev-Server mit Hot-Reload (tsx) |
-| `npm run build` / `npm start` | Kompilieren nach `dist/` bzw. starten |
-| `npm run typecheck` | TypeScript-Prüfung (inkl. Tests) |
-| `npm test` | Unit- und Integrationstests (nutzt `TEST_DATABASE_URL`) |
-| `npm run db:migrate` | Neue Migration aus `schema.prisma` erzeugen und anwenden (Entwicklung) |
-| `npm run db:deploy` | Vorhandene Migrationen anwenden (CI/Produktion) |
+| Script                        | Zweck                                                                  |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| `npm run dev`                 | Dev-Server mit Hot-Reload (tsx)                                        |
+| `npm run build` / `npm start` | Kompilieren nach `dist/` bzw. starten                                  |
+| `npm run typecheck`           | TypeScript-Prüfung (inkl. Tests)                                       |
+| `npm test`                    | Unit- und Integrationstests (nutzt `TEST_DATABASE_URL`)                |
+| `npm run db:migrate`          | Neue Migration aus `schema.prisma` erzeugen und anwenden (Entwicklung) |
+| `npm run db:deploy`           | Vorhandene Migrationen anwenden (CI/Produktion)                        |
 
 Die Tests brauchen eine **eigene** Datenbank (`TEST_DATABASE_URL`, Standard `drogendealer_test`). Deren Tabellen werden vor jedem Test geleert. Der Docker-Container legt sie beim ersten Start automatisch an.
 

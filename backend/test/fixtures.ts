@@ -10,17 +10,30 @@ let seq = 0;
 const next = () => ++seq;
 
 export async function createUser(app: FastifyInstance, name = `player_${next()}`) {
-  const res = await register(app, { email: `${name}@example.com`, username: name, password: 'password-123', ageConfirmed: true });
+  const res = await register(app, {
+    email: `${name}@example.com`,
+    username: name,
+    password: 'password-123',
+    ageConfirmed: true,
+  });
   if (res.statusCode !== 201) throw new Error(`register failed: ${res.body}`);
   const body = res.json<{ accessToken: string; user: { id: string; playerId: string } }>();
   return { token: body.accessToken, userId: body.user.id, playerId: body.user.playerId, name };
 }
 
-export function createCity(app: FastifyInstance, data: { slug: string; name: string; policeStrength?: number }) {
+export function createCity(
+  app: FastifyInstance,
+  data: { slug: string; name: string; policeStrength?: number },
+) {
   return app.prisma.city.create({ data: { country: 'Testland', techLevel: 2, population: 1000, ...data } });
 }
 
-export function connectCities(app: FastifyInstance, fromCityId: string, toCityId: string, distanceKm: number) {
+export function connectCities(
+  app: FastifyInstance,
+  fromCityId: string,
+  toCityId: string,
+  distanceKm: number,
+) {
   return app.prisma.cityConnection.create({ data: { fromCityId, toCityId, distanceKm } });
 }
 
