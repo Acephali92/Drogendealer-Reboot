@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design-Tokens. Dunkel, urban, mit Messing/Bernstein aus dem Original
+ * und Neon-Grün für Geld/Gewinn. Werte als RGB-Tripel für Tailwind-Alpha.
+ */
+:root {
+  color-scheme: dark;
+  --bg: 11 9 7;
+  --surface: 20 17 13;
+  --surface-2: 28 24 19;
+  --surface-3: 40 34 27;
+  --line: 255 196 120;
+  --ink: 243 236 226;
+  --ink-muted: 176 164 148;
+  --ink-faint: 120 110 98;
+  --brass: 255 181 71;
+  --brass-dim: 160 106 40;
+  --neon: 61 255 154;
+  --danger: 255 77 94;
+  --info: 92 200 255;
+  --warn: 255 214 10;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgb(var(--brass) / 0.07), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgb(var(--neon) / 0.04), transparent 60%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-brass/80 ring-offset-2 ring-offset-bg;
+  }
+  ::selection {
+    background: rgb(var(--brass) / 0.35);
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-xl border border-line/10 bg-surface/80 shadow-panel backdrop-blur-sm;
+  }
+  .panel-header {
+    @apply flex items-center justify-between gap-3 border-b border-line/10 px-4 py-3;
+    background: linear-gradient(180deg, rgb(var(--brass) / 0.10), rgb(var(--brass) / 0.02));
+  }
+  .num {
+    @apply font-mono tabular-nums;
+  }
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-faint;
+  }
+  .noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
