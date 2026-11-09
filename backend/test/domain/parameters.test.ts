@@ -1,7 +1,13 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'smol-toml';
-import { validateGameParameters, type GameParameters } from '../../src/domain/index.js';
+import { $Enums } from '@prisma/client';
+import {
+  CLAN_RANKS,
+  IMAGE_CATEGORIES,
+  validateGameParameters,
+  type GameParameters,
+} from '../../src/domain/index.js';
 import {
   DEFAULT_GAME_PARAMETERS_PATH,
   loadGameParameters,
@@ -108,9 +114,69 @@ describe('invalid parameters are rejected with a precise path', () => {
       'unlocks.lkw.field',
     ],
     ['k_start outside [k_min, k_max]', (r: Raw) => (section(r, 'npc').k_max = 0.5), 'npc.k_start'],
+    [
+      'image with ".."',
+      (r: Raw) => (section(r, 'goods', 'gras').image = 'goods/../../etc/x.webp'),
+      'goods.gras.image',
+    ],
+    [
+      'absolute image path',
+      (r: Raw) => (section(r, 'goods', 'gras').image = '/goods/gras.webp'),
+      'goods.gras.image',
+    ],
+    [
+      'image with wrong extension',
+      (r: Raw) => (section(r, 'goods', 'gras').image = 'goods/gras.gif'),
+      'goods.gras.image',
+    ],
+    [
+      'image in a foreign category',
+      (r: Raw) => (section(r, 'goods', 'gras').image = 'vehicles/gras.webp'),
+      'goods.gras.image',
+    ],
+    [
+      'image on a weapon outside weapons/',
+      (r: Raw) => (section(r, 'weapons', 'messer').image = 'armor/messer.png'),
+      'weapons.messer.image',
+    ],
+    [
+      'unknown fallback category',
+      (r: Raw) => (section(r, 'images', 'fallback').food = 'goods/_fallback.svg'),
+      'images.fallback',
+    ],
+    [
+      'fallback in a foreign category',
+      (r: Raw) => (section(r, 'images', 'fallback').goods = 'armor/_fallback.svg'),
+      'images.fallback.goods',
+    ],
+    [
+      'unsupported extension in allowed_extensions',
+      (r: Raw) => (section(r, 'images').allowed_extensions = ['.gif']),
+      'images.allowed_extensions.0',
+    ],
+    [
+      'image extension not in allowed_extensions',
+      (r: Raw) => (section(r, 'images').allowed_extensions = ['.png']),
+      'goods.gras.image',
+    ],
+    [
+      'base_dir escaping the repo',
+      (r: Raw) => (section(r, 'images').base_dir = '../outside'),
+      'images.base_dir',
+    ],
+    [
+      'duplicate rank after mapping legacy names',
+      (r: Raw) => (section(r, 'clans').ranks = ['PATE', 'GODFATHER', 'CAPO', 'SOLDAT', 'MITLAEUFER']),
+      'clans.ranks',
+    ],
   ])('%s', (_name, mutate, path) => {
     const issues = issuesFor(mutate);
     expect(issues.map((i) => i.path)).toContain(path);
+  });
+
+  it('rejects ranks that are neither technical nor legacy values', () => {
+    const issues = issuesFor((r) => (section(r, 'clans').ranks = ['GODFATHER', 'BOSS']));
+    expect(issues.map((i) => i.path)).toContain('clans.ranks.1');
   });
 
   it('reports all problems at once', () => {
@@ -129,5 +195,75 @@ describe('invalid parameters are rejected with a precise path', () => {
     expect(() =>
       parseGameParameters(PARAMETERS_TOML.replace('base_price = 1_000', 'base_price = 10.5')),
     ).toThrow(/goods\.gras\.base_price/);
+  });
+});
+
+describe('images (ADR-020, T-113/T-114a)', () => {
+  /** Removes every image field and [images] – the state before T-113. */
+  const stripImages = (r: Raw) => {
+    for (const category of IMAGE_CATEGORIES) {
+      for (const entry of Object.values(section(r, category)))
+        delete (entry as Record<string, unknown>).image;
+    }
+    delete r.images;
+  };
+
+  it('loads the real parameters.toml with the image mapping from T-113', () => {
+    const result = validateGameParameters(raw());
+    if (!result.ok) throw new Error(JSON.stringify(result.issues, null, 2));
+    const { params } = result;
+    expect(params.images?.base_dir).toBe('frontend/public/images');
+    expect(params.images?.allowed_extensions).toEqual(['.webp', '.png', '.svg']);
+    for (const category of IMAGE_CATEGORIES) {
+      expect(params.images?.fallback[category]).toBe(`${category}/_fallback.svg`);
+    }
+    // Convention: file name = key (ADR-020).
+    expect(params.goods.gras?.image).toBe('goods/gras.webp');
+    expect(params.ships.kreuzer?.image).toBe('ships/kreuzer.webp');
+  });
+
+  it('still loads without any image fields (backwards compatible)', () => {
+    const r = raw();
+    stripImages(r);
+    const result = validateGameParameters(r);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues, null, 2));
+    expect(result.params.images).toBeUndefined();
+    expect(result.params.goods.gras?.image).toBeUndefined();
+  });
+
+  it('accepts .png and .svg images when allowed', () => {
+    const r = raw();
+    section(r, 'vehicles', 'kleinwagen').image = 'vehicles/kleinwagen.png';
+    section(r, 'weapons', 'messer').image = 'weapons/messer.svg';
+    expect(validateGameParameters(r).ok).toBe(true);
+  });
+});
+
+describe('clan ranks (ADR-021)', () => {
+  it('uses exactly the values of the database enum ClanRole', () => {
+    expect([...CLAN_RANKS].sort()).toEqual(Object.values($Enums.ClanRole).sort());
+  });
+
+  it('maps the legacy German values and reports them as warnings (until T-117)', () => {
+    const result = validateGameParameters(raw());
+    if (!result.ok) throw new Error('unexpected');
+    expect(result.params.clans.ranks).toEqual(['GODFATHER', 'CONSIGLIERE', 'CAPO', 'SOLDIER', 'ASSOCIATE']);
+    expect(result.params.clans.election_voter_min_rank).toBe('SOLDIER');
+    expect(result.warnings.map((w) => w.path)).toEqual([
+      'clans.ranks.0',
+      'clans.ranks.3',
+      'clans.ranks.4',
+      'clans.election_voter_min_rank',
+    ]);
+  });
+
+  it('accepts the technical values without warnings (state after T-117)', () => {
+    const r = raw();
+    const clans = section(r, 'clans');
+    clans.ranks = [...CLAN_RANKS];
+    clans.election_voter_min_rank = 'SOLDIER';
+    const result = validateGameParameters(r);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues));
+    expect(result.warnings).toEqual([]);
   });
 });

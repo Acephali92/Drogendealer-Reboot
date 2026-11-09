@@ -9,6 +9,7 @@ import { parse } from 'smol-toml';
 import {
   InvalidGameParametersError,
   validateGameParameters,
+  type ParameterIssue,
   type GameParameters,
 } from '../domain/parameters/index.js';
 
@@ -26,7 +27,13 @@ function deepFreeze<T>(value: T): T {
 }
 
 /** Parses and validates TOML text. Integers are read as BigInt to keep int and float distinct. */
-export function parseGameParameters(toml: string, source = 'game parameters'): GameParameters {
+export type ParameterWarningHandler = (warnings: readonly ParameterIssue[]) => void;
+
+export function parseGameParameters(
+  toml: string,
+  source = 'game parameters',
+  onWarnings?: ParameterWarningHandler,
+): GameParameters {
   let raw: unknown;
   try {
     raw = parse(toml, { integersAsBigInt: true });
@@ -36,11 +43,15 @@ export function parseGameParameters(toml: string, source = 'game parameters'): G
   }
   const result = validateGameParameters(raw);
   if (!result.ok) throw new InvalidGameParametersError(result.issues, source);
+  if (result.warnings.length > 0) onWarnings?.(result.warnings);
   return deepFreeze(result.params);
 }
 
 /** Reads, parses and validates the parameter file. Throws on any problem. */
-export function loadGameParameters(path: string = DEFAULT_GAME_PARAMETERS_PATH): GameParameters {
+export function loadGameParameters(
+  path: string = DEFAULT_GAME_PARAMETERS_PATH,
+  onWarnings?: ParameterWarningHandler,
+): GameParameters {
   let toml: string;
   try {
     toml = readFileSync(path, 'utf8');
@@ -48,5 +59,5 @@ export function loadGameParameters(path: string = DEFAULT_GAME_PARAMETERS_PATH):
     const message = err instanceof Error ? err.message : String(err);
     throw new InvalidGameParametersError([{ path: '(file)', message }], path);
   }
-  return parseGameParameters(toml, path);
+  return parseGameParameters(toml, path, onWarnings);
 }
