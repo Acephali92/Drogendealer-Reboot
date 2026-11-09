@@ -22,6 +22,9 @@ start_cash_white = 0
 backpack_capacity = 60            # Volumeneinheiten ohne Fahrzeug
 hp_max = 100
 
+[account]
+deletion_policy = "forfeit"       # ADR-017: Vermögen gelöschter Konten verfällt ersatzlos (Geldsenke)
+
 [heat]
 max = 100.0                       # Heat pro (Spieler, Stadt) in [0, 100]
 decay_base = 0.01                 # Grundzerfall pro Tick
@@ -51,7 +54,7 @@ demand_wealth_exponent = 1.0      # β: reiche Städte konsumieren mehr
 # realm       "earth" | "space"     (Herkunftswelt, bestimmt Standardmärkte)
 
 [goods.gras]
-name = "Gras"
+name = "Grünzeug"
 realm = "earth"
 base_price = 1_000
 consumption = 0.020
@@ -61,7 +64,7 @@ spoil_rate = 0.0001
 heat = 0.5
 
 [goods.haschisch]
-name = "Haschisch"
+name = "Krümelbrocken"
 realm = "earth"
 base_price = 1_200
 consumption = 0.010
@@ -71,7 +74,7 @@ spoil_rate = 0.0
 heat = 0.6
 
 [goods.pilze]
-name = "Pilze"
+name = "Zauberschwammerl"
 realm = "earth"
 base_price = 1_500
 consumption = 0.004
@@ -81,7 +84,7 @@ spoil_rate = 0.002
 heat = 0.7
 
 [goods.speed]
-name = "Speed"
+name = "Turboflocken"
 realm = "earth"
 base_price = 2_000
 consumption = 0.008
@@ -91,7 +94,7 @@ spoil_rate = 0.0
 heat = 1.0
 
 [goods.ecstasy]
-name = "Ecstasy"
+name = "Grinsepillen"
 realm = "earth"
 base_price = 1_000
 consumption = 0.008
@@ -101,7 +104,7 @@ spoil_rate = 0.0
 heat = 1.0
 
 [goods.lsd]
-name = "LSD"
+name = "Bunte Briefmarken"
 realm = "earth"
 base_price = 1_500
 consumption = 0.003
@@ -111,7 +114,7 @@ spoil_rate = 0.0
 heat = 1.0
 
 [goods.kokain]
-name = "Kokain"
+name = "Schneegestöber"
 realm = "earth"
 base_price = 8_000
 consumption = 0.004
@@ -121,7 +124,7 @@ spoil_rate = 0.0
 heat = 1.5
 
 [goods.heroin]
-name = "Heroin"
+name = "Dämmerpulver"
 realm = "earth"
 base_price = 6_000
 consumption = 0.002
@@ -172,7 +175,7 @@ heat = 2.5
 
 # Marktereignisse (pro Stadt und Ware, höchstens eines gleichzeitig aktiv) ----
 [events.razzia]
-name = "Razzia"
+name = "Medienwirksame Razzia"
 probability = 0.0005              # pro Tick und Markt
 duration = 36                     # Ticks (6 h)
 stock_shock = 0.5                 # Bestand wird sofort halbiert
@@ -180,7 +183,7 @@ supply_mult = 0.5                 # Zielbestand während der Dauer
 demand_mult = 1.0
 
 [events.lieferung]
-name = "Große Lieferung"
+name = "Container vom Laster gefallen"
 probability = 0.0005
 duration = 36
 stock_shock = 2.0
@@ -188,7 +191,7 @@ supply_mult = 1.5
 demand_mult = 1.0
 
 [events.party]
-name = "Festival / Partywochenende"
+name = "Stadtfest mit Kontrollverlust"
 probability = 0.0003
 duration = 72
 stock_shock = 1.0
@@ -197,11 +200,12 @@ demand_mult = 1.8
 
 # -----------------------------------------------------------------------------
 # Städte (Erde)
+# Anzeigenamen (name) sind fiktiv-satirisch (ADR-013); die Schlüssel bleiben technisch stabil.
 # supply/demand: Multiplikatoren m_s / m_d je Ware, fehlend = 1.0 für Erdwaren.
 # Weltraumwaren sind nur dort handelbar, wo sie explizit in supply UND demand stehen.
 # -----------------------------------------------------------------------------
 [city.berlin]
-name = "Berlin"
+name = "Pleitenberg"
 pop = 3_700
 wealth = 1.0
 police = 0.55
@@ -211,7 +215,7 @@ supply = { speed = 1.5, ecstasy = 1.5 }
 demand = { speed = 1.4, ecstasy = 1.6 }
 
 [city.hamburg]
-name = "Hamburg"
+name = "Schmuddelhafen"
 pop = 1_850
 wealth = 1.2
 police = 0.65
@@ -221,7 +225,7 @@ supply = { kokain = 2.0, heroin = 1.5 }
 demand = {}
 
 [city.muenchen]
-name = "München"
+name = "Protzingen"
 pop = 1_500
 wealth = 1.6
 police = 0.8
@@ -231,7 +235,7 @@ supply = { kokain = 0.5, gras = 0.6, haschisch = 0.7 }
 demand = { kokain = 1.4 }
 
 [city.koeln]
-name = "Köln"
+name = "Klüngelheim"
 pop = 1_080
 wealth = 1.1
 police = 0.6
@@ -241,7 +245,7 @@ supply = {}
 demand = { gras = 1.3 }
 
 [city.frankfurt]
-name = "Frankfurt"
+name = "Bankfurt"
 pop = 770
 wealth = 1.5
 police = 0.7
@@ -251,7 +255,7 @@ supply = { heroin = 1.3, sternenstaub = 0.2, mondkristall = 0.2, marsmoos = 0.2,
 demand = { kokain = 1.5, sternenstaub = 1.0, mondkristall = 1.0, marsmoos = 1.0, nullgrav = 1.0 }
 
 [city.leipzig]
-name = "Leipzig"
+name = "Plattenhausen"
 pop = 620
 wealth = 0.8
 police = 0.5
@@ -261,7 +265,7 @@ supply = { speed = 2.5 }
 demand = {}
 
 [city.amsterdam]
-name = "Amsterdam"
+name = "Qualmsterdam"
 pop = 900
 wealth = 1.3
 police = 0.3
@@ -271,7 +275,7 @@ supply = { gras = 3.0, haschisch = 3.0, pilze = 3.0, ecstasy = 2.0 }
 demand = {}
 
 [city.rotterdam]
-name = "Rotterdam"
+name = "Containerdam"
 pop = 650
 wealth = 1.0
 police = 0.45
@@ -534,7 +538,16 @@ capo_per_members = 8              # 1 Capo je angefangene 8 Mitglieder
 ranks = ["PATE", "CONSIGLIERE", "CAPO", "SOLDAT", "MITLAEUFER"]   # verbindliche API-Werte
 networth_treasury_share = 1.0     # Pro-Kopf-Anteil der Clankasse zählt zum Nettovermögen
 probation_ticks = 144             # Mitläufer-Probezeit
-inactive_pate_ticks = 1_008       # danach Nachfolge
+inactive_pate_ticks = 1_008       # danach Wahl eines neuen Paten
+election_duration_ticks = 72      # 12 h
+election_voter_min_rank = "SOLDAT"
+election_candidate_min_rank = "CAPO"
+election_candidate_min_tenure_ticks = 1_008
+no_confidence_min_rank = "CAPO"   # wer ein Misstrauensvotum beantragen darf
+no_confidence_quorum_num = 2      # Ja-Stimmen ≥ ⌈num/den · Wahlberechtigte ohne Paten⌉
+no_confidence_quorum_den = 3
+no_confidence_duration_ticks = 72
+no_confidence_cooldown_ticks = 1_008
 district_min_members = 3          # Anwesende zum Beanspruchen
 district_abandon_ticks = 1_008    # ohne Präsenz wird ein Viertel frei
 
@@ -654,7 +667,7 @@ pirate_strength = 120.0           # × Gefahr der Route
 pirate_loot_rate = 0.5
 
 [space_location.orbit]
-name = "Orbitalstation Hafen Eins"
+name = "Raststätte Letzte Ausfahrt"
 pop = 200
 wealth = 1.5
 police = 0.1
@@ -664,7 +677,7 @@ supply = { nullgrav = 2.0, kokain = 0.5 }
 demand = { sternenstaub = 3.0, mondkristall = 2.0, marsmoos = 2.0, kokain = 4.0 }
 
 [space_location.mond]
-name = "Selene-Basis"
+name = "Mondbasis Käseloch"
 pop = 300
 wealth = 1.2
 police = 0.05
@@ -674,7 +687,7 @@ supply = { mondkristall = 3.0, gras = 0.5 }
 demand = { sternenstaub = 2.0, gras = 4.0 }
 
 [space_location.mars]
-name = "Ares-Kolonie"
+name = "Mars-Reihenhaussiedlung"
 pop = 1_000
 wealth = 1.2
 police = 0.05
@@ -684,7 +697,7 @@ supply = { marsmoos = 3.0, kokain = 0.5 }
 demand = { sternenstaub = 3.0, nullgrav = 2.0, kokain = 4.0 }
 
 [space_location.ceres]
-name = "Ceres-Depot"
+name = "Ceres-Schrottplatz"
 pop = 150
 wealth = 0.8
 police = 0.0

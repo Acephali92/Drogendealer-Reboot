@@ -191,9 +191,9 @@ function attack(att, def):
 - Falls der Angreifer gewinnt:
   - $f_w = 0{,}4 \cdot 49{,}076 / 136{,}16 =$ **0,1442** → $\operatorname{round}(3 \cdot 0{,}1442) =$ **0** Schläger verloren
   - $f_l = 0{,}8 \cdot 87{,}084 / 136{,}16 =$ **0,5117** → $\operatorname{round}(2 \cdot 0{,}5117) =$ **1** Schläger verloren
-  - Beute bei 5 000 € Bargeld und 40 Kokain (erster Überfall des Tages, $k = 0$):
-    Opfer verliert $\min(125\,000;\; 175\,000) =$ **125 000 ct** und **10** Kokain,
-    der Angreifer erhält nach Hehlerabschlag **106 250 ct** und **8** Kokain
+  - Beute bei 5 000 € Bargeld und 40 Schneegestöber (erster Überfall des Tages, $k = 0$):
+    Opfer verliert $\min(125\,000;\; 175\,000) =$ **125 000 ct** und **10** Schneegestöber,
+    der Angreifer erhält nach Hehlerabschlag **106 250 ct** und **8** Schneegestöber
   - HP Verteidiger: 80 − 30 = **50**
 
 **EX-CMB-02 – Zulässigkeit** (Angreifer-Nettovermögen 100 000 €, sofern nicht anders angegeben)

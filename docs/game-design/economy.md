@@ -42,14 +42,14 @@ Werte aus `goods.<id>.*`. Preise in ct pro Einheit, Verbrauch in Einheiten pro 1
 
 | Ware | Welt | $P_{base}$ | Verbrauch $c$ | Volatilität $\sigma$ | Volumen | Verderb/Tick | Heat $h$ |
 |---|---|---:|---:|---:|---:|---:|---:|
-| Gras | Erde | 1 000 | 0,020 | 0,015 | 2 | 0,0001 | 0,5 |
-| Haschisch | Erde | 1 200 | 0,010 | 0,015 | 1 | 0 | 0,6 |
-| Pilze | Erde | 1 500 | 0,004 | 0,020 | 2 | 0,002 | 0,7 |
-| Speed | Erde | 2 000 | 0,008 | 0,020 | 1 | 0 | 1,0 |
-| Ecstasy | Erde | 1 000 | 0,008 | 0,020 | 1 | 0 | 1,0 |
-| LSD | Erde | 1 500 | 0,003 | 0,025 | 1 | 0 | 1,0 |
-| Kokain | Erde | 8 000 | 0,004 | 0,020 | 1 | 0 | 1,5 |
-| Heroin | Erde | 6 000 | 0,002 | 0,025 | 1 | 0 | 2,0 |
+| Grünzeug | Erde | 1 000 | 0,020 | 0,015 | 2 | 0,0001 | 0,5 |
+| Krümelbrocken | Erde | 1 200 | 0,010 | 0,015 | 1 | 0 | 0,6 |
+| Zauberschwammerl | Erde | 1 500 | 0,004 | 0,020 | 2 | 0,002 | 0,7 |
+| Turboflocken | Erde | 2 000 | 0,008 | 0,020 | 1 | 0 | 1,0 |
+| Grinsepillen | Erde | 1 000 | 0,008 | 0,020 | 1 | 0 | 1,0 |
+| Bunte Briefmarken | Erde | 1 500 | 0,003 | 0,025 | 1 | 0 | 1,0 |
+| Schneegestöber | Erde | 8 000 | 0,004 | 0,020 | 1 | 0 | 1,5 |
+| Dämmerpulver | Erde | 6 000 | 0,002 | 0,025 | 1 | 0 | 2,0 |
 | Sternenstaub | All | 50 000 | 0,010 | 0,040 | 1 | 0 | 3,0 |
 | Mondkristall | All | 30 000 | 0,010 | 0,030 | 1 | 0 | 1,0 |
 | Marsmoos | All | 20 000 | 0,015 | 0,035 | 2 | 0,001 | 1,5 |
@@ -61,9 +61,9 @@ Beispiel-Schlüssel: `goods.kokain.base_price`, `goods.pilze.spoil_rate`, `goods
 
 | Ereignis | Schlüssel | $p$/Tick/Markt | Dauer | Bestandsschock | $M_s$ | $M_d$ |
 |---|---|---:|---:|---:|---:|---:|
-| Razzia | `events.razzia` | 0,0005 | 36 (6 h) | × 0,5 | 0,5 | 1,0 |
-| Große Lieferung | `events.lieferung` | 0,0005 | 36 | × 2,0 | 1,5 | 1,0 |
-| Festival | `events.party` | 0,0003 | 72 (12 h) | × 1,0 | 1,0 | 1,8 |
+| Medienwirksame Razzia | `events.razzia` | 0,0005 | 36 (6 h) | × 0,5 | 0,5 | 1,0 |
+| Container vom Laster gefallen | `events.lieferung` | 0,0005 | 36 | × 2,0 | 1,5 | 1,0 |
+| Stadtfest mit Kontrollverlust | `events.party` | 0,0003 | 72 (12 h) | × 1,0 | 1,0 | 1,8 |
 
 Pro Markt ist höchstens ein Ereignis aktiv. Erwartete Ereignisse pro Markt und Tag:
 $144 \cdot (0{,}0005 + 0{,}0005 + 0{,}0003) = 0{,}187$ – bei 80 Märkten (8 Städte × 8 Waren auf der Erde)
@@ -120,7 +120,7 @@ x_{t+1} = \rho\, x_t + \sigma\, Z_t, \qquad N_t = e^{x_t}
 ```
 
 $Z_t$ nach F-GLB-02 mit Entität `<stadt>/<ware>` und $k = 1$. Stationäre Standardabweichung
-$\sigma / \sqrt{1-\rho^2}$, z. B. Gras: $0{,}015 / 0{,}312 = 4{,}8\,\%$.
+$\sigma / \sqrt{1-\rho^2}$, z. B. Grünzeug: $0{,}015 / 0{,}312 = 4{,}8\,\%$.
 
 **F-ECO-06 – Marktpreis**
 
@@ -183,9 +183,9 @@ for market in markets:
 
 ## 7. Beispielrechnungen
 
-**EX-ECO-01 – Gleichgewichtspreis Gras: Amsterdam vs. München**
+**EX-ECO-01 – Gleichgewichtspreis Grünzeug: Qualmsterdam vs. Protzingen**
 
-| | Amsterdam | München |
+| | Qualmsterdam | Protzingen |
 |---|---|---|
 | $W$ | 1,3 | 1,6 |
 | $m_d / m_s$ | 1,0 / 3,0 | 1,0 / 0,6 |
@@ -193,9 +193,9 @@ for market in markets:
 | $(m_d/m_s)^{0{,}5}$ | 0,5774 | 1,2910 |
 | $P^{*} = 1000 \cdot W^{0{,}3} \cdot (m_d/m_s)^{0{,}5}$ | **624,63 ct** | **1 486,48 ct** |
 
-Verhältnis München/Amsterdam = **2,3798** → die klassische „Holland-Route“.
+Verhältnis Protzingen/Qualmsterdam = **2,3798** → die klassische „Qualm-Route“.
 
-**EX-ECO-02 – Markttiefe Kokain in Rotterdam**
+**EX-ECO-02 – Markttiefe Schneegestöber in Containerdam**
 
 $\text{pop} = 650$, $c = 0{,}004$, $W = 1{,}0$, $m_d = 1{,}0$, $m_s = 2{,}5$:
 
@@ -206,7 +206,7 @@ $\text{pop} = 650$, $c = 0{,}004$, $W = 1{,}0$, $m_d = 1{,}0$, $m_s = 2{,}5$:
 
 **EX-ECO-03 – Erholung nach einem Großeinkauf**
 
-Ein Spieler kauft 200 Einheiten Kokain in Rotterdam: $S_0 = 936 - 200 = $ **736,0**, Preis **5 705,83 ct**.
+Ein Spieler kauft 200 Einheiten Schneegestöber in Containerdam: $S_0 = 936 - 200 = $ **736,0**, Preis **5 705,83 ct**.
 
 | Ticks nach Kauf | $S = 936 + (736 - 936) \cdot 0{,}98^n$ | Preis |
 |---|---:|---:|
@@ -219,7 +219,7 @@ Ein Spieler kauft 200 Einheiten Kokain in Rotterdam: $S_0 = 936 - 200 = $ **736,
 $t_{1/2} = \ln 0{,}5 / \ln 0{,}98 =$ **34,31 Ticks** = **5,72 h**. Eine leergekaufte Route ist nach einem
 halben Arbeitstag zur Hälfte, nach einem Tag zu ~95 % erholt.
 
-**EX-ECO-05 – Razzia auf dem Berliner Grasmarkt**
+**EX-ECO-05 – Razzia auf dem Pleitenberger Grünzeugmarkt**
 
 $S_{target} = 3700 \cdot 0{,}02 \cdot 144 =$ **10 656,0**; Preis vorher **1 000,00 ct**.
 Razzia: $S \leftarrow 10656 \cdot 0{,}5 =$ **5 328,0**; Preis nachher $1000 \cdot \sqrt{2} =$ **1 414,21 ct**
@@ -228,7 +228,7 @@ danach erholt sich der Markt per F-ECO-04.
 
 **EX-ECO-06 – Ein Rauschschritt**
 
-Gras, $x_t = 0{,}02$, $Z_t = -1{,}0$: $x_{t+1} = 0{,}95 \cdot 0{,}02 + 0{,}015 \cdot (-1) =$ **0,004**,
+Grünzeug, $x_t = 0{,}02$, $Z_t = -1{,}0$: $x_{t+1} = 0{,}95 \cdot 0{,}02 + 0{,}015 \cdot (-1) =$ **0,004**,
 $N = e^{0{,}004} =$ **1,004008**.
 
 ## 8. Balancing-Ziele & Exploit-Analyse
@@ -259,7 +259,7 @@ Städte hinweg sind gewolltes Clan-Gameplay.
 
 - **Pflicht wegen R-1 (wenige Spieler, siehe README):** NPC-Händler, die profitable Routen mit fester Rate
   abschöpfen (z. B. als zusätzlicher Verbrauch an Billig-Märkten und zusätzliches Angebot an teuren Märkten).
-  Ohne sie hat ein einzelner Spieler bei 10–30 Spielern eine Route wie Rotterdam → München praktisch für
+  Ohne sie hat ein einzelner Spieler bei 10–30 Spielern eine Route wie Containerdam → Protzingen praktisch für
   sich allein. Die Stärke soll mit wachsender Spielerzahl sinken. Noch nicht spezifiziert.
 
 - Sollen Spielerverkäufe den **Zielbestand** dauerhaft verschieben (Marktsättigung über Tage)?

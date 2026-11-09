@@ -32,8 +32,8 @@ Unterhalt und Risiko modelliert.
 | Spielhalle | 300 000 € | 6 000 | 3 200 | 10 % | 0,0003 | beste Waschgebühr | Finanzen L3 |
 | Bordell | 500 000 € | 10 000 | 5 500 | 12 % | 0,0005 | höchster Umsatz | Finanzen L5 |
 | Lagerhaus | 80 000 € | 0 | 300 | – | 0,0001 | 5 000 Volumen Lager in der Stadt | – |
-| Plantage | 120 000 € | 0 | 600 | – | 0,0006 | produziert Gras 4,0/Tick | Produktion L1 |
-| Labor | 250 000 € | 0 | 1 500 | – | 0,0008 | produziert Speed **oder** Ecstasy 3,0/Tick | Produktion L3 |
+| Plantage | 120 000 € | 0 | 600 | – | 0,0006 | produziert Grünzeug 4,0/Tick | Produktion L1 |
+| Labor | 250 000 € | 0 | 1 500 | – | 0,0008 | produziert Turboflocken **oder** Grinsepillen 3,0/Tick | Produktion L3 |
 
 Umsatz und Unterhalt in ct pro Tick. Schlüssel z. B. `businesses.bordell.income`, `businesses.labor.output_per_tick`,
 `businesses.plantage.material_cost_ratio`.
@@ -123,7 +123,7 @@ for b in businesses:
 
 ## 7. Beispielrechnungen
 
-**EX-RE-01 – Bordell in München, Ausbaustufe 2**
+**EX-RE-01 – Bordell in Protzingen, Ausbaustufe 2**
 
 - $R = \lfloor 10\,000 \cdot 1{,}6^{0{,}5} \cdot 1{,}4 \rfloor =$ **17 708 ct/Tick**
 - $U = \lceil 5\,500 \cdot 1{,}2 \rceil =$ **6 600 ct/Tick**
@@ -131,7 +131,7 @@ for b in businesses:
 - Investition: $50 + 0{,}2 \cdot 50 \cdot (1 + 2) = $ **80 000 000 ct** (800 000 €)
 - Amortisation: **50,01 Tage**
 
-**EX-RE-02 – Amortisation in Berlin (W = 1, Stufe 0)**
+**EX-RE-02 – Amortisation in Pleitenberg (W = 1, Stufe 0)**
 
 | Betrieb | Investition | Netto/Tag | Amortisation |
 |---|---:|---:|---:|
@@ -144,16 +144,16 @@ for b in businesses:
 Alle liegen im Zielkorridor 20–120 Tage (INV-06). Der Ausbau verkürzt die Amortisation, weil der
 Umsatz doppelt so stark wächst wie der Unterhalt.
 
-**EX-RE-03 – Razziarisiko Bordell München (Heat 0)**
+**EX-RE-03 – Razziarisiko Bordell Protzingen (Heat 0)**
 
 $p = 0{,}0005 \cdot 0{,}8 \cdot 1 =$ **0,0004** pro Tick → **0,056** pro Tag (F-ML-04).
 
 **EX-RE-04 – Plantage, Produktion L4, Ausbaustufe 1, ein Tag**
 
-- $Q = \lfloor 4{,}0 \cdot 144 \cdot 1{,}10 \cdot 1{,}20 \rfloor =$ **760** Gras
+- $Q = \lfloor 4{,}0 \cdot 144 \cdot 1{,}10 \cdot 1{,}20 \rfloor =$ **760** Grünzeug
 - Material $\lceil 760 \cdot 0{,}15 \cdot 1000 \rceil =$ **114 000 ct**
 - Unterhalt $\lceil 600 \cdot 1{,}1 \rceil \cdot 144 =$ **95 040 ct**
-- Verkaufswert in München (Ø ≈ 13–14 € bei dieser Menge): ≈ 10 000 € – abzüglich Transport und Risiko.
+- Verkaufswert in Protzingen (Ø ≈ 13–14 € bei dieser Menge): ≈ 10 000 € – abzüglich Transport und Risiko.
 
 ## 8. Balancing-Ziele
 

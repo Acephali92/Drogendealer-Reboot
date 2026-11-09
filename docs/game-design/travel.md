@@ -47,7 +47,7 @@ Versteck um `businesses.autowerkstatt.hide_bonus` = 0,10.
 | $r_{bribe}$ | `travel.bribe_cost_rate` | 0,5 | Bestechungskosten |
 | – | `travel.bribe_base_success`, `travel.bribe_police_penalty` | 0,6 / 0,5 | Bestechungschance |
 
-Distanzen: `distances."<a>-<b>"` (alphabetisch sortiert), z. B. Berlin–Hamburg 289 km.
+Distanzen: `distances."<a>-<b>"` (alphabetisch sortiert), z. B. Pleitenberg–Schmuddelhafen 289 km.
 
 ## 4. Formeln
 
@@ -135,7 +135,7 @@ on arrival: player.city = to; xp.schmuggel += xp_gain(...)   # F-PRF-02, nur mit
 
 ## 7. Beispielrechnungen
 
-**EX-TRV-01 – Berlin → Hamburg (289 km)**
+**EX-TRV-01 – Pleitenberg → Schmuddelhafen (289 km)**
 
 | | Kleinwagen | Bahn |
 |---|---|---|
@@ -144,9 +144,9 @@ on arrival: player.city = to; xp.schmuggel += xp_gain(...)   # F-PRF-02, nur mit
 
 Die Bahn ist schneller und für kleine Mengen sinnvoll, der Kleinwagen billiger und transportiert 6× mehr.
 
-**EX-TRV-02 – Kontrollrisiko Rotterdam → München mit 200 Kokain**
+**EX-TRV-02 – Kontrollrisiko Containerdam → Protzingen mit 200 Schneegestöber**
 
-Transporter (Versteck 0), Heat in Rotterdam 10, Schmuggel-Level 4, $d = 820$ km.
+Transporter (Versteck 0), Heat in Containerdam 10, Schmuggel-Level 4, $d = 820$ km.
 
 - $n = \lceil 820/100 \rceil =$ **9** Segmente, $\bar\pi = (0{,}45 + 0{,}8)/2 =$ **0,625**
 - $hv = 200 \cdot 8000 \cdot 1{,}5 / 100\,000 =$ **24,0**, $g = 1 + 24/74 =$ **1,324324**
@@ -167,8 +167,8 @@ Polizei attraktiv.
 
 | Posten | Wert |
 |---|---:|
-| Einkauf 200 Kokain Rotterdam | −1 126 303 ct |
-| Verkauf 200 Kokain München | +2 742 772 ct |
+| Einkauf 200 Schneegestöber Containerdam | −1 126 303 ct |
+| Verkauf 200 Schneegestöber Protzingen | +2 742 772 ct |
 | Treibstoff $\lceil 820 \cdot 10/100 \cdot 200 \rceil$ | **−16 400 ct** |
 | Reisezeit $\lceil 820/85 \cdot 6 \rceil$ | **58 Ticks** (9,7 h) |
 | Gewinn ohne Kontrolle | **1 600 069 ct** |
@@ -178,7 +178,7 @@ Polizei attraktiv.
 
 | Ziel | Prüfung |
 |---|---|
-| Startroute mit Bahn und Startkapital rentabel | INV-04 (Leipzig → Berlin, Speed) |
+| Startroute mit Bahn und Startkapital rentabel | INV-04 (Plattenhausen → Pleitenberg, Turboflocken) |
 | Jede Referenzroute deckt Treibstoff | INV-05 |
 | Große Ladungen sind riskanter, aber nicht prohibitiv | $g < 2$ begrenzt den Ladungseffekt |
 | Lange Routen = mehr Segmente = mehr Risiko | $n \propto d$ |
@@ -194,7 +194,7 @@ Erwartungswert – gewollte Risikoabwägung.
 | ← | [cities.md](cities.md) | Distanzen, Treibstoffpreise, $\pi$, Heat |
 | ← | [professions.md](professions.md) | Schmuggel-Boni; → Schmuggel-XP |
 | ← | [real-estate.md](real-estate.md) | Versteckbonus Autowerkstatt |
-| → | [space.md](space.md) | Raumhafen Frankfurt als Übergang |
+| → | [space.md](space.md) | Raumhafen Bankfurt als Übergang |
 
 ## 10. Offene Fragen
 

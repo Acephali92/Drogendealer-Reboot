@@ -2,7 +2,7 @@
 
 ## 1. Zweck & Spielgefühl
 
-Drogengeld ist **Schwarzgeld**: Es kann geraubt werden und reicht nicht für die großen Investitionen
+Geld aus dem Warenhandel ist **Schwarzgeld**: Es kann geraubt werden und reicht nicht für die großen Investitionen
 (Immobilien, Clan, Raumfahrt). Wer aufsteigen will, muss es **waschen** – über eigene Betriebe, deren legaler
 Umsatz das Waschvolumen tarnt. Je mehr man im Verhältnis zum echten Umsatz wäscht, desto auffälliger wird
 es. Das erzeugt die zentrale Abwägung zwischen **Tempo** und **Risiko**.
@@ -131,7 +131,7 @@ Der Spieler stellt pro Betrieb einen Betrag pro Tick ein; die UI zeigt Gebühr u
 
 ## 7. Beispielrechnungen
 
-**EX-ML-01 – Spielhalle in Berlin, Finanzen L5, Heat 20**
+**EX-ML-01 – Spielhalle in Pleitenberg, Finanzen L5, Heat 20**
 
 - Legaler Umsatz $R =$ **6 000 ct/Tick**; Kapazität $x_{max} = 3 \cdot 6000 =$ **18 000 ct/Tick**
 - Gebühr $f = 0{,}10 \cdot (1 - 0{,}10) =$ **0,09**

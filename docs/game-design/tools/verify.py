@@ -518,6 +518,55 @@ def rank_limits(members: int, treasury: int) -> dict:
             "capo_daily_payout": floor_ct(treasury * CLN["capo_daily_payout_limit"])}
 
 
+RANK_ORDER = {rank: i for i, rank in enumerate(CLN["ranks"])}   # 0 = höchster Rang
+
+
+def rank_at_least(rank: str, min_rank: str) -> bool:
+    return RANK_ORDER[rank] <= RANK_ORDER[min_rank]
+
+
+def election_candidates(members: list[dict]) -> list[dict]:
+    """F-CLN-08 (a): Wählbar ab CAPO mit Mindest-Mitgliedschaft; Fallback ab SOLDAT, dann alle.
+
+    Mitglieder mit excluded=True (abgesetzter Pate) sind nur wählbar, wenn sonst niemand übrig ist.
+    """
+    pool = [m for m in members if not m.get("excluded")] or members
+    for cond in (lambda m: rank_at_least(m["rank"], CLN["election_candidate_min_rank"])
+                 and m["tenure"] >= CLN["election_candidate_min_tenure_ticks"],
+                 lambda m: rank_at_least(m["rank"], CLN["election_voter_min_rank"]),
+                 lambda m: True):
+        cands = [m for m in pool if cond(m)]
+        if cands:
+            return cands
+    return pool
+
+
+def election_result(members: list[dict], votes: dict[str, str]) -> str:
+    """F-CLN-08: Ein Mitglied → sofort Pate; sonst einfache Mehrheit gültiger Stimmen,
+    Gleichstand/keine Stimmen → höherer Rang, längere Mitgliedschaft, kleinere Spieler-ID."""
+    if len(members) == 1:
+        return members[0]["id"]
+    cands = election_candidates(members)
+    cand_ids = {m["id"] for m in cands}
+    voters = {m["id"] for m in members if rank_at_least(m["rank"], CLN["election_voter_min_rank"])}
+    tally = {c: 0 for c in cand_ids}
+    for voter, cand in votes.items():
+        if voter in voters and cand in cand_ids:
+            tally[cand] += 1
+    return min(cands, key=lambda m: (-tally[m["id"]], RANK_ORDER[m["rank"]], -m["tenure"], m["id"]))["id"]
+
+
+def no_confidence(members: list[dict], pate_id: str, yes: set[str]) -> dict:
+    """F-CLN-09: Misstrauensvotum angenommen, wenn Ja-Stimmen ≥ ⌈num/den · n⌉,
+    n = Wahlberechtigte ohne den Paten."""
+    eligible = {m["id"] for m in members
+                if m["id"] != pate_id and rank_at_least(m["rank"], CLN["election_voter_min_rank"])}
+    num, den = CLN["no_confidence_quorum_num"], CLN["no_confidence_quorum_den"]
+    needed = (num * len(eligible) + den - 1) // den
+    got = len(yes & eligible)
+    return {"eligible": len(eligible), "needed": needed, "yes": got, "passed": len(eligible) > 0 and got >= needed}
+
+
 # =============================================================================
 # Geldwäsche (money-laundering.md)
 # =============================================================================
@@ -874,6 +923,36 @@ def ex_cln_04():
             "capos": rl["capos"], "payout": rl["capo_daily_payout"]}
 
 
+CLAN_DEMO = [
+    {"id": "A", "rank": "CONSIGLIERE", "tenure": 3_000},
+    {"id": "B", "rank": "CAPO", "tenure": 2_000},
+    {"id": "C", "rank": "CAPO", "tenure": 500},
+    {"id": "D", "rank": "SOLDAT", "tenure": 5_000},
+    {"id": "E", "rank": "SOLDAT", "tenure": 300},
+    {"id": "F", "rank": "MITLAEUFER", "tenure": 50},
+]
+
+
+def ex_cln_05():
+    return {"candidates": "".join(m["id"] for m in election_candidates(CLAN_DEMO)),
+            "majority": election_result(CLAN_DEMO, {"A": "B", "B": "B", "C": "A", "D": "A", "E": "B", "F": "A"}),
+            "tie": election_result(CLAN_DEMO, {"A": "A", "B": "B"}),
+            "no_votes": election_result(CLAN_DEMO, {}),
+            "single": election_result([{"id": "D", "rank": "SOLDAT", "tenure": 5_000}], {})}
+
+
+def ex_cln_06():
+    big = [{"id": "P", "rank": "PATE", "tenure": 9_000}] + [
+        {"id": f"S{i:02d}", "rank": "SOLDAT", "tenure": 2_000} for i in range(14)]
+    small = [{"id": "P", "rank": "PATE", "tenure": 9_000}, {"id": "X", "rank": "CAPO", "tenure": 2_000},
+             {"id": "Y", "rank": "SOLDAT", "tenure": 2_000}, {"id": "Z", "rank": "SOLDAT", "tenure": 2_000}]
+    nine = no_confidence(big, "P", {f"S{i:02d}" for i in range(9)})
+    ten = no_confidence(big, "P", {f"S{i:02d}" for i in range(10)})
+    sm = no_confidence(small, "P", {"X", "Y"})
+    return {"eligible_14": nine["eligible"], "needed_14": nine["needed"], "nine_yes": nine["passed"],
+            "ten_yes": ten["passed"], "needed_3": sm["needed"], "small_passed": sm["passed"]}
+
+
 def ex_ml_01():
     R = business_income("spielhalle", "berlin", 0)
     f = wash_fee("spielhalle", 5)
@@ -963,6 +1042,7 @@ EXAMPLES = {
     "EX-PRF-01": ex_prf_01, "EX-PRF-02": ex_prf_02, "EX-PRF-03": ex_prf_03,
     "EX-CMB-01": ex_cmb_01, "EX-CMB-02": ex_cmb_02, "EX-CMB-03": ex_cmb_03,
     "EX-CLN-01": ex_cln_01, "EX-CLN-02": ex_cln_02, "EX-CLN-03": ex_cln_03, "EX-CLN-04": ex_cln_04,
+    "EX-CLN-05": ex_cln_05, "EX-CLN-06": ex_cln_06,
     "EX-ML-01": ex_ml_01, "EX-ML-02": ex_ml_02, "EX-ML-03": ex_ml_03, "EX-ML-04": ex_ml_04,
     "EX-RE-01": ex_re_01, "EX-RE-02": ex_re_02, "EX-RE-03": ex_re_03, "EX-RE-04": ex_re_04,
     "EX-SPC-01": ex_spc_01, "EX-SPC-02": ex_spc_02, "EX-SPC-03": ex_spc_03, "EX-SPC-04": ex_spc_04,
@@ -1002,6 +1082,8 @@ EXPECTED: dict[str, dict] = {
     'EX-CLN-02': {'berlin_tick': 1216, 'berlin_day': 175104, 'muenchen_tick': 1239, 'muenchen_day': 178416},
     'EX-CLN-03': {'equal': 20, 'underdog': 23, 'bully': 14, 'reparation': 3000000},
     'EX-CLN-04': {'tax': 80000, 'tax_capped': 100000, 'capos': 3, 'payout': 5000000},
+    'EX-CLN-05': {'candidates': 'AB', 'majority': 'B', 'tie': 'A', 'no_votes': 'A', 'single': 'D'},
+    'EX-CLN-06': {'eligible_14': 14, 'needed_14': 10, 'nine_yes': False, 'ten_yes': True, 'needed_3': 2, 'small_passed': True},
     'EX-ML-01': {'R': 6000, 'x_max': 18000, 'fee': 0.09, 'credit': 5460, 'p_tick': 0.00108, 'p_day': 0.1441},
     'EX-ML-02': {'p_day_0_5': 0.0381, 'p_day_2_0': 0.4639},
     'EX-ML-03': {'accepted': 1000000, 'credit': 700000},
@@ -1168,6 +1250,24 @@ def inv_loot_cap():
     return True, f"Tagesverlust je Opfer ≤ {CMB['loot_daily_cap_rate']:.0%} des Bargelds"
 
 
+def inv_election_unique():
+    ranks = CLN["ranks"]
+    for trial in range(500):
+        n = 1 + int(rng_uniform("inv13", trial, "size") * member_limit(CLN["max_level"]))
+        members = [{"id": f"M{i:02d}", "rank": ranks[1 + int(rng_uniform("inv13", trial, f"r{i}") * (len(ranks) - 1))],
+                    "tenure": int(rng_uniform("inv13", trial, f"t{i}") * 5_000), "excluded": i == 0}
+                   for i in range(n)]
+        votes = {m["id"]: members[int(rng_uniform("inv13", trial, f"v{i}") * n)]["id"]
+                 for i, m in enumerate(members) if rng_uniform("inv13", trial, f"a{i}") < 0.7}
+        w = election_result(members, votes)
+        ids = [m["id"] for m in members]
+        if ids.count(w) != 1:
+            return False, f"Versuch {trial}: kein eindeutiger Sieger"
+        if n > 1 and w == "M00":
+            return False, f"Versuch {trial}: abgesetzter Pate gewählt"
+    return True, "500 Zufallswahlen liefern genau einen Paten"
+
+
 def inv_strawman_expensive():
     fees = [b["wash_fee"] for b in P["businesses"].values() if "wash_fee" in b]
     return LAU["strawman_fee"] > max(fees), "Strohmann teurer als jeder Betrieb"
@@ -1192,6 +1292,7 @@ INVARIANTS = {
     "INV-10 Freischaltungen": inv_unlocks_reachable,
     "INV-11 Weltraumroute": inv_space_route,
     "INV-12 Beute-Tageslimit": inv_loot_cap,
+    "INV-13 Eindeutige Pate-Wahl": inv_election_unique,
 }
 
 

@@ -3,7 +3,7 @@
 ## 1. Zweck & Spielgefühl
 
 Der Weltraum ist das **Endgame**: Wer genug Kapital und Schmuggelerfahrung hat, startet vom Raumhafen
-Frankfurt zu Orbitalstation, Mond, Mars und Asteroidengürtel. Dort gibt es **Spezialwaren** mit hohen
+Bankfurt zu Raststätte Letzte Ausfahrt, Mond, Mars und Asteroidengürtel. Dort gibt es **Spezialwaren** mit hohen
 Margen, lange Reisen, teuren Treibstoff und **Piraten** statt Polizei. Der Weltraum nutzt dieselben
 Formeln wie die Erde (Wirtschaft, Handel, Kampf) – nur mit eigenen Parametern.
 
@@ -22,14 +22,14 @@ Formeln wie die Erde (Wirtschaft, Handel, Kampf) – nur mit eigenen Parametern.
 
 | Ort | pop (Tsd.) | $W$ | $\pi$ | Deuterium (ct/Einheit) | Gefahr | Angebot $m_s$ | Nachfrage $m_d$ |
 |---|---:|---:|---:|---:|---:|---|---|
-| Orbitalstation Hafen Eins | 200 | 1,5 | 0,10 | 1 500 | 0,1 | Nullgrav 2,0 · Kokain 0,5 | Sternenstaub 3 · Mondkristall 2 · Marsmoos 2 · Kokain 4 |
-| Selene-Basis (Mond) | 300 | 1,2 | 0,05 | 1 800 | 0,3 | Mondkristall 3,0 · Gras 0,5 | Sternenstaub 2 · Gras 4 |
-| Ares-Kolonie (Mars) | 1 000 | 1,2 | 0,05 | 2 000 | 0,5 | Marsmoos 3,0 · Kokain 0,5 | Sternenstaub 3 · Nullgrav 2 · Kokain 4 |
-| Ceres-Depot | 150 | 0,8 | 0,00 | 2 500 | 1,0 | Sternenstaub 3,0 | Marsmoos 3 · Nullgrav 2 |
+| Raststätte Letzte Ausfahrt | 200 | 1,5 | 0,10 | 1 500 | 0,1 | Nullgrav 2,0 · Schneegestöber 0,5 | Sternenstaub 3 · Mondkristall 2 · Marsmoos 2 · Schneegestöber 4 |
+| Mondbasis Käseloch (Mond) | 300 | 1,2 | 0,05 | 1 800 | 0,3 | Mondkristall 3,0 · Grünzeug 0,5 | Sternenstaub 2 · Grünzeug 4 |
+| Mars-Reihenhaussiedlung (Mars) | 1 000 | 1,2 | 0,05 | 2 000 | 0,5 | Marsmoos 3,0 · Schneegestöber 0,5 | Sternenstaub 3 · Nullgrav 2 · Schneegestöber 4 |
+| Ceres-Schrottplatz | 150 | 0,8 | 0,00 | 2 500 | 1,0 | Sternenstaub 3,0 | Marsmoos 3 · Nullgrav 2 |
 
 Weltraumwaren (`realm = "space"`) sind an allen Weltraumorten handelbar (fehlende Multiplikatoren = 1,0).
 Erdwaren nur dort, wo beide Multiplikatoren gesetzt sind. Auf der Erde sind Weltraumwaren ausschließlich in
-Frankfurt handelbar (`city.frankfurt.supply.sternenstaub` = 0,2, `city.frankfurt.demand.sternenstaub` = 1,0).
+Bankfurt handelbar (`city.frankfurt.supply.sternenstaub` = 0,2, `city.frankfurt.demand.sternenstaub` = 1,0).
 
 Distanzen (`space_distances`, in Tkm = 1 000 km): Orbit–Mond 384, Orbit–Mars 78 000, Mond–Mars 78 000,
 Mars–Ceres 190 000, Orbit–Ceres 263 000, Mond–Ceres 263 000. Erde ↔ Orbit ist ein fester Start bzw. eine Landung.
@@ -46,7 +46,7 @@ Mars–Ceres 190 000, Orbit–Ceres 263 000, Mond–Ceres 263 000. Erde ↔ Orbi
 
 | Symbol | Schlüssel | Default | Bedeutung |
 |---|---|---|---|
-| $T_{launch}$ | `space.launch_ticks` | 3 | Start/Landung Frankfurt ↔ Orbit |
+| $T_{launch}$ | `space.launch_ticks` | 3 | Start/Landung Bankfurt ↔ Orbit |
 | – | `space.launch_fee` | 5 000 € | Start- bzw. Landegebühr |
 | $q_0$ | `space.piracy_base` | 0,03 | Piratenrisiko je Segment |
 | – | `space.piracy_segment_ticks` | 24 | ein Segment je 4 h Flugzeit |
@@ -67,17 +67,17 @@ Danach kann ein Raumschiff (Weißgeld) gekauft werden.
 **F-SPC-02 – Flugzeit**
 
 ```math
-T = \begin{cases} T_{launch} & \text{Frankfurt} \leftrightarrow \text{Orbit} \\ \lceil d / v \cdot 6 \rceil & \text{sonst, nur wenn } d \le \text{Reichweite} \end{cases}
+T = \begin{cases} T_{launch} & \text{Bankfurt} \leftrightarrow \text{Orbit} \\ \lceil d / v \cdot 6 \rceil & \text{sonst, nur wenn } d \le \text{Reichweite} \end{cases}
 ```
 
 **F-SPC-03 – Flugkosten**
 
 ```math
-C = \begin{cases} \text{launch\_fee} & \text{Frankfurt} \leftrightarrow \text{Orbit} \\ \lceil d/100 \cdot \text{Verbrauch} \cdot \text{Deuteriumpreis}_{Start} \rceil & \text{sonst} \end{cases}
+C = \begin{cases} \text{launch\_fee} & \text{Bankfurt} \leftrightarrow \text{Orbit} \\ \lceil d/100 \cdot \text{Verbrauch} \cdot \text{Deuteriumpreis}_{Start} \rceil & \text{sonst} \end{cases}
 ```
 
-Bei der **Landung in Frankfurt** findet genau eine Zollkontrolle nach F-TRV-04 statt
-($n = 1$, $\bar\pi = \pi_{Frankfurt}$, Versteck 0, Heat in Frankfurt).
+Bei der **Landung in Bankfurt** findet genau eine Zollkontrolle nach F-TRV-04 statt
+($n = 1$, $\bar\pi = \pi_{Bankfurt}$, Versteck 0, Heat in Bankfurt).
 
 **F-SPC-04 – Piraten**
 
@@ -124,11 +124,11 @@ land(player at orbit -> frankfurt):
 
 | Fall | NW | Schmuggel | Ort | Ergebnis |
 |---|---:|---:|---|---|
-| a | 6 Mio. € | 12 | Frankfurt | **frei** |
-| b | 6 Mio. € | 12 | Berlin | **gesperrt** (kein Raumhafen) |
-| c | 4 Mio. € | 12 | Frankfurt | **gesperrt** (Vermögen) |
+| a | 6 Mio. € | 12 | Bankfurt | **frei** |
+| b | 6 Mio. € | 12 | Pleitenberg | **gesperrt** (kein Raumhafen) |
+| c | 4 Mio. € | 12 | Bankfurt | **gesperrt** (Vermögen) |
 
-**EX-SPC-02 – Frankfurt → Orbit → Mars mit Frachter**
+**EX-SPC-02 – Bankfurt → Orbit → Mars mit Frachter**
 
 - Start: **3 Ticks**, Gebühr **500 000 ct**
 - Orbit → Mars: $\lceil 78\,000 / 10\,000 \cdot 6 \rceil =$ **47 Ticks** (≈ 7,8 h),
@@ -150,18 +150,18 @@ Ein Kreuzer (Stärke 200) senkt das Verlustrisiko deutlich, transportiert aber w
 
 | Ort | $P^{*}$ |
 |---|---:|
-| Ceres-Depot | **26 998,30 ct** |
-| Orbitalstation | **97 804,31 ct** |
-| Ares-Kolonie | **91 471,33 ct** |
-| Frankfurt | **126 264,83 ct** |
+| Ceres-Schrottplatz | **26 998,30 ct** |
+| Raststätte Letzte Ausfahrt | **97 804,31 ct** |
+| Mars-Reihenhaussiedlung | **91 471,33 ct** |
+| Bankfurt | **126 264,83 ct** |
 
-**EX-SPC-05 – Route Ceres → Orbit → Frankfurt mit 230 Sternenstaub (Frachter)**
+**EX-SPC-05 – Route Ceres → Orbit → Bankfurt mit 230 Sternenstaub (Frachter)**
 
 | Posten | Wert |
 |---|---:|
-| Marktbestand Ceres / Frankfurt ($S_{target}$) | **518,4** / **332,64** |
+| Marktbestand Ceres / Bankfurt ($S_{target}$) | **518,4** / **332,64** |
 | Einkauf Ceres (F-TRD-01) | **−7 469 143 ct** |
-| Verkauf Frankfurt (F-TRD-02) | **+23 984 549 ct** |
+| Verkauf Bankfurt (F-TRD-02) | **+23 984 549 ct** |
 | Deuterium Ceres → Orbit | **−1 315 000 ct** |
 | Landegebühr | **−500 000 ct** |
 | Flugzeit gesamt | **161 Ticks** (≈ 27 h) |
@@ -172,14 +172,14 @@ Rückreise. INV-11 prüft, dass diese Referenzroute profitabel bleibt.
 
 ### Weitere Gleichgewichtspreise im All (€)
 
-| Ware | Frankfurt | Orbitalstation | Selene-Basis | Ares-Kolonie | Ceres-Depot |
+| Ware | Bankfurt | Raststätte Letzte Ausfahrt | Mondbasis Käseloch | Mars-Reihenhaussiedlung | Ceres-Schrottplatz |
 |---|---:|---:|---:|---:|---:|
 | Sternenstaub | 1262,65 | 978,04 | 746,86 | 914,71 | 269,98 |
 | Mondkristall | 757,59 | 479,14 | 182,94 | 316,87 | 280,57 |
 | Marsmoos | 505,06 | 319,43 | 211,24 | 121,96 | 323,98 |
 | Nullgrav-Kapseln | 2020,24 | 638,86 | 844,98 | 1194,98 | 1058,11 |
-| Kokain | 110,65 | 255,54 | – | 239,00 | – |
-| Gras | 11,29 | – | 29,87 | – | – |
+| Schneegestöber | 110,65 | 255,54 | – | 239,00 | – |
+| Grünzeug | 11,29 | – | 29,87 | – | – |
 
 ## 8. Balancing-Ziele
 
@@ -188,7 +188,7 @@ Rückreise. INV-11 prüft, dass diese Referenzroute profitabel bleibt.
 | Weltraum ist Endgame, kein Abkürzungsweg | 5 Mio. € NW, Schmuggel L10, Schiffe nur mit Weißgeld |
 | Gewinn pro Reise ≫ Erde, Gewinn pro Stunde moderat höher | lange Flüge, Treibstoff, Gebühren |
 | Risiko statt Polizei | Piraten, Gefahr steigt mit Entfernung |
-| Erdwaren bleiben relevant | Kokain/Gras im All 2–5× teurer als auf der Erde |
+| Erdwaren bleiben relevant | Schneegestöber/Grünzeug im All 2–5× teurer als auf der Erde |
 | Märkte im All sind flach | kleine Bevölkerung → großer Preis-Impact |
 
 ## 9. Schnittstellen
@@ -205,4 +205,4 @@ Rückreise. INV-11 prüft, dass diese Referenzroute profitabel bleibt.
 
 - Betriebe im All (Bergbau auf Ceres, Gewächshäuser auf dem Mars)?
 - Clan-Stationen als Endgame-Ziel für Clans?
-- Soll der Zoll in Frankfurt mit Schmuggel-Level/Versteck reduzierbar sein?
+- Soll der Zoll in Bankfurt mit Schmuggel-Level/Versteck reduzierbar sein?

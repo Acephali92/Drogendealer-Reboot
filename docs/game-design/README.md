@@ -36,8 +36,8 @@ vollständig, wenn Dokument, `parameters.toml`, `verify.py` und die Beispielwert
 
 ## 1. Spielmodell
 
-- **Multiplayer-Browserspiel.** Alle Spieler eines Servers teilen sich die Märkte: Kauft ein Spieler Kokain
-  in Rotterdam, steigt der Preis für alle anderen.
+- **Multiplayer-Browserspiel.** Alle Spieler eines Servers teilen sich die Märkte: Kauft ein Spieler Schneegestöber
+  in Containerdam, steigt der Preis für alle anderen.
 - **Echtzeit-Ticks.** 1 Tick = `meta.tick_minutes` = 10 Minuten, 1 Tag = `meta.ticks_per_day` = 144 Ticks.
   Alle Raten in den Dokumenten gelten **pro Tick**, sofern nicht anders angegeben.
 - **Aktionen sind sofort, Zustände entwickeln sich pro Tick.** Ein Kauf verändert den Marktbestand sofort;
@@ -65,6 +65,17 @@ Daraus folgen **Pflicht-Erweiterungen**, die noch nicht spezifiziert sind (offen
 
 Bereits umgesetzt gegen Ausnutzung bei wenigen Spielern: Beute-Tageslimit und Hehlerabschlag (F-CMB-05),
 Vermögensband mit 7-Tage-Höchstwert (F-CMB-06).
+
+### 1.2 Ton & Benennung (ADR-013)
+
+- Satirisch-überzeichnet mit schwarzem Humor, Zielgruppe ab 18.
+- Städte, Figuren, Waren und Ereignisse tragen **fiktive Anzeigenamen** (`name` in `parameters.toml`),
+  z. B. Pleitenberg, Protzingen, Schneegestöber, „Container vom Laster gefallen“.
+- Keine realen Personen oder Marken, keine realistischen Details zu Herstellung oder Konsum, keine Verherrlichung.
+  Produktion ist nur als Ausstoß und Materialkostenanteil modelliert (F-RE-06).
+- **Schlüssel bleiben technisch stabil** (z. B. `city.berlin`, `goods.kokain`): Backend, Frontend und Simulation
+  greifen nur über Schlüssel zu, sichtbar ist ausschließlich `name`. Distanzen und Bevölkerungszahlen sind
+  Spielwerte und keine Aussage über reale Orte.
 
 ## 2. Zahlen- und Rundungskonventionen
 
@@ -158,7 +169,7 @@ flowchart LR
 
 | | Schwarzgeld | Weißgeld |
 |---|---|---|
-| Herkunft | Drogenverkauf, Beute, Schutzgeld | legale Betriebserträge, Geldwäsche |
+| Herkunft | Warenverkauf, Beute, Schutzgeld | legale Betriebserträge, Geldwäsche |
 | Aufbewahrung | Bargeld beim Spieler | Bankkonto |
 | Plünderbar | ja (F-CMB-05) | nein |
 | Verwendbar für | Waren, Waffen, Crew, Fahrzeuge, Bestechung, Treibstoff | alles; **exklusiv**: Immobilien, Clan-Gründung/-Ausbau, Raumschiffe |
@@ -184,9 +195,29 @@ NW = \text{Schwarzgeld} + \text{Weißgeld} + \text{Sachwerte} + \sum_i q_i \cdot
 
 **EX-GLB-02 – Nettovermögen**
 
-Schwarzgeld 5 000 €, Weißgeld 20 000 €, Kleinwagen + Transporter (33 000 €), 40 Kokain, Clankasse 300 000 €
+Schwarzgeld 5 000 €, Weißgeld 20 000 €, Kleinwagen + Transporter (33 000 €), 40 Schneegestöber, Clankasse 300 000 €
 bei 12 Mitgliedern:
 $500\,000 + 2\,000\,000 + 3\,300\,000 + 40 \cdot 8\,000 + 30\,000\,000/12 =$ **8 620 000 ct** (86 200 €).
+
+### 7.1 Kontolöschung (ADR-017)
+
+Gelöschte Konten bleiben in Journalen als pseudonymisierte Spieler erhalten (Kampf-, Handels- und Waschprotokolle
+bleiben auditierbar). Ihr Vermögen wird nach `account.deletion_policy` = `forfeit` behandelt:
+
+| Bestandteil | Behandlung |
+|---|---|
+| Schwarzgeld, Weißgeld | verfällt ersatzlos (Geldsenke) |
+| Inventar, Lagerhaus-Bestände, laufende Produktion | verfällt; Waren gehen **nicht** zurück in die Märkte (keine Preisbewegung) |
+| Fahrzeuge, Raumschiffe, Waffen, Rüstung, Crew | verfallen, kein Wiederverkaufserlös |
+| Betriebe | werden geschlossen und entfernt, kein Erlös |
+| Schulden (negatives Weißgeld) | verfallen |
+| Anteil an der Clankasse | bleibt im Clan (gehört dem Clan, nicht dem Spieler) |
+| Rolle als Pate | löst eine Wahl aus (F-CLN-08); war es das letzte Mitglied, wird der Clan aufgelöst und die Kasse verfällt |
+| Kontrollierte Viertel des Clans | bleiben beim Clan |
+
+Da kein Geld erzeugt, sondern nur vernichtet wird, ist die Regel inflationsneutral bzw. leicht deflationär
+(ADR-016: keine Resets). Ein Transfer an andere Spieler findet nicht statt, damit Kontolöschungen nicht als
+Vermögensübertragung missbraucht werden können.
 
 ## 8. Glossar
 

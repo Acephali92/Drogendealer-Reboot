@@ -141,7 +141,7 @@ Level werden bei jeder Nutzung aus XP berechnet (keine Speicherung, keine Inkons
 | **10 000** | 10 |
 | **40 000** | 20 |
 
-**EX-PRF-02 – XP aus der Kokain-Route (EX-TRD-01, EX-TRV-02)**
+**EX-PRF-02 – XP aus der Schneegestöber-Route (EX-TRD-01, EX-TRV-02)**
 
 - Handel: Einkaufsvolumen 11 263,03 € → $\lfloor 112{,}63 \rfloor =$ **112** XP (der Verkauf bringt weitere XP)
 - Schmuggel: $\lfloor 820 \cdot 0{,}1 + 24 \rfloor =$ **106** XP

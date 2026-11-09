@@ -117,11 +117,11 @@ damit zwei gleichzeitige Käufe nicht denselben Bestand sehen.
   zwischen Anzeige und Bestätigung, wird mit einer Slippage-Toleranz des Spielers (Standard `trade.slippage_tolerance` = 2 %) abgebrochen.
 - Kauf mit Weißgeld ist erlaubt, Verkauf erzeugt immer Schwarzgeld.
 - $q_{max}$ verhindert, dass ein Markt auf $S_{min}$ leergekauft wird.
-- Weltraumwaren in Erdstädten: nur in Frankfurt handelbar (siehe [space.md](space.md)).
+- Weltraumwaren in Erdstädten: nur in Bankfurt handelbar (siehe [space.md](space.md)).
 
 ## 7. Beispielrechnungen
 
-**EX-TRD-01 – Kauf von 200 Kokain in Rotterdam (Level 0)**
+**EX-TRD-01 – Kauf von 200 Schneegestöber in Containerdam (Level 0)**
 
 - Aus EX-ECO-02: $S = 936{,}0$, $K = 8000 \cdot 1 \cdot 374{,}4^{0{,}5} = 154\,795{,}35$
 - Preisgrenzen 2 000 / 32 000 ct werden nicht berührt.
@@ -130,7 +130,7 @@ damit zwei gleichzeitige Käufe nicht denselben Bestand sehen.
   (Marktpreis vorher 5 059,64 ct)
 - Neuer Bestand **736,0**
 
-**EX-TRD-02 – Verkauf von 200 Kokain in München (Level 0)**
+**EX-TRD-02 – Verkauf von 200 Schneegestöber in Protzingen (Level 0)**
 
 - $S_{ref} = 1500 \cdot 0{,}004 \cdot 1{,}6 \cdot 1{,}4 \cdot 144 = 1\,935{,}36$, $S = S_{target} = 691{,}2$
 - $K = 8000 \cdot 1{,}6^{0{,}3} \cdot 1935{,}36^{0{,}5} = 405\,234{,}92$; Preis vorher 15 413,63 ct
@@ -140,22 +140,22 @@ damit zwei gleichzeitige Käufe nicht denselben Bestand sehen.
 
 **EX-TRD-03 – Kauf und Sofortverkauf (kein Arbitrage-Gewinn)**
 
-200 Kokain in Rotterdam kaufen (**1 126 303 ct**) und sofort zurückverkaufen:
+200 Schneegestöber in Containerdam kaufen (**1 126 303 ct**) und sofort zurückverkaufen:
 Integral identisch, $R = \lfloor 0{,}95 \cdot 1\,072\,668{,}97 \rfloor =$ **1 019 035 ct**.
 Verlust **107 268 ct** = exakt der Spread. INV-03 prüft dies für jeden Markt.
 
-**EX-TRD-04 – Verderb von Pilzen**
+**EX-TRD-04 – Verderb von Zauberschwammerln**
 
-100 Pilze, $r = 0{,}002$: nach 144 Ticks $\lfloor 100 \cdot 0{,}998^{144} \rfloor =$ **74**, nach einer Woche
+100 Zauberschwammerl, $r = 0{,}002$: nach 144 Ticks $\lfloor 100 \cdot 0{,}998^{144} \rfloor =$ **74**, nach einer Woche
 (1 008 Ticks) **13**.
 
 **EX-TRD-05 – Heat durch den Kauf aus EX-TRD-01**
 
-$H = 0 + 0{,}5 \cdot 1\,126\,303 / 100\,000 \cdot 1{,}5 =$ **8,4473** in Rotterdam.
+$H = 0 + 0{,}5 \cdot 1\,126\,303 / 100\,000 \cdot 1{,}5 =$ **8,4473** in Containerdam.
 
 **EX-TRD-06 – Kapazität mit Kleinwagen**
 
-$60 + 300 =$ **360** Volumeneinheiten → max. **180** Gras (Volumen 2) oder **360** Kokain.
+$60 + 300 =$ **360** Volumeneinheiten → max. **180** Grünzeug (Volumen 2) oder **360** Schneegestöber.
 
 ## 8. Balancing-Ziele & Exploit-Analyse
 
