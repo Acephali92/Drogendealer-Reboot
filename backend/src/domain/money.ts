@@ -69,3 +69,32 @@ export function parseMoney(input: string): bigint {
 
 export const minMoney = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 export const maxMoney = (a: bigint, b: bigint): bigint => (a > b ? a : b);
+
+/*
+ * Float formulas (game design README §2): intermediate results are float64, rounding happens
+ * only at the end of a formula, with a tolerance of 1e-9 against float noise – exactly like
+ * ceil_ct / floor_ct / round_half_up in docs/game-design/tools/verify.py.
+ */
+
+/** Tolerance for float rounding (verify.py EPS). */
+export const ROUNDING_EPS = 1e-9;
+
+function toSafeBigInt(value: number, fn: string, input: number): bigint {
+  if (!Number.isSafeInteger(value)) throw new RangeError(`${fn}: ${input} is not a finite amount in range`);
+  return BigInt(value);
+}
+
+/** Player pays: round up to whole cents (costs, fees, fines, fuel). */
+export function ceilCt(x: number): bigint {
+  return toSafeBigInt(Math.ceil(x - ROUNDING_EPS), 'ceilCt', x);
+}
+
+/** Player receives: round down to whole cents (sale proceeds, income, loot). */
+export function floorCt(x: number): bigint {
+  return toSafeBigInt(Math.floor(x + ROUNDING_EPS), 'floorCt', x);
+}
+
+/** Commercial rounding (display values, crew losses): floor(x + 0.5). */
+export function roundHalfUp(x: number): bigint {
+  return toSafeBigInt(Math.floor(x + 0.5), 'roundHalfUp', x);
+}
