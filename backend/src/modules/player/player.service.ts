@@ -2,23 +2,27 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import { notFound } from '../../lib/errors.js';
 import type { Pagination } from '../../lib/pagination.js';
 import { serialize } from '../../lib/serialize.js';
+import type { GameParameters } from '../../domain/index.js';
 
 /**
- * Start values for newly registered players. Money in cents (ADR-019).
- * PLACEHOLDER until T-101: the start capital comes from docs/game-design/parameters.toml
- * (`start_cash_black`, `start_cash_white`) and must not be duplicated here. The data model
- * does not yet distinguish black and white money (see BACKEND_ARCHITECTURE.md, B-9).
+ * Start values for newly registered players, taken from parameters.toml [player] (T-101).
+ *
+ * Money stays 0 for now: the game design starts players with `start_cash_black` (black money)
+ * and `start_cash_white`, but the data model only knows `cash`/`bank` (BACKEND_ARCHITECTURE.md
+ * B-9, open with Agent 5). Writing black money into `cash` would pre-empt that decision.
  */
-export const PLAYER_START_VALUES = {
-  cash: 0n,
-  bank: 0n,
-  health: 100,
-  maxHealth: 100,
-  level: 1,
-  experience: 0,
-  reputation: 0,
-  heat: 0,
-} as const satisfies Partial<Prisma.PlayerUncheckedCreateInput>;
+export function playerStartValues(params: GameParameters) {
+  return {
+    cash: 0n,
+    bank: 0n,
+    health: params.player.hp_max,
+    maxHealth: params.player.hp_max,
+    level: 1,
+    experience: 0,
+    reputation: 0,
+    heat: 0,
+  } as const satisfies Partial<Prisma.PlayerUncheckedCreateInput>;
+}
 
 /** A player counts as online if they made an authenticated request within this window. */
 export const ONLINE_WINDOW_MS = 5 * 60_000;
@@ -51,9 +55,14 @@ export const playerProfileSelect = {
   },
 } as const satisfies Prisma.PlayerSelect;
 
-export function createPlayerForUser(tx: Prisma.TransactionClient, userId: string, name: string) {
+export function createPlayerForUser(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  name: string,
+  params: GameParameters,
+) {
   return tx.player.create({
-    data: { userId, name, ...PLAYER_START_VALUES },
+    data: { userId, name, ...playerStartValues(params) },
     select: { id: true },
   });
 }

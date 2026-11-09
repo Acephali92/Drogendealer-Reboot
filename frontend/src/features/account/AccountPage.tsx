@@ -19,6 +19,7 @@ import { formatMoney, formatNumber } from '@/lib/money';
 import { formatDateTime } from '@/lib/time';
 import { mockMode } from '@/lib/env';
 import { heatLevel } from '@/lib/heat';
+import { PrivacyPanel } from './PrivacyPanel';
 
 export function AccountPage() {
   const { t } = useTranslation();
@@ -30,8 +31,10 @@ export function AccountPage() {
   if (!player) return null;
 
   const resetWorld = async () => {
-    const { resetState } = await import('@/mocks/store');
-    resetState();
+    if (mockMode !== 'off') {
+      const { resetState } = await import('@/mocks/store');
+      resetState();
+    }
     await logout();
   };
 
@@ -48,18 +51,20 @@ export function AccountPage() {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Badge tone="brass">Level {player.level}</Badge>
-            <Badge tone="info">{t(`status.${player.status}`)}</Badge>
+            <Badge tone="info">{t(`status.${player.status}`, { defaultValue: '' })}</Badge>
             {city && <Badge>{city.name}</Badge>}
           </div>
-          <div className="mt-4 max-w-md">
-            <ProgressBar value={player.experience / Math.max(1, player.experienceForNextLevel)} />
-            <p className="mt-1 text-xs text-ink-muted">
-              {t('account.nextLevel', {
-                xp: formatNumber(Math.max(0, player.experienceForNextLevel - player.experience)),
-                level: player.level + 1,
-              })}
-            </p>
-          </div>
+          {player.experienceForNextLevel !== null && (
+            <div className="mt-4 max-w-md">
+              <ProgressBar value={player.experience / Math.max(1, player.experienceForNextLevel)} />
+              <p className="mt-1 text-xs text-ink-muted">
+                {t('account.nextLevel', {
+                  xp: formatNumber(Math.max(0, player.experienceForNextLevel - player.experience)),
+                  level: player.level + 1,
+                })}
+              </p>
+            </div>
+          )}
         </div>
         <Button variant="outline" onClick={logout}>
           <LogOut className="h-4 w-4" />
@@ -68,15 +73,29 @@ export function AccountPage() {
       </section>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label={t('stats.reputation')} value={formatNumber(player.reputation)} icon={<Trophy className="h-4 w-4" />} tone="brass" />
-        <StatTile label={t('stats.xp')} value={formatNumber(player.experience)} icon={<Star className="h-4 w-4" />} />
+        <StatTile
+          label={t('stats.reputation')}
+          value={formatNumber(player.reputation)}
+          icon={<Trophy className="h-4 w-4" />}
+          tone="brass"
+        />
+        <StatTile
+          label={t('stats.xp')}
+          value={formatNumber(player.experience)}
+          icon={<Star className="h-4 w-4" />}
+        />
         <StatTile
           label={t('stats.health')}
           value={`${player.health}/${player.maxHealth}`}
           icon={<HeartPulse className="h-4 w-4" />}
           tone={player.health < player.maxHealth / 3 ? 'danger' : 'default'}
         />
-        <StatTile label={t('stats.heat')} value={player.heat} hint={t(`heat.${heatLevel(player.heat)}`)} icon={<Flame className="h-4 w-4" />} />
+        <StatTile
+          label={t('stats.heat')}
+          value={player.heat}
+          hint={t(`heat.${heatLevel(player.heat)}`)}
+          icon={<Flame className="h-4 w-4" />}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -89,10 +108,14 @@ export function AccountPage() {
             <ul className="max-h-[480px] divide-y divide-line/5 overflow-y-auto">
               {tx.data.map((x) => (
                 <li key={x.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                  <Badge>{t(`account.reasons.${x.reason}`)}</Badge>
+                  <Badge>
+                    {t(`account.reasons.${x.reason}`, { defaultValue: t('account.reasons.OTHER') })}
+                  </Badge>
                   <span className="flex-1 text-xs text-ink-faint">{formatDateTime(x.createdAt)}</span>
                   <Money value={x.amount} signed colored className="font-semibold" />
-                  <span className="num hidden w-28 text-right text-xs text-ink-muted sm:inline">{formatMoney(x.balanceAfter)}</span>
+                  <span className="num hidden w-28 text-right text-xs text-ink-muted sm:inline">
+                    {formatMoney(x.balanceAfter)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -121,6 +144,9 @@ export function AccountPage() {
             </div>
           )}
         </Panel>
+        <div className="lg:col-start-3">
+          <PrivacyPanel />
+        </div>
       </div>
 
       <Modal

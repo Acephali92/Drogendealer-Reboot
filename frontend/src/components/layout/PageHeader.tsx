@@ -1,6 +1,16 @@
 import type { ReactNode } from 'react';
 
-export function PageHeader({ title, subtitle, actions, eyebrow }: { title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; eyebrow?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+  eyebrow,
+}: {
+  title: ReactNode;
+  subtitle?: ReactNode;
+  actions?: ReactNode;
+  eyebrow?: ReactNode;
+}) {
   return (
     <div className="mb-6 flex flex-col gap-4 animate-fade-up sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">

@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient, type User } from '@prisma/client';
 import { conflict, unauthorized } from '../../lib/errors.js';
 import { getDummyHash, hashPassword, verifyPassword } from '../../lib/password.js';
 import { generateRefreshToken, hashRefreshToken } from '../../lib/tokens.js';
+import type { GameParameters } from '../../domain/index.js';
 import type { AccessTokenPayload } from '../../plugins/auth.js';
 import { createPlayerForUser } from '../player/player.service.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
@@ -15,6 +16,7 @@ export interface AuthServiceDeps {
   prisma: PrismaClient;
   signAccessToken: (payload: AccessTokenPayload) => string;
   refreshTokenTtlDays: number;
+  gameParams: GameParameters;
 }
 
 export interface PublicUser {
@@ -37,7 +39,12 @@ const invalidCredentials = () => unauthorized('INVALID_CREDENTIALS', 'Invalid lo
 const invalidRefreshToken = () =>
   unauthorized('INVALID_REFRESH_TOKEN', 'Refresh token is invalid or expired');
 
-export function createAuthService({ prisma, signAccessToken, refreshTokenTtlDays }: AuthServiceDeps) {
+export function createAuthService({
+  prisma,
+  signAccessToken,
+  refreshTokenTtlDays,
+  gameParams,
+}: AuthServiceDeps) {
   const refreshExpiry = () => new Date(Date.now() + refreshTokenTtlDays * 24 * 60 * 60 * 1000);
 
   async function issueTokens(
@@ -112,7 +119,7 @@ export function createAuthService({ prisma, signAccessToken, refreshTokenTtlDays
               ageConfirmedAt: new Date(),
             },
           });
-          const player = await createPlayerForUser(tx, user.id, input.username);
+          const player = await createPlayerForUser(tx, user.id, input.username, gameParams);
           return issueTokens(tx, { ...user, player }, meta);
         });
         return strip(result);

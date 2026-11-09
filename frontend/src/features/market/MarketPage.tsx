@@ -1,150 +1,176 @@
-import { useMemo, useState } from 'react';
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight, MapPin, TrendingDown, TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useOverview } from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Tabs } from '@/components/ui/Tabs';
 import { Money } from '@/components/ui/Money';
-import { CommodityIcon } from '@/components/ui/CommodityIcon';
-import { ErrorState, Skeleton } from '@/components/ui/Feedback';
-import { percentDelta, toCents } from '@/lib/money';
+import { CommodityImage } from '@/components/ui/GameImages';
+import { EmptyState, ErrorState, Skeleton } from '@/components/ui/Feedback';
+import { percentDelta } from '@/lib/money';
+import { formatRelative } from '@/lib/time';
 import { cn } from '@/lib/cn';
-import { TrendIcon } from '@/features/trade/TradePage';
 
+/** Marktübersicht laut Vertrag: je Ware die günstigste Einkaufs- und die beste Verkaufsstadt. */
 export function MarketPage() {
   const { t } = useTranslation();
   const { city } = useGame();
   const ov = useOverview();
-  const [mode, setMode] = useState<'buyPrice' | 'sellPrice'>('buyPrice');
 
-  const stats = useMemo(() => {
-    const d = ov.data;
-    if (!d) return [];
-    return d.commodities.map((c) => {
-      let minBuy: { city: string; v: bigint } | null = null;
-      let maxSell: { city: string; v: bigint } | null = null;
-      for (const ci of d.cities) {
-        const p = d.prices[ci.id]?.[c.id];
-        if (!p) continue;
-        const b = toCents(p.buyPrice);
-        const s = toCents(p.sellPrice);
-        if (!minBuy || b < minBuy.v) minBuy = { city: ci.id, v: b };
-        if (!maxSell || s > maxSell.v) maxSell = { city: ci.id, v: s };
-      }
-      const pct = minBuy && maxSell ? percentDelta(maxSell.v, minBuy.v) : null;
-      return { c, minBuy, maxSell, pct };
-    });
-  }, [ov.data]);
+  const rows = (ov.data ?? []).map((r) => ({
+    ...r,
+    margin: r.lowestBuy && r.highestSell ? percentDelta(r.highestSell.price, r.lowestBuy.price) : null,
+  }));
+  const top = [...rows]
+    .filter((r) => (r.margin ?? 0) > 0)
+    .sort((a, b) => (b.margin ?? 0) - (a.margin ?? 0))
+    .slice(0, 3);
 
-  const name = (id?: string) => ov.data?.cities.find((c) => c.id === id)?.name ?? '—';
+  const CityLink = ({ id, name, tone }: { id: string; name: string; tone: 'neon' | 'brass' }) => (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 font-medium',
+        tone === 'neon' ? 'text-neon' : 'text-brass',
+      )}
+    >
+      {id === city?.id && <MapPin className="h-3 w-3" aria-label={t('market.here')} />}
+      {name}
+    </span>
+  );
 
   return (
     <div>
-      <PageHeader
-        title={t('market.title')}
-        subtitle={t('market.subtitle')}
-        actions={
-          <Tabs
-            value={mode}
-            onChange={setMode}
-            items={[
-              { value: 'buyPrice', label: t('market.showBuy') },
-              { value: 'sellPrice', label: t('market.showSell') },
-            ]}
-          />
-        }
-      />
+      <PageHeader title={t('market.title')} subtitle={t('market.subtitle')} />
       {ov.isError && <ErrorState error={ov.error} onRetry={() => ov.refetch()} />}
       {ov.isPending && <Skeleton className="h-96" />}
+      {ov.data?.length === 0 && <EmptyState title={t('market.empty')} />}
 
-      {ov.data && (
+      {rows.length > 0 && (
         <>
-          {/* Routen-Karten */}
           <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {stats
-              .filter((s) => s.pct !== null && s.pct > 0)
-              .sort((a, b) => (b.pct ?? 0) - (a.pct ?? 0))
-              .slice(0, 3)
-              .map((s) => (
-                <div key={s.c.id} className="panel flex items-center gap-3 p-4">
-                  <CommodityIcon slug={s.c.slug} size={40} />
-                  <div className="min-w-0 flex-1 text-sm">
-                    <p className="font-semibold text-ink">{s.c.name}</p>
-                    <p className="flex flex-wrap items-center gap-1 text-xs text-ink-muted">
-                      <span className="text-neon">{name(s.minBuy?.city)}</span>
-                      <ArrowRight className="h-3 w-3" aria-hidden />
-                      <span className="text-brass">{name(s.maxSell?.city)}</span>
-                    </p>
-                  </div>
-                  <span className="num text-lg font-bold text-neon">+{s.pct?.toLocaleString('de-DE')} %</span>
+            {top.map((r) => (
+              <div key={r.commodity.id} className="panel flex items-center gap-3 p-4">
+                <CommodityImage commodity={r.commodity} size={40} />
+                <div className="min-w-0 flex-1 text-sm">
+                  <p className="font-semibold text-ink">{r.commodity.name}</p>
+                  <p className="flex flex-wrap items-center gap-1 text-xs">
+                    <CityLink id={r.lowestBuy!.city.id} name={r.lowestBuy!.city.name} tone="neon" />
+                    <ArrowRight className="h-3 w-3 text-ink-faint" aria-hidden />
+                    <CityLink id={r.highestSell!.city.id} name={r.highestSell!.city.name} tone="brass" />
+                  </p>
                 </div>
-              ))}
+                <span className="num text-lg font-bold text-neon">
+                  +{r.margin?.toLocaleString('de-DE')} %
+                </span>
+              </div>
+            ))}
           </div>
 
-          {/* Matrix */}
           <div className="panel overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-line/10">
-                    <th className="label sticky left-0 z-10 bg-surface px-4 py-3 text-left">{t('market.commodity')}</th>
-                    {ov.data.cities.map((c) => (
-                      <th
-                        key={c.id}
-                        className={cn(
-                          'label whitespace-nowrap px-3 py-3 text-right',
-                          c.id === city?.id && 'bg-brass/10 text-brass',
-                        )}
-                      >
-                        {c.id === city?.id && <MapPin className="mr-1 inline h-3 w-3" aria-label={t('market.here')} />}
-                        {c.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line/5">
-                  {stats.map(({ c, minBuy, maxSell }) => (
-                    <tr key={c.id} className="hover:bg-surface-2/50">
-                      <th scope="row" className="sticky left-0 z-10 bg-surface px-4 py-2.5 text-left">
-                        <span className="flex items-center gap-2 font-semibold text-ink">
-                          <CommodityIcon slug={c.slug} size={28} />
-                          {c.name}
+            {/* Tabelle ab md, Karten am Handy */}
+            <table className="hidden w-full text-sm md:table">
+              <thead>
+                <tr className="border-b border-line/10 text-left">
+                  <th className="label px-4 py-3">{t('market.commodity')}</th>
+                  <th className="label px-4 py-3">{t('market.cheapest')}</th>
+                  <th className="label px-4 py-3">{t('market.priciest')}</th>
+                  <th className="label px-4 py-3 text-right">{t('market.spread')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line/5">
+                {rows.map((r) => (
+                  <tr key={r.commodity.id} className="hover:bg-surface-2/50">
+                    <th scope="row" className="px-4 py-3 text-left">
+                      <span className="flex items-center gap-3 font-semibold text-ink">
+                        <CommodityImage commodity={r.commodity} size={32} />
+                        {r.commodity.name}
+                      </span>
+                    </th>
+                    <td className="px-4 py-3">
+                      {r.lowestBuy ? (
+                        <span className="flex items-center gap-2">
+                          <TrendingDown className="h-4 w-4 text-neon" aria-hidden />
+                          <Money value={r.lowestBuy.price} className="font-semibold text-ink" />
+                          <CityLink id={r.lowestBuy.city.id} name={r.lowestBuy.city.name} tone="neon" />
                         </span>
-                      </th>
-                      {ov.data!.cities.map((ci) => {
-                        const p = ov.data!.prices[ci.id]?.[c.id];
-                        if (!p) return <td key={ci.id} />;
-                        const best =
-                          mode === 'buyPrice' ? minBuy?.city === ci.id : maxSell?.city === ci.id;
-                        return (
-                          <td
-                            key={ci.id}
-                            className={cn(
-                              'whitespace-nowrap px-3 py-2.5 text-right',
-                              ci.id === city?.id && 'bg-brass/5',
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5',
-                                best && mode === 'buyPrice' && 'bg-neon/10 font-semibold text-neon ring-1 ring-neon/30',
-                                best && mode === 'sellPrice' && 'bg-brass/10 font-semibold text-brass ring-1 ring-brass/30',
-                                !best && 'text-ink-muted',
-                              )}
-                            >
-                              <Money value={p[mode]} />
-                              <TrendIcon trend={p.trend} className="h-3 w-3" />
-                            </span>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.highestSell ? (
+                        <span className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-brass" aria-hidden />
+                          <Money value={r.highestSell.price} className="font-semibold text-ink" />
+                          <CityLink id={r.highestSell.city.id} name={r.highestSell.city.name} tone="brass" />
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td
+                      className={cn(
+                        'num px-4 py-3 text-right font-semibold',
+                        (r.margin ?? 0) > 0 ? 'text-neon' : 'text-ink-faint',
+                      )}
+                    >
+                      {r.margin !== null
+                        ? `${r.margin > 0 ? '+' : ''}${r.margin.toLocaleString('de-DE')} %`
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <ul className="divide-y divide-line/5 md:hidden">
+              {rows.map((r) => (
+                <li key={r.commodity.id} className="space-y-2 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-3 font-semibold text-ink">
+                      <CommodityImage commodity={r.commodity} size={32} />
+                      {r.commodity.name}
+                    </span>
+                    <span
+                      className={cn(
+                        'num font-semibold',
+                        (r.margin ?? 0) > 0 ? 'text-neon' : 'text-ink-faint',
+                      )}
+                    >
+                      {r.margin !== null
+                        ? `${r.margin > 0 ? '+' : ''}${r.margin.toLocaleString('de-DE')} %`
+                        : '—'}
+                    </span>
+                  </div>
+                  {r.lowestBuy && r.highestSell && (
+                    <dl className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <dt className="label">{t('market.cheapest')}</dt>
+                        <dd>
+                          <Money value={r.lowestBuy.price} className="text-ink" />{' '}
+                          <CityLink id={r.lowestBuy.city.id} name={r.lowestBuy.city.name} tone="neon" />
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="label">{t('market.priciest')}</dt>
+                        <dd>
+                          <Money value={r.highestSell.price} className="text-ink" />{' '}
+                          <CityLink id={r.highestSell.city.id} name={r.highestSell.city.name} tone="brass" />
+                        </dd>
+                      </div>
+                    </dl>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
+          {rows[0]?.lowestBuy && (
+            <p className="mt-3 text-xs text-ink-faint">
+              {t('market.updated', { when: formatRelative(rows[0].lowestBuy.updatedAt) })} ·{' '}
+              <Link to="/reisen" className="text-brass hover:underline">
+                {t('city.toTravel')}
+              </Link>
+            </p>
+          )}
         </>
       )}
     </div>

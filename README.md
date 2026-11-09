@@ -164,6 +164,12 @@ Alle drei müssen ohne Fehler durchlaufen. Erwartet werden zurzeit 113 Backend-T
 
 ---
 
+## Bilder einstellen
+
+Bilder für Waren, Fahrzeuge, Waffen und mehr gehören nach [`frontend/public/images/`](frontend/public/images/README.md), je Kategorie ein Unterordner. Die Anleitung dort erklärt Dateinamen, Format (512 × 512, WebP/PNG/SVG, max. 300 KB), Stilregeln und das Hochladen direkt über GitHub. Welches Bild wohin gehört, steht in `docs/game-design/parameters.toml` (Feld `image`). Fehlt ein Bild, zeigt das Spiel einen Platzhalter.
+
+---
+
 ## Wenn etwas nicht klappt
 
 | Problem | Lösung |

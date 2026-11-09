@@ -40,7 +40,9 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
     };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
-    const focusable = ref.current?.querySelector<HTMLElement>('input, [data-autofocus], button:not([aria-label])');
+    const focusable = ref.current?.querySelector<HTMLElement>(
+      'input, [data-autofocus], button:not([aria-label])',
+    );
     (focusable ?? ref.current)?.focus();
     return () => {
       document.removeEventListener('keydown', onKey);
@@ -52,7 +54,11 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
   if (!open) return null;
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-up" onClick={onClose} aria-hidden />
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-up"
+        onClick={onClose}
+        aria-hidden
+      />
       <div
         ref={ref}
         role="dialog"
@@ -66,7 +72,11 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
       >
         <div className="panel-header sticky top-0 z-10 bg-surface/95 backdrop-blur">
           <h2 className="font-display text-base font-semibold text-ink">{title}</h2>
-          <button onClick={onClose} className="rounded-md p-1 text-ink-muted hover:text-ink" aria-label={t('app.close')}>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-ink-muted hover:text-ink"
+            aria-label={t('app.close')}
+          >
             <X className="h-5 w-5" />
           </button>
         </div>

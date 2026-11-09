@@ -35,7 +35,12 @@ export const CityArt = memo(function CityArt({ slug, className }: { slug: string
 
   const id = `c-${slug}`;
   return (
-    <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" className={cn('block h-full w-full', className)} aria-hidden>
+    <svg
+      viewBox="0 0 400 200"
+      preserveAspectRatio="xMidYMax slice"
+      className={cn('block h-full w-full', className)}
+      aria-hidden
+    >
       <defs>
         <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={`hsl(${art.hue} 55% 10%)`} />
@@ -62,7 +67,9 @@ export const CityArt = memo(function CityArt({ slug, className }: { slug: string
             <rect x={b.x} y={200 - b.h} width={b.w} height={b.h} />
             {b.roof > 0.75 && <rect x={b.x + b.w / 2 - 1} y={200 - b.h - 14} width="2" height="14" />}
             {b.roof > 0.55 && b.roof <= 0.75 && (
-              <polygon points={`${b.x},${200 - b.h} ${b.x + b.w / 2},${200 - b.h - 12} ${b.x + b.w},${200 - b.h}`} />
+              <polygon
+                points={`${b.x},${200 - b.h} ${b.x + b.w / 2},${200 - b.h - 12} ${b.x + b.w},${200 - b.h}`}
+              />
             )}
           </g>
         ))}

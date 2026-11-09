@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Alterskennzeichnung „ab 18“ für die gesamte Website (ADR-013, T-305).
+
+  VORLAGE – vor dem Livegang prüfen:
+  Struktur nach bestem Wissen; die offizielle Spezifikation (age-label.de)
+  war aus der Entwicklungsumgebung nicht erreichbar. Die Datei bitte mit dem
+  offiziellen Generator auf age-label.de erzeugen bzw. validieren und hier ersetzen.
+  Sie muss im Web-Root unter /age-de.xml ausgeliefert werden (Caddy, ADR-014).
+-->
+<age-declaration>
+  <age-issuer>de</age-issuer>
+  <default-age>18</default-age>
+  <min-age>18</min-age>
+  <country>de</country>
+</age-declaration>

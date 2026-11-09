@@ -1,6 +1,6 @@
 import { createState, type MockState } from './engine';
 
-const KEY = 'dd-mock-state-v1';
+const KEY = 'dd-mock-state-v2';
 let state: MockState | null = null;
 
 export function getState(): MockState {
@@ -9,7 +9,7 @@ export function getState(): MockState {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as MockState;
-      if (parsed.version === 1) state = parsed;
+      if (parsed.version === 2) state = parsed;
     }
   } catch {
     /* Speicher nicht verfügbar – frischer Zustand */

@@ -1,0 +1,14 @@
+{
+  "_hinweis": "Vorlage. Echte Angaben in public/legal.json bzw. auf dem Server unter /legal.json ablegen (nicht ins Repo, siehe .gitignore).",
+  "operatorName": "Vorname Nachname",
+  "street": "Musterstraße 1",
+  "postalCode": "12345",
+  "city": "Musterstadt",
+  "country": "Deutschland",
+  "email": "kontakt@example.org",
+  "phone": "",
+  "contentResponsible": "Vorname Nachname, Anschrift wie oben",
+  "hostingProvider": "Name des VPS-Anbieters, Anschrift",
+  "supervisoryAuthority": "Zuständige Datenschutz-Aufsichtsbehörde des Bundeslands",
+  "lastUpdated": "2026-11-09"
+}
