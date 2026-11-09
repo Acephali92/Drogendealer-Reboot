@@ -50,11 +50,7 @@ export const playerProfileSelect = {
   },
 } as const satisfies Prisma.PlayerSelect;
 
-export function createPlayerForUser(
-  tx: Prisma.TransactionClient,
-  userId: string,
-  name: string,
-) {
+export function createPlayerForUser(tx: Prisma.TransactionClient, userId: string, name: string) {
   return tx.player.create({
     data: { userId, name, ...PLAYER_START_VALUES },
     select: { id: true },

@@ -17,8 +17,8 @@ beforeEach(async () => {
 });
 
 async function seed() {
-  const city = await createCity(app, { slug: 'berlin', name: 'Berlin' });
-  const commodity = await createCommodity(app, 'weed');
+  const city = await createCity(app, { slug: 'nebelstadt', name: 'Nebelstadt' });
+  const commodity = await createCommodity(app, 'kraut');
   const price = await setPrice(app, city.id, commodity.id, 100n, 90n);
   return { city, commodity, price };
 }

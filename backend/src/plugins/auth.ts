@@ -54,7 +54,10 @@ export default fp<AuthPluginOptions>(
         await app.prisma.player.updateMany({
           where: {
             id: request.user.pid,
-            OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: new Date(now.getTime() - LAST_SEEN_INTERVAL_MS) } }],
+            OR: [
+              { lastSeenAt: null },
+              { lastSeenAt: { lt: new Date(now.getTime() - LAST_SEEN_INTERVAL_MS) } },
+            ],
           },
           data: { lastSeenAt: now },
         });
