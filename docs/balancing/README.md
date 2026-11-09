@@ -1,7 +1,7 @@
 # Balancing & Simulation
 
 > Verantwortlich: **Agent 5 – Game Balancing & Simulation Engineer** (laut Product Owner gibt es fünf Agenten; `PROJECT.md` führt die Rolle noch als „Agent 6“).
-> Stand: 2026-11-09 · Basis: `main` mit Game Design (PR #4), Backend inkl. `backend/src/domain/` (PR #2/#6/#8/#9), ADR-001…019.
+> Stand: 2026-11-09 · Basis: `main` @ `74790f7` mit Game Design (PR #4), Backend inkl. `backend/src/domain/` (PR #2/#6/#8/#9/#14), ADR-001…020.
 
 Dieser Ordner beschreibt die Spielökonomie von Drogendealer-Reboot fachlich, misst sie mit einer reproduzierbaren Simulation (`sim/`) und leitet daraus Balancing-Entscheidungen ab.
 
@@ -102,5 +102,5 @@ Mehr dazu in [MARKET_SIMULATION.md §2](MARKET_SIMULATION.md#2-bedienung).
 | 5 Spielertypen getestet | erfüllt (A–E, 10–150 Spieler) |
 | 6 Langfristige Auswirkungen | erfüllt (365 Tage) |
 | 7 Nachvollziehbar | erfüllt (Seeds, Parameter-Hash, deterministisch) |
-| 8 Agent 3 bestätigt Umsetzung | **offen**: Das Backend hat noch keine Wirtschaftsregeln (`backend/src/domain/` enthält nur RNG, Geld und Zeit) |
+| 8 Agent 3 bestätigt Umsetzung | **teilweise**: Der Zufall (F-GLB-01/02) ist im Backend umgesetzt und wird von der Simulation genutzt. Die Wirtschaftsregeln (T-103) fehlen noch. |
 | 9 Keine kritischen Balancing-Probleme | **offen**: siehe kritische Befunde in [GAME_BALANCING.md §6](GAME_BALANCING.md#6-befunde-und-empfehlungen) |

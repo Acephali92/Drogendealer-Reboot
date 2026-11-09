@@ -129,7 +129,7 @@ Ziel: Die Welt verändert sich auch ohne Spieler. Das geschieht langsam, nachvol
 | T-2 | Marktzustand je (Stadt, Ware): S (float), x (float), aktives Ereignis + Restdauer; [Design] m_sup, Kundenbindung. Heute (`MarketPrice` auf main): `supply Int`, kein x, kein Ereignis. | Ohne x und Ereignisstatus ist F-ECO-05/09 nicht deterministisch fortsetzbar |
 | T-3 | Jede Order schreibt S **sofort** fort (zugesagt) | E-05 Order-Splitting |
 | T-4 | Regelfunktionen rein und seedbar mit gleichen Signaturen wie `sim/src/model/*` (`marketPrice`, `buyCost`, `sellRevenue`, `stockStep`, `noiseStep`, `pickEvent`, `controlProbability`, `npcTraderFlows` …). Die Basis `backend/src/domain/` (RNG, Geld, Zeit, `CommandResult`) ist vorhanden. | ADR-012: Formelschicht der Simulation wird ausgetauscht |
-| T-5 | Tick-Reihenfolge laut Agent 2 README §4 und npc.md §5. Zufall nach F-GLB-01 (SHA-256-U): Ereigniswurf mit Entität `<stadt>/<ware>`, k = 0, Rauschen k = 1. **Widerspruch:** `backend/src/domain/rng.ts` nutzt cyrb128/sfc32 (`deriveRng`), das liefert andere Folgen als F-GLB-01. | Reproduzierbarkeit gegen Simulation und `verify.py` |
+| T-5 | Tick-Reihenfolge laut Agent 2 README §4 und npc.md §5. Zufall nach F-GLB-01 (SHA-256-U): Ereigniswurf mit Entität `<stadt>/<ware>`, k = 0, Rauschen k = 1. ✅ `backend/src/domain/rng.ts` folgt seit PR #14 F-GLB-01/02 und wird von `sim/` importiert. | Reproduzierbarkeit gegen Simulation und `verify.py` |
 | T-6 | Preisjournal: Ursache `NPC` ergänzen, x je Tick-Eintrag | §3.2 |
 
 ## 8. Testfälle und erwartete Ergebnisse

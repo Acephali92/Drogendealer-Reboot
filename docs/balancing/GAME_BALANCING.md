@@ -1,6 +1,6 @@
 # GAME_BALANCING – Ist-Analyse, Ziele, Befunde
 
-> Agent 5 – Game Balancing & Simulation · Stand 2026-11-09 · Basis: `main` @ `1c396cd`
+> Agent 5 – Game Balancing & Simulation · Stand 2026-11-09 · Basis: `main` @ `74790f7` (Messläufe auf `1c396cd`, Wirtschaftsparameter unverändert)
 > Ersetzt die frühere `balancing-concept.md`. Kennzeichnung: [gemessen] · [Regel] · [Design] · [Annahme] · [Hypothese] (siehe [README](README.md#arbeitsweise)).
 
 ## 1. Ist-Analyse
@@ -50,8 +50,8 @@ Untersucht wurden folgende Quellen:
 | Wirtschaftliche Eigendynamik | Wohlstand, Polizei und Konsum sind statisch. Ohne Spieler bewegt sich nur Rauschen und Ereignis. Vorschläge F-ECO-10…14 in [GAME_ECONOMY.md §5](GAME_ECONOMY.md#5-wirtschaftliche-eigendynamik-design-vorschlag-agent-5). | Agent 5 → Agent 2 |
 | Ereignisse | nur 3 Typen, rein lokal, ohne Nachwirkung | Agent 5 |
 | Progression | Aufhol-XP und vermögensabhängige Senken (T-505) und Ranglisten nach Zuwachs (T-508) sind in `docs/game-design/README.md` §1.1 als Pflicht genannt, aber nicht spezifiziert | Agent 5 / Agent 2 |
-| Backend-Spiellogik | `backend/src/domain/` enthält RNG, Geld, Zeit und Verträge. **Keine** Wirtschafts-, Handels- oder Reiseregeln, kein Tick-Job, keine Spielaktionen (nur lesende Endpunkte, `backend/src/modules/*/routes`). | Agent 3 (T-103 ff.) |
-| Startwerte und Seed-Daten | `PLAYER_START_VALUES.cash = 0n` (`backend/src/modules/player/player.service.ts`). Keine Seed-Daten aus `parameters.toml` (T-101/T-102). | Agent 3 |
+| Backend-Spiellogik | `backend/src/domain/` enthält RNG (F-GLB-01/02), Geld, Zeit, Parameter-Validierung und Verträge. **Keine** Wirtschafts-, Handels- oder Reiseregeln, kein Tick-Job, keine Spielaktionen (nur lesende Endpunkte, `backend/src/modules/*/routes`). | Agent 3 (T-103 ff.) |
+| Startwerte und Seed-Daten | `parameters.toml` wird jetzt geladen und validiert (`backend/src/domain/parameters/`, T-101). Das Startgeld ist aber weiterhin `cash = 0n` (`player.service.ts`), weil die Abbildung von Schwarz-/Weißgeld auf `cash`/`bank` offen ist (B-9). Seed-Daten fehlen (T-102). | Agent 3 / Datenmodell |
 | Marktzustand im Datenmodell | `MarketPrice` hat `supply Int`, aber weder Rauschzustand x noch aktives Ereignis oder Restdauer. Damit ist F-ECO-05/09 nicht fortsetzbar. | Agent 3 |
 | Ranglisten | „Vermögen“ zählt nur `cash + bank` (`rankings.service.ts`). F-GLB-03 verlangt Sachwerte, Ware und Clan-Anteil. | Agent 3 |
 
@@ -70,7 +70,7 @@ Untersucht wurden folgende Quellen:
 
 | # | Widerspruch | Quellen | Vorschlag | Klärung durch |
 |---|---|---|---|---|
-| E-1 | **Zufallsgenerator:** Das Game Design legt F-GLB-01 fest, also SHA-256 über `seed:t:e:k`. Das Backend implementiert dagegen cyrb128 + sfc32 (`deriveRng`). Dieselbe Welt ergibt im Backend andere Ereignisse und Kontrollen als in `verify.py` und der Simulation. | `docs/game-design/README.md`, `backend/src/domain/rng.ts` | Eine Methode verbindlich machen. Empfehlung: F-GLB-01, weil zustandslos, sprachneutral und schon mit Testvektor versehen. | Agent 1 (ADR), Agent 2, Agent 3 |
+| E-1 | ~~**Zufallsgenerator:** Das Backend nutzte cyrb128 + sfc32 statt F-GLB-01.~~ ✅ **Gelöst** durch PR #14: `backend/src/domain/rng.ts` implementiert F-GLB-01/02 bitgenau wie `verify.py`. Die Simulation importiert ihn direkt, Determinismus-Hash unverändert. | `backend/src/domain/rng.ts` | – | – |
 | E-2 | **Zuständigkeit:** `PROJECT.md` §5 weist Formeln und Parameter Agent 2 zu. Der PO hat am 2026-11-09 auf „geteilt nach Systemen“ entschieden. | `PROJECT.md`, diese Session | ADR anlegen | Agent 1 |
 | E-3 | **Agentenzählung:** `PROJECT.md` führt sechs Agenten (Agent 5 = Datenbank, Agent 6 = Balancing). Der PO sagt: fünf Agenten, Balancing = Agent 5. | `PROJECT.md` §5 | Rollenliste anpassen | Agent 1 / PO |
 | E-4 | **„Saison“ in ROADMAP M5** („stabile Wirtschaft über eine Saison“) widerspricht ADR-016 (keine Saisons). | `ROADMAP.md`, `DECISIONS.md` | „über 365 Simulationstage“ | Agent 1 |
@@ -201,7 +201,7 @@ Für 1–3 liegt mit `npc-conf` und `h-wealth-sink` ein Beleg vor. Ein gemeinsam
 
 | # | Frage | An |
 |---|---|---|
-| 1 | Welcher Zufallsgenerator gilt verbindlich: F-GLB-01 (SHA-256) oder cyrb128/sfc32 (`backend/src/domain/rng.ts`)? (E-1) | Agent 1 |
+| 1 | ~~Welcher Zufallsgenerator gilt verbindlich?~~ ✅ F-GLB-01, umgesetzt in PR #14 (E-1) | – |
 | 2 | ADR zur geteilten Zuständigkeit (E-2) und Bereinigung der Agentenliste (E-3) | Agent 1 |
 | 3 | Übernahme von `travel.confiscation_share` (B-1). Betrifft das Reisesystem von Agent 2. | Agent 2 |
 | 4 | Wann liefert das Backend die Wirtschaftsregeln als reine Funktionen (T-103)? Erst dann kann die Simulation sie importieren (ADR-012) und DoD Punkt 8 erfüllt werden. | Agent 3 |

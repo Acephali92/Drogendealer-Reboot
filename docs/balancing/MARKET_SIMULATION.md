@@ -10,9 +10,9 @@ Die Simulation beantwortet Balancing-Fragen **gemessen statt geschätzt**. Dafü
 | Prinzip | Umsetzung |
 |---|---|
 | Gleiche Regeln wie das Spiel | Formeln aus `docs/game-design/` als reine Funktionen in `sim/src/model/`. Golden-Tests reproduzieren **alle** EX-Werte von `verify.py` für Wirtschaft, Handel, Städte, Reisen, Progression und NPC-Händler. |
-| Übergang (ADR-012) | `sim/src/model/` ist eine **Übergangsschicht**. Liefert Agent 3 die Regelfunktionen in `backend/src/domain/`, werden sie dort importiert und die Golden-Tests gegen beide laufen gelassen. Bisher enthält `domain/` nur RNG, Geld und Zeit (`backend/src/domain/{rng,money,time,types}.ts`). |
+| Übergang (ADR-012) | `sim/src/model/` ist eine **Übergangsschicht**. Liefert Agent 3 die Regelfunktionen in `backend/src/domain/`, werden sie dort importiert und die Golden-Tests gegen beide laufen gelassen. **Erster Schritt erledigt:** Der Zufall (F-GLB-01/02) kommt bereits aus `backend/src/domain/rng.ts`. |
 | Parameter nicht kopieren | Gelesen wird `docs/game-design/parameters.toml` (überschreibbar per `--params` / `SIM_PARAMS`). Vorschläge kommen aus `sim/proposals.toml`. Jeder Bericht nennt den SHA-256 beider Dateien. |
-| Deterministisch | Zufall nur über F-GLB-01/02 `U(seed, t, entity, k)`, keine globale Zufallsquelle. Gleicher Seed ergibt identischen Endzustand (Test I-5). |
+| Deterministisch | Zufall nur über F-GLB-01/02 `U(seed, t, entity, k)`. Die Implementierung wird direkt aus `backend/src/domain/rng.ts` importiert (`sim/src/rng.ts`), sie ist also dieselbe wie im Spielserver. Gleicher Seed ergibt identischen Endzustand (Test I-5). |
 | Geld exakt | Integer-Cent (ADR-019). ⌈⌉ beim Zahlen, ⌊⌋ beim Erhalten. Die Geldbilanz wird **jeden Tick** geprüft (I-1). |
 
 ## 2. Bedienung
@@ -41,7 +41,7 @@ npm run sim -- run base-short --seeds 4 --days 30 --set economy.elasticity=0.4
 npm run sim -- registry > /tmp/registry.md
 ```
 
-- `npm test` führt Typecheck-freie Tests aus: RNG, Golden Vectors (Sollwerte werden zur Laufzeit aus `verify.py` exportiert, benötigt `python3` ≥ 3.11) und Invarianten.
+- `npm test` führt die Tests aus (ohne Typecheck): RNG, Golden Vectors (Sollwerte aus `backend/test/golden/golden-vectors.json`, ohne Python) und Invarianten.
 - Ergebnisse landen in `sim/out/<szenario>/summary.{json,md}`. Der Ordner ist nicht versioniert. Gültige Läufe werden nach [SIMULATION_RESULTS.md](SIMULATION_RESULTS.md) übernommen.
 - Die Seeds laufen parallel (`worker_threads`). 90 Tage mit 35 Spielern brauchen ≈ 6 s pro Seed.
 
@@ -50,7 +50,7 @@ npm run sim -- registry > /tmp/registry.md
 ```text
 sim/src/
   params.ts            parameters.toml + proposals.toml laden, prüfen ([bounds]), Overrides, SHA-256
-  rng.ts               F-GLB-01/02
+  rng.ts               F-GLB-01/02 – Re-Export aus backend/src/domain/rng.ts
   model/               ÜBERGANGS-Formelschicht (→ backend/src/domain/)
     economy.ts         F-ECO-01…09
     trade.ts           F-TRD-01…06, F-PRF-03
@@ -186,7 +186,7 @@ Jede Variante ändert **genau eine** Sache gegenüber `base`/`base-short`. Stand
 | Test | Inhalt |
 |---|---|
 | `rng.test.ts` | Testvektor EX-GLB-01, Zustandslosigkeit |
-| `golden.test.ts` | EX-GLB-01, EX-ECO-01…06, EX-TRD-01…06, EX-CTY-01…03, EX-TRV-01…04, EX-PRF-01…03, EX-NPC-01, EX-NPC-04. Sollwerte live aus `verify.py`. |
+| `golden.test.ts` | EX-GLB-01, EX-ECO-01…06, EX-TRD-01…06, EX-CTY-01…03, EX-TRV-01…04, EX-PRF-01…03, EX-NPC-01, EX-NPC-04. Sollwerte aus `backend/test/golden/golden-vectors.json` (Export von Agent 3, deckungsgleich mit `verify.py`), Fallback: Live-Export aus `verify.py`. |
 | `invariants.test.ts` | I-3 Rund-Trip-Verlust (alle Märkte, Mengen, Level), E-05 Order-Splitting, Preisgrenzen, I-1/I-4 über 3 Tage mit allen Erweiterungen, I-5 Determinismus |
 
 CI: `.github/workflows/sim.yml` (`sim-fast`: `npm ci`, Typecheck, `npm test`) bei Änderungen an `sim/`, `parameters.toml` oder `verify.py`. Der nächtliche `balance-check` (ADR-012) ist Phase P1+, Laufzeit der Basis ≈ 10 min.
@@ -206,4 +206,4 @@ CI: `.github/workflows/sim.yml` (`sim-fast`: `npm ci`, Typecheck, `npm test`) be
 
 - Die Bots sind rationaler und gleichförmiger als Menschen. Ergebnisse für E sind eine **Obergrenze**, für D eine Untergrenze.
 - Ohne Kampf, Clans, Geldwäsche und Betriebe ist das Nettovermögen ein reines Handelsvermögen.
-- **RNG-Abweichung:** Die Simulation nutzt F-GLB-01 (SHA-256), wie `verify.py`. Das Backend nutzt in `backend/src/domain/rng.ts` cyrb128 + sfc32 (`deriveRng`). Dieselben Seeds ergeben dort **andere** Zufallsfolgen. Das Ergebnis ist statistisch gleichwertig, aber nicht ziffern-identisch reproduzierbar. Klärung durch Agent 1 nötig (siehe GAME_BALANCING §1 E).
+- **Formelschicht noch eigen:** Nur der Zufall stammt bereits aus dem Backend. Preis-, Handels-, Reise- und NPC-Formeln folgen mit T-103. Geldrundung rechnet in `sim` mit number, im Backend mit BigInt (`money.ts`). Beide sind für Beträge bis 9 · 10^15 ct gleichwertig.
