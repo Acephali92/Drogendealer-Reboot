@@ -9,7 +9,7 @@ Echtzeit-Mehrspieler-Browsergame mit persistenter Welt: Handel, Reisen, Kampf un
 |--------|--------|----------------|
 | `backend/` | API-Server: Node.js, TypeScript, Fastify, Prisma, PostgreSQL | Agent 3 |
 | `frontend/` | Spieloberfläche: React, TypeScript, Vite | Agent 4 |
-| `docs/game-design/` | Spielregeln, Formeln, Parameterdatei | Agent 2 |
+| [`docs/game-design/`](docs/game-design/README.md) | Spielregeln, Formeln, `parameters.toml`, Prüfskript `tools/verify.py` | Agent 2 |
 | `docs/database/` | Datenmodell, Nachvollziehbarkeit | Agent 5 |
 | `docs/api/` | API-Vertrag | Agent 3 |
 | `docs/frontend/` | UI-Richtlinien | Agent 4 |
