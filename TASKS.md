@@ -13,15 +13,15 @@
 
 | ID | Titel | Zuständig | Status | Abhängig von |
 |----|-------|-----------|--------|--------------|
-| T-001 | GitHub-Schreibzugriff für alle Agenten herstellen | Product Owner | blocked | – |
-| T-002 | Steuerungsdokumente Revision 2 | A1 | review | – |
-| T-003 | Game-Design-Grundlagen (Regeln, Parameterdatei, Prüfskript) | A2 | in progress | – |
-| T-004 | Backend-Fundament: Setup, Prisma-Schema, Auth, `/players/me` | A3 | in progress | – |
+| T-001 | GitHub-Schreibzugriff für alle Agenten herstellen | Product Owner | done (2026-11-08) | – |
+| T-002 | Steuerungsdokumente Revision 2 | A1 | done (Basis von `main`) | – |
+| T-003 | Game-Design-Grundlagen (Regeln, Parameterdatei, Prüfskript) | A2 | done ([PR #4](https://github.com/Acephali92/Drogendealer-Reboot/pull/4)) | – |
+| T-004 | Backend-Fundament: Setup, Prisma-Schema, Auth, `/players/me` | A3 | done ([PR #2](https://github.com/Acephali92/Drogendealer-Reboot/pull/2), 81 Tests grün) | – |
 | T-005 | Datenmodell-Review des bestehenden Schemas + Nachvollziehbarkeitskonzept | A5 | todo | T-004 |
-| T-006 | Frontend-Gerüst, API-Vertragsentwurf, UI-Richtlinien | A4 | in progress | – |
-| T-007 | Root-README konsolidieren, Backend-Schnellstart nach `backend/README.md` | A1 + A3 | in progress (A3 lokal) | T-004 |
-| T-008 | Branches integrieren (Reihenfolge siehe unten) | A1 | blocked (T-001) | T-002 – T-007, T-009 |
-| T-009 | Balancing-Konzept und Simulations-Spezifikation (`docs/balancing/`) | A6 | review | – |
+| T-006 | Frontend-Gerüst, API-Vertragsentwurf, UI-Richtlinien | A4 | done ([PR #3](https://github.com/Acephali92/Drogendealer-Reboot/pull/3)); Nacharbeiten in T-110 | – |
+| T-007 | Root-README konsolidieren, Backend-Schnellstart nach `backend/README.md` | A1 + A3 | done | T-004 |
+| T-008 | Branches integrieren | A1 | in progress: A2, A3, A4, A6 gemergt; A5 hat noch nicht gepusht | T-002 – T-007, T-009 |
+| T-009 | Balancing-Konzept und Simulations-Spezifikation (`docs/balancing/`) | A6 | done ([PR #1](https://github.com/Acephali92/Drogendealer-Reboot/pull/1)) | – |
 
 ## M1 – Wirtschaftskern
 
@@ -31,9 +31,13 @@
 | T-102 | Seed-Daten: Städte, Verbindungen, Waren aus Parametern | A3 | todo | T-101 |
 | T-103 | Preisformeln als reine Funktionen + Tests gegen Prüfskript | A3 (Review A2) | todo | T-003 |
 | T-104 | Markt-Tick-Job (idempotent, Tick-Nummer) | A3 | todo | T-103, T-105 |
-| T-105 | Preisänderungsjournal `MarketPriceChange` mit Ursache, per DB-Trigger auf `MarketPrice` | A3 (umgesetzt, lokal) · Review A5 Pflicht | review | T-005 |
+| T-105 | Preisänderungsjournal `MarketPriceChange` mit Ursache, per DB-Trigger auf `MarketPrice` | A3 (gemergt) · Review A5 Pflicht | review | T-005 |
 | T-106 | Handels-Endpunkte Kaufen/Verkaufen inkl. Journale | A3 | todo | T-102, T-105 |
-| T-107 | API-Vertrag nach `docs/api/API-CONTRACT.md` übernehmen und mit A4-Entwurf abgleichen | A3 + A4 | review (A3 lokal; Abweichungen dort dokumentiert, A4 muss bestätigen) | T-006 |
+| T-107 | API-Vertrag nach `docs/api/API-CONTRACT.md` übernehmen und mit A4-Entwurf abgleichen | A3 + A4 | in progress: Vertrag gemergt; A4 muss Abweichungen bestätigen | T-006 |
+| T-109 | Geld in Cent im Backend (ADR-019): Vertrag, Startwerte, Serialisierung, Tests | A3 (Review A5) | todo | T-004 |
+| T-110 | Frontend-Nacharbeiten aus PR #3: Schriften selbst hosten (ADR-015), Mock-Default `off` in Production, CI `frontend.yml`, `UI-GUIDE.md` | A4 | todo | T-006 |
+| T-111 | Production-Start verweigern, wenn `JWT_SECRET` dem Platzhalter aus `.env.example` entspricht | A3 | todo | T-004 |
+| T-112 | Interne Schlüssel (`city.berlin`, Warenschlüssel) nie in der UI anzeigen, nur `name` (ADR-013) | A3 + A4 | todo | T-003 |
 
 ## M2 – Reisen & Spielerfortschritt
 
@@ -84,7 +88,9 @@
 
 ## Integrationsplan (T-008)
 
-Derzeit liegt **kein** Branch auf GitHub: Pushes scheitern mit 403 (T-001). Sobald der Zugriff steht:
+Stand 2026-11-09: Zugriff funktioniert. Alle Agenten-Branches haben keine gemeinsame Vorgeschichte mit `main` und werden über `integrate/agent-N-*`-Branches (`--allow-unrelated-histories`) per PR gemergt. Neue Arbeit beginnt immer auf einem Branch von `main`.
+
+Ursprünglich geplante Reihenfolge (A6 wurde vorgezogen, da reine Doku):
 
 1. `claude/tender-mccarthy-dhr8kr` (A1, Steuerungsdokumente) wird Basis des Hauptbranches `main`.
 2. Game Design (A2): `docs/game-design/`.
