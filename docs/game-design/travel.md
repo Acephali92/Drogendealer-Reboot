@@ -57,6 +57,9 @@ Distanzen: `distances."<a>-<b>"` (alphabetisch sortiert), z. B. Pleitenberg–Sc
 T = \Big\lceil \frac{d}{v} \cdot 6 \Big\rceil \text{ Ticks} \quad (6 = \text{Ticks pro Stunde})
 ```
 
+Für die API gilt: Reisedauer in Sekunden = $T \cdot 600$. Dauer und Kosten sind keine festen Werte je
+Verbindung, sondern hängen von Fahrzeug und Startstadt ab (F-TRV-01 bis F-TRV-03).
+
 **F-TRV-02 – Treibstoffkosten (bezahlt bei Abfahrt in der Startstadt)**
 
 ```math
