@@ -1,13 +1,28 @@
 # Drogendealer-Reboot
 
-Echtzeit-Browsergame (persistente Welt): Handel, Reisen, Kampf und Clans.
+Echtzeit-Mehrspieler-Browsergame mit persistenter Welt: Handel, Reisen, Kampf und Clans.
+**Status:** M0 – Integration & Fundament.
 
 ## Projektstruktur
 
-| Ordner | Inhalt |
-|---|---|
-| `backend/` | API-Server: Node.js, TypeScript, Fastify, Prisma, PostgreSQL |
+| Ordner | Inhalt | Verantwortlich |
+|--------|--------|----------------|
+| `backend/` | API-Server: Node.js, TypeScript, Fastify, Prisma, PostgreSQL | Agent 3 |
+| `frontend/` | Spieloberfläche: React, TypeScript, Vite | Agent 4 |
+| [`docs/game-design/`](docs/game-design/README.md) | Spielregeln, Formeln, `parameters.toml`, Prüfskript `tools/verify.py` | Agent 2 |
+| `docs/database/` | Datenmodell, Nachvollziehbarkeit | Agent 5 |
+| `docs/api/` | API-Vertrag | Agent 3 |
+| `docs/frontend/` | UI-Richtlinien | Agent 4 |
+| `docs/balancing/`, `sim/` | Balancing-Konzept, Simulation | Agent 6 |
 
-## Backend
+Schnellstart je Bereich: [`backend/README.md`](backend/README.md), `frontend/README.md`. API-Vertrag: [`docs/api/API-CONTRACT.md`](docs/api/API-CONTRACT.md).
 
-Setup, Scripts und Datenmodell: [`backend/README.md`](backend/README.md). API-Vertrag: [`docs/api/API-CONTRACT.md`](docs/api/API-CONTRACT.md).
+## Projektdokumente
+
+| Dokument | Inhalt |
+|----------|--------|
+| [PROJECT.md](PROJECT.md) | Vision, Scope, Rollen, Arbeitsregeln, offene Fragen |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Systemaufbau, Ordner-Eigentum, Datenmodell- und API-Grundsätze |
+| [DECISIONS.md](DECISIONS.md) | Architekturentscheidungen (ADRs) |
+| [ROADMAP.md](ROADMAP.md) | Meilensteine und Exit-Kriterien |
+| [TASKS.md](TASKS.md) | Aufgaben-Board, Integrationsplan, Review-Prozess |

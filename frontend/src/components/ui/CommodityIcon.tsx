@@ -1,0 +1,34 @@
+import { Cookie, FlaskConical, Gem, Leaf, Package, Pill, Snowflake, Sparkles, Syringe, Wind } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { hashHue } from '@/lib/art';
+import { cn } from '@/lib/cn';
+
+const ICONS: Record<string, LucideIcon> = {
+  gras: Leaf,
+  haschisch: Cookie,
+  amphetamine: FlaskConical,
+  ecstasy: Pill,
+  lsd: Sparkles,
+  'angel-dust': Wind,
+  crack: Gem,
+  kokain: Snowflake,
+  heroin: Syringe,
+};
+
+export function CommodityIcon({ slug, size = 44, className }: { slug: string; size?: number; className?: string }) {
+  const Icon = ICONS[slug] ?? Package;
+  const hue = hashHue(slug);
+  return (
+    <span
+      aria-hidden
+      className={cn('relative inline-grid shrink-0 place-items-center overflow-hidden rounded-xl ring-1 ring-white/10', className)}
+      style={{
+        width: size,
+        height: size,
+        background: `radial-gradient(circle at 30% 25%, hsl(${hue} 70% 45% / 0.55), hsl(${hue} 40% 12%) 70%)`,
+      }}
+    >
+      <Icon style={{ width: size * 0.5, height: size * 0.5, color: `hsl(${hue} 90% 78%)` }} strokeWidth={1.75} />
+    </span>
+  );
+}
