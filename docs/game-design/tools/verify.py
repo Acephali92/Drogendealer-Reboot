@@ -342,16 +342,21 @@ def control_probability(a: str, b: str, cargo: dict[str, int], H: float, hide: f
             "p_total": 1 - (1 - p_seg) ** n}
 
 
-def bust(cargo: dict[str, int], police: float, L_schmuggel: int) -> dict:
-    """F-TRV-06: Strafe, Bestechungskosten und Bestechungschance bei einer Kontrolle."""
+def bust(cargo: dict[str, int], police: float, L_schmuggel: int, cash_black: int) -> dict:
+    """F-TRV-06 (ADR-023): Kontrolle beschlagnahmt alle mitgeführten Waren und das gesamte mitgeführte
+    Schwarzgeld, ohne Strafe und ohne Schuld. Bestechung nur aus mitgeführtem Bargeld."""
     V = sum(q * GOODS[g]["base_price"] for g, q in cargo.items())
+    bribe_cost = ceil_ct(TRV["bribe_cost_rate"] * V * (1 + police))
     return {
         "cargo_base_value": V,
-        "fine": ceil_ct(TRV["fine_rate"] * V),
-        "bribe_cost": ceil_ct(TRV["bribe_cost_rate"] * V * (1 + police)),
+        "confiscated_cash": cash_black,
+        "confiscated_goods": dict(cargo),
+        "bribe_cost": bribe_cost,
+        "bribe_possible": cash_black >= bribe_cost,
         "bribe_chance": clamp(TRV["bribe_base_success"] - TRV["bribe_police_penalty"] * police
                               + PRF["schmuggel_bribe_bonus"] * L_schmuggel,
                               TRV["bribe_success_min"], TRV["bribe_success_max"]),
+        "cash_after_bribe_success": cash_black - bribe_cost if cash_black >= bribe_cost else None,
     }
 
 
@@ -597,10 +602,67 @@ def risk_over(p: float, ticks: int = TICKS_PER_DAY) -> float:
     return 1 - (1 - p) ** ticks
 
 
+TIERS = LAU["tiers"]
+
+
 def strawman(x: int, used_today: int = 0) -> dict:
-    """F-ML-05: Strohmann: x' = min(x, cap − used); Gutschrift = ⌊x' · (1 − f_S)⌋, risikofrei."""
-    x_eff = max(0, min(x, LAU["strawman_daily_cap"] - used_today))
-    return {"accepted": x_eff, "credit": floor_ct(x_eff * (1 - LAU["strawman_fee"]))}
+    """F-ML-05: Strohmann (Stufe W1): x' = min(x, cap − used); Gutschrift = ⌊x' · Kurs⌋, risikofrei."""
+    t = TIERS["strawman"]
+    x_eff = max(0, min(x, t["daily_cap"] - used_today))
+    return {"accepted": x_eff, "credit": floor_ct(x_eff * t["rate"])}
+
+
+def gambling_rate(u: float) -> float:
+    """F-ML-07 (a): Kurs der Spielhölle r = r_min + (r_max − r_min) · U."""
+    t = TIERS["gambling"]
+    return t["rate_min"] + (t["rate_max"] - t["rate_min"]) * u
+
+
+def gambling(x: int, L_fin: int, used_today: int, u: float) -> dict:
+    """F-ML-07: Glücksspiel (W0): Tageslimit cap = c_0 + c_L · L; Gutschrift = ⌊x' · r(U)⌋."""
+    t = TIERS["gambling"]
+    cap = t["daily_cap_base"] + t["daily_cap_per_level"] * L_fin
+    x_eff = max(0, min(x, cap - used_today))
+    rate = gambling_rate(u)
+    return {"cap": cap, "accepted": x_eff, "rate": rate, "credit": floor_ct(x_eff * rate)}
+
+
+def tiers_available(L_fin: int) -> list[str]:
+    """F-ML-08 (a): verfügbare Direktwäsche-Stufen nach Finanzen-Level (W2 hängt am Besitz eines Betriebs)."""
+    return [k for k, t in sorted(TIERS.items(), key=lambda kv: kv[1]["tier"]) if L_fin >= t["min_level"]]
+
+
+def tier_wash(tier: str, x: int, L_fin: int, used_today: int = 0) -> dict:
+    """F-ML-08: Festkurs-Stufen (W1, W3, W4): Mindestbetrag, Tageslimit, Gutschrift = ⌊x' · Kurs⌋."""
+    t = TIERS[tier]
+    if L_fin < t["min_level"]:
+        return {"accepted": 0, "credit": 0, "reason": "Level zu niedrig"}
+    if x < t.get("min_amount", 0):
+        return {"accepted": 0, "credit": 0, "reason": "unter Mindestbetrag"}
+    x_eff = max(0, min(x, t["daily_cap"] - used_today))
+    return {"accepted": x_eff, "credit": floor_ct(x_eff * t["rate"]), "reason": "ok"}
+
+
+def papers_event(credits_lookback: int) -> dict:
+    """F-ML-09: „Papers“-Enthüllung (W4): p pro Tag; beschlagnahmt ⌈r · Gutschriften der letzten 30 Tage⌉
+    vom Bankkonto (höchstens bis Kontostand 0, keine Schuld), Heat +40."""
+    t = TIERS["foundation"]
+    return {"p_day": t["papers_probability_per_day"],
+            "p_year": 1 - (1 - t["papers_probability_per_day"]) ** 365,
+            "confiscated": ceil_ct(t["papers_confiscation_rate"] * credits_lookback)}
+
+
+def loan_shark_eligible(vehicles: int, weapons: int, cash_black: int, cash_white: int, open_loan: bool) -> bool:
+    """F-ML-10 (a): Kredithai nur, wenn ≤ 1 Fahrzeug, keine Waffe, Schwarz- + Weißgeld < Schwelle, kein offener Kredit."""
+    k = P["loan_shark"]
+    return (vehicles <= k["max_vehicles"] and weapons <= k["max_weapons"]
+            and cash_black + cash_white < k["max_assets"] and not open_loan)
+
+
+def loan_shark_repay(revenue: int, outstanding: int) -> dict:
+    """F-ML-10 (b): Tilgung = min(Rest, ⌈r · Erlös⌉); Auszahlung an den Spieler = Erlös − Tilgung."""
+    pay = min(outstanding, ceil_ct(P["loan_shark"]["repayment_rate"] * revenue))
+    return {"repay": pay, "to_player": revenue - pay, "outstanding": outstanding - pay}
 
 
 def detection_penalty(washed_lookback: int) -> dict:
@@ -894,9 +956,12 @@ def ex_trv_02():
 
 def ex_trv_03():
     police_avg = (P["city"]["rotterdam"]["police"] + P["city"]["muenchen"]["police"]) / 2
-    b = bust({"kokain": 200}, police_avg, 4)
-    b["bribe_chance"] = r(b["bribe_chance"])
-    return b
+    low = bust({"kokain": 200}, police_avg, 4, 500_000)
+    high = bust({"kokain": 200}, police_avg, 4, 2_000_000)
+    return {"cargo_base_value": low["cargo_base_value"], "bribe_cost": low["bribe_cost"],
+            "bribe_chance": r(low["bribe_chance"]), "bribe_possible_500k": low["bribe_possible"],
+            "confiscated_cash_500k": low["confiscated_cash"], "bribe_possible_2m": high["bribe_possible"],
+            "cash_after_bribe_2m": high["cash_after_bribe_success"]}
 
 
 def ex_trv_04():
@@ -905,8 +970,8 @@ def ex_trv_04():
     d = distance("rotterdam", "muenchen")
     fuel = fuel_cost(d, "transporter", "rotterdam")
     p = ex_trv_02()["p_total"]
-    fine = ex_trv_03()["fine"]
-    ev = (1 - p) * rev - cost - fuel - p * fine
+    carried = 300_000                      # mitgeführtes Restbargeld auf der Fahrt
+    ev = (1 - p) * rev - cost - fuel - p * carried
     return {"fuel": fuel, "T": travel_ticks(d, P["vehicles"]["transporter"]["speed"]),
             "profit_no_bust": rev - cost - fuel, "EV": round_half_up(ev)}
 
@@ -1056,6 +1121,39 @@ def ex_ml_04():
     return {"confiscated": d["confiscated"], "fine": d["fine"]}
 
 
+def ex_ml_05():
+    u = rng_uniform("demo-server", 1, "gamble/p1/1")
+    g = gambling(150_000, 0, 0, u)
+    g5 = gambling(1_000_000, 5, 0, u)
+    return {"U": r(u, 6), "rate": r(g["rate"], 6), "cap_L0": g["cap"], "credit": g["credit"],
+            "cap_L5": g5["cap"], "accepted_L5": g5["accepted"], "rate_min": TIERS["gambling"]["rate_min"],
+            "rate_max": TIERS["gambling"]["rate_max"]}
+
+
+def ex_ml_06():
+    return {"L0": ",".join(tiers_available(0)), "L2": ",".join(tiers_available(2)),
+            "L10": ",".join(tiers_available(10)), "L15": ",".join(tiers_available(15)),
+            "shell_1m": tier_wash("shell", 100_000_000, 10)["credit"],
+            "shell_50k": tier_wash("shell", 5_000_000, 10)["reason"],
+            "foundation_5m": tier_wash("foundation", 500_000_000, 15)["credit"],
+            "foundation_L12": tier_wash("foundation", 500_000_000, 12)["reason"]}
+
+
+def ex_ml_07():
+    pe = papers_event(950_000_000)
+    return {"p_day": pe["p_day"], "p_year": r(pe["p_year"]), "confiscated": pe["confiscated"]}
+
+
+def ex_ml_08():
+    k = P["loan_shark"]
+    a = loan_shark_repay(400_000, round_half_up(k["amount"] * k["repay_factor"]))
+    return {"eligible_ok": loan_shark_eligible(1, 0, 50_000, 0, False),
+            "eligible_2_vehicles": loan_shark_eligible(2, 0, 50_000, 0, False),
+            "eligible_weapon": loan_shark_eligible(1, 1, 50_000, 0, False),
+            "eligible_rich": loan_shark_eligible(1, 0, 150_000, 100_000, False),
+            "amount": k["amount"], "repay": a["repay"], "to_player": a["to_player"], "outstanding": a["outstanding"]}
+
+
 def ex_re_01():
     I, U = business_income("bordell", "muenchen", 2), business_upkeep("bordell", 2)
     return {"R": I, "U": U, "net_day": (I - U) * TICKS_PER_DAY, "invest": total_investment("bordell", 2),
@@ -1168,6 +1266,7 @@ EXAMPLES = {
     "EX-CLN-01": ex_cln_01, "EX-CLN-02": ex_cln_02, "EX-CLN-03": ex_cln_03, "EX-CLN-04": ex_cln_04,
     "EX-CLN-05": ex_cln_05, "EX-CLN-06": ex_cln_06,
     "EX-ML-01": ex_ml_01, "EX-ML-02": ex_ml_02, "EX-ML-03": ex_ml_03, "EX-ML-04": ex_ml_04,
+    "EX-ML-05": ex_ml_05, "EX-ML-06": ex_ml_06, "EX-ML-07": ex_ml_07, "EX-ML-08": ex_ml_08,
     "EX-RE-01": ex_re_01, "EX-RE-02": ex_re_02, "EX-RE-03": ex_re_03, "EX-RE-04": ex_re_04,
     "EX-SPC-01": ex_spc_01, "EX-SPC-02": ex_spc_02, "EX-SPC-03": ex_spc_03, "EX-SPC-04": ex_spc_04,
     "EX-SPC-05": ex_spc_05,
@@ -1195,8 +1294,8 @@ EXPECTED: dict[str, dict] = {
     'EX-CTY-03': {'v': 1.9658, 'label': 'gut'},
     'EX-TRV-01': {'T_car': 18, 'fuel': 3208, 'T_train': 15, 'train': 4335},
     'EX-TRV-02': {'n': 9, 'police_avg': 0.625, 'hv': 24.0, 'g': 1.324324, 'p_seg': 0.016389, 'p_total': 0.138188},
-    'EX-TRV-03': {'cargo_base_value': 1600000, 'fine': 320000, 'bribe_cost': 1300000, 'bribe_chance': 0.3475},
-    'EX-TRV-04': {'fuel': 16400, 'T': 58, 'profit_no_bust': 1600069, 'EV': 1176831},
+    'EX-TRV-03': {'cargo_base_value': 1600000, 'bribe_cost': 1300000, 'bribe_chance': 0.3475, 'bribe_possible_500k': False, 'confiscated_cash_500k': 500000, 'bribe_possible_2m': True, 'cash_after_bribe_2m': 700000},
+    'EX-TRV-04': {'fuel': 16400, 'T': 58, 'profit_no_bust': 1600069, 'EV': 1179594},
     'EX-PRF-01': {'L_2500': 5, 'L_9999': 9, 'XP_L10': 10000, 'XP_L20': 40000},
     'EX-PRF-02': {'handel': 112, 'schmuggel': 106, 'finanzen': 8},
     'EX-PRF-03': {'spread_L10': 0.07, 'spread_L20': 0.04, 'control_red_L10': 0.25, 'strength_L10': 0.3, 'fee_red_L10': 0.2},
@@ -1211,8 +1310,12 @@ EXPECTED: dict[str, dict] = {
     'EX-CLN-06': {'eligible_14': 14, 'needed_14': 10, 'nine_yes': False, 'ten_yes': True, 'needed_3': 2, 'small_passed': True},
     'EX-ML-01': {'R': 6000, 'x_max': 18000, 'fee': 0.09, 'credit': 5460, 'p_tick': 0.00108, 'p_day': 0.1441},
     'EX-ML-02': {'p_day_0_5': 0.0381, 'p_day_2_0': 0.4639},
-    'EX-ML-03': {'accepted': 1000000, 'credit': 700000},
+    'EX-ML-03': {'accepted': 1000000, 'credit': 750000},
     'EX-ML-04': {'confiscated': 786240, 'fine': 393120},
+    'EX-ML-05': {'U': 0.969025, 'rate': 0.981415, 'cap_L0': 200000, 'credit': 147212, 'cap_L5': 700000, 'accepted_L5': 700000, 'rate_min': 0.4, 'rate_max': 1.0},
+    'EX-ML-06': {'L0': 'gambling', 'L2': 'gambling,strawman', 'L10': 'gambling,strawman,shell', 'L15': 'gambling,strawman,shell,foundation', 'shell_1m': 92000000, 'shell_50k': 'unter Mindestbetrag', 'foundation_5m': 475000000, 'foundation_L12': 'Level zu niedrig'},
+    'EX-ML-07': {'p_day': 0.002, 'p_year': 0.5184, 'confiscated': 237500000},
+    'EX-ML-08': {'eligible_ok': True, 'eligible_2_vehicles': False, 'eligible_weapon': False, 'eligible_rich': False, 'amount': 10000000, 'repay': 200000, 'to_player': 200000, 'outstanding': 9800000},
     'EX-RE-01': {'R': 17708, 'U': 6600, 'net_day': 1599552, 'invest': 80000000, 'payback_days': 50.01},
     'EX-RE-02': {'waschsalon': 69.44, 'bar': 80.13, 'spielhalle': 74.4, 'bordell': 77.16, 'autowerkstatt': 92.59},
     'EX-RE-03': {'p_tick': 0.0004, 'p_day': 0.056},
@@ -1434,7 +1537,33 @@ def inv_handover_bounds():
 
 def inv_strawman_expensive():
     fees = [b["wash_fee"] for b in P["businesses"].values() if "wash_fee" in b]
-    return LAU["strawman_fee"] > max(fees), "Strohmann teurer als jeder Betrieb"
+    return 1 - TIERS["strawman"]["rate"] > max(fees), "Strohmann teurer als jeder Betrieb"
+
+
+def inv_tier_progression():
+    """Kurs steigt mit der Stufe: Ø W0 < W1 < W2 (schlechtester Betrieb) ≤ W2 (bester) < W3 < W4."""
+    g = TIERS["gambling"]
+    fees = [b["wash_fee"] for b in P["businesses"].values() if "wash_fee" in b]
+    chain = [(g["rate_min"] + g["rate_max"]) / 2, TIERS["strawman"]["rate"], 1 - max(fees), 1 - min(fees),
+             TIERS["shell"]["rate"], TIERS["foundation"]["rate"]]
+    levels = [TIERS[k]["min_level"] for k in ("gambling", "strawman", "shell", "foundation")]
+    ok = (all(a < b for a, b in zip(chain[:2], chain[1:3])) and chain[2] <= chain[3] < chain[4] < chain[5]
+          and 0 <= g["rate_min"] <= g["rate_max"] <= 1 and levels == sorted(levels)
+          and all(lv <= PRF["level_max"] for lv in levels))
+    return ok, "Kurse " + " < ".join(f"{c:.2f}" for c in chain)
+
+
+def inv_loan_shark():
+    k = P["loan_shark"]
+    ok = (loan_shark_eligible(1, 0, 0, 0, False) and not loan_shark_eligible(2, 0, 0, 0, False)
+          and not loan_shark_eligible(1, 1, 0, 0, False) and not loan_shark_eligible(1, 0, k["max_assets"], 0, False)
+          and not loan_shark_eligible(1, 0, 0, 0, True))
+    total, outstanding, steps = 0, round_half_up(k["amount"] * k["repay_factor"]), 0
+    while outstanding > 0 and steps < 10_000:
+        res = loan_shark_repay(50_000, outstanding)
+        outstanding, total, steps = res["outstanding"], total + res["repay"], steps + 1
+    ok = ok and outstanding == 0 and total == round_half_up(k["amount"] * k["repay_factor"])
+    return ok, f"Bedingungen greifen, Tilgung exakt in {steps} Verkäufen à 500 €"
 
 
 def inv_unlocks_reachable():
@@ -1453,6 +1582,8 @@ INVARIANTS = {
     "INV-07 Kampfwahrscheinlichkeit": inv_combat_range,
     "INV-08 Monte-Carlo-Markt": inv_monte_carlo,
     "INV-09 Strohmann-Gebühr": inv_strawman_expensive,
+    "INV-16 Waschstufen-Progression": inv_tier_progression,
+    "INV-17 Kredithai": inv_loan_shark,
     "INV-10 Freischaltungen": inv_unlocks_reachable,
     "INV-11 Weltraumroute": inv_space_route,
     "INV-12 Beute-Tageslimit": inv_loot_cap,

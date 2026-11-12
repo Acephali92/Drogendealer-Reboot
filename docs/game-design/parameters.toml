@@ -337,7 +337,6 @@ segment_km = 100                  # Kontrollsegment
 control_base = 0.02               # Grundwahrscheinlichkeit pro Segment
 control_segment_max = 0.5
 cargo_heat_half = 50.0            # Halbwertsladung für g(Ladung)
-fine_rate = 0.20                  # Strafe in Anteil des Ladungs-Basiswerts
 heat_on_bust = 30.0
 bribe_cost_rate = 0.5             # Bestechung kostet 50 % · (1 + Polizei) des Basiswerts
 bribe_base_success = 0.6
@@ -345,7 +344,7 @@ bribe_police_penalty = 0.5
 bribe_success_min = 0.05
 bribe_success_max = 0.9
 control_decision_timeout_ticks = 3 # danach automatisch "Kooperieren"
-debt_repayment_rate = 0.5         # Anteil künftiger Verkaufserlöse zur Schuldtilgung
+debt_repayment_rate = 0.5         # Anteil künftiger Verkaufserlöse zur Tilgung von Schulden (z. B. aus F-ML-06)
 vehicle_resale_rate = 0.6
 
 [vehicles.kleinwagen]
@@ -598,9 +597,56 @@ lookback_ticks = 144
 penalty_fine_rate = 0.5
 closure_ticks = 144
 heat_on_detection = 40.0
-strawman_fee = 0.30
-strawman_daily_cap = 1_000_000    # 10 000 € pro Tag
 
+
+# Waschstufen (ADR-023, F-ML-07/08). rate = Anteil, der auf dem Bankkonto ankommt.
+# Freischaltung über das Level im Feld Finanzen; W2 (eigene Betriebe) nutzt businesses.<id>.wash_fee.
+[laundering.tiers.gambling]
+name = "Spielhölle Zum Goldenen Zufall"
+tier = 0
+min_level = 0
+rate_min = 0.40                   # Kurs je Vorgang gleichverteilt in [rate_min, rate_max]
+rate_max = 1.00
+daily_cap_base = 200_000          # 2 000 € pro Tag
+daily_cap_per_level = 100_000     # + 1 000 € je Finanzen-Level
+
+[laundering.tiers.strawman]
+name = "Cousin Kalle"
+tier = 1
+min_level = 2
+rate = 0.75
+daily_cap = 1_000_000             # 10 000 € pro Tag
+
+[laundering.tiers.shell]
+name = "Briefkasten-GmbH auf dem Steuerfrei-Atoll"
+tier = 3
+min_level = 10
+rate = 0.92
+min_amount = 10_000_000           # 100 000 € je Vorgang
+daily_cap = 100_000_000           # 1 Mio. € pro Tag
+
+[laundering.tiers.foundation]
+name = "Stiftung Sonnenschein (Insel Diskretistan)"
+tier = 4
+min_level = 15
+rate = 0.95
+min_amount = 100_000_000          # 1 Mio. € je Vorgang
+daily_cap = 1_000_000_000         # 10 Mio. € pro Tag
+papers_name = "Diskretistan-Papers"
+papers_probability_per_day = 0.002
+papers_lookback_ticks = 4_320     # 30 Tage
+papers_confiscation_rate = 0.25
+papers_heat = 40.0
+
+# Kredithai (Notkredit für gestrandete Spieler, F-ML-10)
+[loan_shark]
+name = "Onkel Kredit-Klaus"
+amount = 10_000_000               # 100 000 €, ausgezahlt als Schwarzgeld
+max_assets = 200_000              # nur wenn Schwarz- + Weißgeld unter 2 000 €
+max_vehicles = 1                  # alle Fahrzeuge bis auf eins verkauft
+max_weapons = 0                   # alle Waffen verkauft
+repayment_rate = 0.5              # Anteil jedes Verkaufserlöses zur Tilgung
+repay_factor = 1.0                # Rückzahlung = amount · repay_factor (Aufschlag: Kalibrierung Agent 5)
 # -----------------------------------------------------------------------------
 # Immobilien / Betriebe
 # -----------------------------------------------------------------------------
@@ -852,7 +898,8 @@ ships = "ships/_fallback.svg"
 "combat.loot_fence_rate" = [0.0, 0.5]
 "clans.tax_max" = [0.0, 0.25]
 "laundering.risk_base" = [0.0, 0.01]
-"laundering.strawman_fee" = [0.1, 0.5]
+"laundering.tiers.strawman.rate" = [0.5, 0.9]
+"laundering.tiers.gambling.rate_min" = [0.0, 1.0]
 "real_estate.upgrade_cost_factor" = [0.05, 1.0]
 "space.piracy_base" = [0.0, 0.2]
 "npc.trader_intensity" = [0.0, 2.0]

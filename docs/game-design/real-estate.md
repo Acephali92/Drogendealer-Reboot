@@ -31,7 +31,7 @@ Unterhalt und Risiko modelliert.
 | Autowerkstatt | 200 000 € | 3 500 | 2 000 | 18 % | 0,0002 | Versteck +0,10 für eigene Fahrzeuge | – |
 | Spielhalle | 300 000 € | 6 000 | 3 200 | 10 % | 0,0003 | beste Waschgebühr | Finanzen L3 |
 | Bordell | 500 000 € | 10 000 | 5 500 | 12 % | 0,0005 | höchster Umsatz | Finanzen L5 |
-| Lagerhaus | 80 000 € | 0 | 300 | – | 0,0001 | 5 000 Volumen Lager in der Stadt | – |
+| Lagerhaus | 80 000 € | 0 | 300 | – | 0,0001 | 5 000 VE Lager in der Stadt, nur Ware (kein Bargeld, ADR-023) | – |
 | Plantage | 120 000 € | 0 | 600 | – | 0,0006 | produziert Grünzeug 4,0/Tick | Produktion L1 |
 | Labor | 250 000 € | 0 | 1 500 | – | 0,0008 | produziert Turboflocken **oder** Grinsepillen 3,0/Tick | Produktion L3 |
 

@@ -75,6 +75,9 @@ Freischaltungen kombinieren Level **und** Kapital (Kaufpreis) – Kapital allein
 | Labor | Produktion ≥ 3 | 250 000 € Weißgeld | `unlocks.labor.level` |
 | Spielhalle | Finanzen ≥ 3 | 300 000 € Weißgeld | `unlocks.spielhalle.level` |
 | Bordell | Finanzen ≥ 5 | 500 000 € Weißgeld | `unlocks.bordell.level` |
+| Waschstufe W1 „Cousin Kalle“ | Finanzen ≥ 2 | – | `laundering.tiers.strawman.min_level` |
+| Waschstufe W3 Scheinfirma | Finanzen ≥ 10 | Mindestbetrag 100 000 € | `laundering.tiers.shell.min_level` |
+| Waschstufe W4 Stiftung | Finanzen ≥ 15 | Mindestbetrag 1 Mio. € | `laundering.tiers.foundation.min_level` |
 | Clan gründen | Summe aller Level ≥ 15 | 50 000 € Weißgeld | `unlocks.clan_gruendung.level_sum` |
 | Weltraum | Schmuggel ≥ 10 | Nettovermögen ≥ 5 Mio. €, Raumhafen | `unlocks.weltraum.networth` |
 

@@ -42,7 +42,6 @@ Versteck um `businesses.autowerkstatt.hide_bonus` = 0,10.
 | $c_0$ | `travel.control_base` | 0,02 | Grundwahrscheinlichkeit je Segment |
 | $p_{seg,max}$ | `travel.control_segment_max` | 0,5 | Obergrenze je Segment |
 | $hv_{1/2}$ | `travel.cargo_heat_half` | 50 | Ladungsheat, bei dem $g = 1{,}5$ |
-| $r_{fine}$ | `travel.fine_rate` | 0,20 | Strafe relativ zum Basiswert |
 | $\Delta H_{bust}$ | `travel.heat_on_bust` | 30 | Heat in der Zielstadt nach Erwischtwerden |
 | $r_{bribe}$ | `travel.bribe_cost_rate` | 0,5 | Bestechungskosten |
 | – | `travel.bribe_base_success`, `travel.bribe_police_penalty` | 0,6 / 0,5 | Bestechungschance |
@@ -99,19 +98,25 @@ n = \lceil d / d_{seg} \rceil, \qquad p_{Reise} = 1 - (1 - p_{seg})^n
 - Bei Abfahrt wird für jedes Segment $j$ mit $U(\text{seed}, t_{Abfahrt}, \texttt{trip/<id>}, j) < p_{seg}$
   gewürfelt; die **erste** Kontrolle findet beim Tick $t_{Abfahrt} + \lceil T \cdot j / n \rceil$ statt.
 
-**F-TRV-06 – Folgen einer Kontrolle**
+**F-TRV-06 – Folgen einer Kontrolle (ADR-023)**
+
+Eine Kontrolle **beschlagnahmt alles Mitgeführte**: alle Waren im Inventar (Rucksack und Fahrzeug) und das
+**gesamte mitgeführte Bargeld** (Schwarzgeld $B$). Es gibt **keine zusätzliche Strafe und keine Schuld**.
+Nicht betroffen sind das Bankkonto (Weißgeld), Lagerhaus-Bestände, Betriebe und das Fahrzeug selbst.
 
 Basiswert der Ladung $V = \sum q_i \cdot P_{base,i}$. Der Spieler wählt:
 
-| Option | Kosten | Erfolg |
-|---|---|---|
-| Bestechen | $\lceil r_{bribe} \cdot V \cdot (1 + \bar\pi) \rceil$ (Schwarzgeld, sofort fällig) | $p_b = \operatorname{clamp}(0{,}6 - 0{,}5\bar\pi + 0{,}015\,L_{Schmuggel},\; 0{,}05,\; 0{,}9)$ |
-| Kooperieren | gesamte illegale Ladung beschlagnahmt + Strafe $\lceil 0{,}2 \cdot V \rceil$ | – |
+| Option | Kosten | Erfolg | Folge bei Misserfolg |
+|---|---|---|---|
+| Bestechen (nur wenn $B \ge$ Kosten) | $C_b = \lceil r_{bribe} \cdot V \cdot (1 + \bar\pi) \rceil$ aus dem mitgeführten Bargeld | $p_b = \operatorname{clamp}(0{,}6 - 0{,}5\bar\pi + 0{,}015\,L_{Schmuggel},\; 0{,}05,\; 0{,}9)$ | Beschlagnahme von Ladung und restlichem Bargeld $B - C_b$; $C_b$ ist ohnehin weg |
+| Kooperieren | – | – | Beschlagnahme von Ladung und Bargeld $B$ |
 
-Misslingt die Bestechung, ist das Bestechungsgeld verloren **und** es gelten die Folgen von „Kooperieren“.
-In jedem Fall mit Beschlagnahme: $H_{Ziel} \mathrel{+}= 30$. Die Reise wird fortgesetzt.
-Reicht das Bargeld nicht für die Strafe, wird der Rest vom Weißgeld abgebucht; danach entsteht eine
-Schuld, die künftige Verkaufserlöse zu `travel.debt_repayment_rate` = 50 % tilgt.
+- Gelingt die Bestechung, behält der Spieler Ladung und $B - C_b$.
+- Bei jeder Beschlagnahme: $H_{Ziel} \mathrel{+}= 30$. Die Reise wird fortgesetzt (mit leerem Laderaum).
+- Bestechung ist nur aus **mitgeführtem** Bargeld möglich, nicht vom Bankkonto.
+- Beschlagnahmtes Geld und beschlagnahmte Ware verlassen das Spiel (Geldsenke) und werden im Journal festgehalten.
+- Ausweg nach einer Beschlagnahme: Das Bankkonto darf für den Wareneinkauf genutzt werden ([trade.md](trade.md)).
+  Wer gar nichts mehr hat, kann den Kredithai nutzen (F-ML-10).
 
 ## 5. Ablauf
 
@@ -159,12 +164,16 @@ Transporter (Versteck 0), Heat in Containerdam 10, Schmuggel-Level 4, $d = 820$ 
 **EX-TRV-03 – Folgen einer Kontrolle auf dieser Route**
 
 - Basiswert $V = 200 \cdot 8000 =$ **1 600 000 ct**
-- Strafe bei Kooperation: **320 000 ct** (+ Verlust der Ladung)
 - Bestechung: $\lceil 0{,}5 \cdot 1\,600\,000 \cdot 1{,}625 \rceil =$ **1 300 000 ct**,
   Erfolg $0{,}6 - 0{,}3125 + 0{,}06 =$ **0,3475**
+- Spieler mit 5 000 € Bargeld: Bestechung **nicht möglich** (False). Er verliert die Ladung und
+  **500 000 ct** Bargeld, ohne weitere Strafe.
+- Spieler mit 20 000 € Bargeld: Bestechung **möglich** (True). Gelingt sie, bleiben **700 000 ct** Bargeld
+  und die Ladung; misslingt sie, ist alles weg.
 
 Bestechung lohnt sich hier kaum – sie wird erst mit höherem Schmuggel-Level und in Städten mit schwacher
-Polizei attraktiv.
+Polizei attraktiv. Wer mit viel Bargeld reist, riskiert es komplett; deshalb lohnt das Waschen vor der Fahrt
+([money-laundering.md](money-laundering.md)).
 
 **EX-TRV-04 – Wirtschaftlichkeit der Route (mit EX-TRD-01/02)**
 
@@ -175,7 +184,7 @@ Polizei attraktiv.
 | Treibstoff $\lceil 820 \cdot 10/100 \cdot 200 \rceil$ | **−16 400 ct** |
 | Reisezeit $\lceil 820/85 \cdot 6 \rceil$ | **58 Ticks** (9,7 h) |
 | Gewinn ohne Kontrolle | **1 600 069 ct** |
-| Erwartungswert $(1-p)R - C - C_{fuel} - p \cdot \text{Strafe}$ | **1 176 831 ct** |
+| Erwartungswert $(1-p)R - C - C_{fuel} - p \cdot B$ bei $B$ = 3 000 € mitgeführtem Bargeld | **1 179 594 ct** |
 
 ## 8. Balancing-Ziele & Exploit-Analyse
 
