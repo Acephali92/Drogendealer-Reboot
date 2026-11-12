@@ -9,6 +9,7 @@ import type { GameParameters } from './domain/index.js';
 import authPlugin from './plugins/auth.js';
 import errorsPlugin from './plugins/errors.js';
 import healthRoutes from './modules/health/health.routes.js';
+import imageRoutes from './modules/images/images.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import playerRoutes from './modules/player/player.routes.js';
 import accountRoutes from './modules/account/account.routes.js';
@@ -69,6 +70,7 @@ export async function buildApp(env: Env, options: BuildAppOptions = {}): Promise
   await app.register(
     async (api) => {
       await api.register(healthRoutes);
+      await api.register(imageRoutes);
       await api.register(authRoutes, {
         prefix: '/auth',
         refreshTokenTtlDays: env.REFRESH_TOKEN_TTL_DAYS,
