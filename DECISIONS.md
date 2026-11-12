@@ -218,6 +218,11 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   5. **Progression:** Mit steigendem Level werden die Waschmethoden **stabiler und lukrativer**. Am Ende stehen Methoden für Superreiche: Offshore-Enthüllungen à la „Panama Papers“, Scheinfirmen in Steuerparadiesen, Stiftungen.
   6. **Darstellung (ADR-013):** satirisch überzeichnet, mit fiktiven Namen für Steueroasen, Firmen und Enthüllungen, keine realen Personen oder Firmen. Rein spielmechanisch abstrahiert, keine Anleitung zu realer Geldwäsche; das Rotlicht-Gewerbe bleibt wie bisher eine abstrakte Wirtschaftseinheit.
   7. **Zusammenarbeit:** Agent 2 (Geldwäsche, Kontrollen) und Agent 5 (Wirtschaft, Progression) erarbeiten die Regeln **gemeinsam** (ADR-022). Ziel ist ein ansprechender Spielfortschritt trotz Totalbeschlagnahme. Agent 5 weist per Simulation nach, dass Durchschnittsspieler nicht in Sackgassen geraten.
+- **Nachtrag 2026-11-12 (Produktentscheidungen zu T-120, vom Product Owner beantwortet):**
+  1. **Keine Zusatzstrafe:** Bei einer Kontrolle gibt es nur die Beschlagnahme. Die bisherige Strafe (20 % des Ladungswerts, Rest als Schuld) entfällt.
+  2. **Kein Geld-Versteck:** Im Lager bzw. in Immobilien ist nur Ware sicher. Schwarzgeld ist nur mitgeführt (gefährdet) oder gewaschen auf dem Bankkonto (sicher).
+  3. **Notkredit nur als letzter Ausweg:** Solange der Spieler noch Waffen oder Fahrzeuge besitzt, die er verkaufen kann, gibt es keinen Notkredit. Erst danach gibt es einen kleinen Notkredit (Vorschlag Agent 5: 1.000 €, Tilgung mit 50 % der Verkaufserlöse, höchstens einmal pro Woche; endgültige Werte nach Simulation in `parameters.toml`). Voraussetzung: Waffen und Fahrzeuge lassen sich zurückverkaufen (Rückkaufpreis legt Agent 5 fest, Exploit-Prüfung E-08).
+  4. **Kontrollen nur auf Reisen.** Überfälle durch Spieler und NPC-Banden folgen ihren eigenen, gedeckelten Regeln.
 - **Konsequenzen:** `money-laundering.md`, die Kontrollregeln und `parameters.toml` werden überarbeitet (T-120); die Simulation bekommt ein neues Szenario mit Totalbeschlagnahme und Wäsche-Progression. Agent 3 trennt im Datenmodell Bargeld (schwarz) und Bankkonto (weiß) und journalisiert jede Wäsche und jede Beschlagnahme (ADR-010). Agent 4 zeigt beide Geldarten und das Kontrollrisiko deutlich an.
 
 ---
