@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { withImage, type GameParameters } from '../../domain/index.js';
 import { citySummarySelect } from '../world/world.selects.js';
 
 /**
@@ -6,7 +7,7 @@ import { citySummarySelect } from '../world/world.selects.js';
  * Note: arrival is not resolved here yet (that belongs to the travel logic), so a travel
  * whose arrivesAt lies in the past is still returned with status IN_PROGRESS.
  */
-export async function getCurrentTravel(prisma: PrismaClient, playerId: string) {
+export async function getCurrentTravel(prisma: PrismaClient, params: GameParameters, playerId: string) {
   const travel = await prisma.travel.findFirst({
     where: { playerId, status: 'IN_PROGRESS' },
     orderBy: { departedAt: 'desc' },
@@ -20,5 +21,9 @@ export async function getCurrentTravel(prisma: PrismaClient, playerId: string) {
       vehicle: { select: { id: true, vehicleType: { select: { slug: true, name: true } } } },
     },
   });
-  return { travel };
+  if (!travel) return { travel: null };
+  const vehicle = travel.vehicle
+    ? { ...travel.vehicle, vehicleType: withImage(params, 'vehicles', travel.vehicle.vehicleType) }
+    : null;
+  return { travel: { ...travel, vehicle } };
 }
