@@ -62,15 +62,16 @@ Gründungsvoraussetzung: Summe aller fünf Level ≥ 15 (`unlocks.clan_gruendung
 
 Die API verwendet ausschließlich diese Werte aus `clans.ranks` (Reihenfolge = Hierarchie, höchster zuerst):
 
-| Schlüssel | Anzeige | Übergangs-Mapping vom aktuellen Backend |
-|---|---|---|
-| `PATE` | Pate | `LEADER` |
-| `CONSIGLIERE` | Consigliere | – (fehlt im Backend, muss ergänzt werden) |
-| `CAPO` | Capo | `OFFICER` |
-| `SOLDAT` | Soldat | `MEMBER` |
-| `MITLAEUFER` | Mitläufer | – (fehlt im Backend, muss ergänzt werden) |
+| Schlüssel (API, ADR-021) | Anzeige |
+|---|---|
+| `GODFATHER` | Pate |
+| `CONSIGLIERE` | Consigliere |
+| `CAPO` | Capo |
+| `SOLDIER` | Soldat |
+| `ASSOCIATE` | Mitläufer |
 
-Das Mapping ist nur eine Übergangslösung; Ziel ist, dass Backend und Frontend die fünf Schlüssel direkt nutzen.
+Technische Werte sind englisch (ADR-021), die Oberfläche zeigt nur die deutschen Bezeichnungen. In diesem
+Dokument stehen im Fließtext die deutschen Namen, in Parametern und Formeln die Schlüssel.
 
 Neue Mitglieder starten als **Mitläufer** (Probezeit `clans.probation_ticks` = 144 Ticks), danach kann ein Capo sie zum Soldaten machen.
 Einen neuen Paten bestimmt der Clan per **Wahl** (ADR-018, F-CLN-08). Eine Wahl wird ausgelöst, wenn der Pate
@@ -150,8 +151,8 @@ n_{Capo} \le \lceil m / 8 \rceil, \qquad \text{Auszahlung}_{Capo,Tag} \le \lfloo
 | Regel | Festlegung | Schlüssel |
 |---|---|---|
 | Ein einziges Mitglied | wird sofort Pate, keine Wahl | – |
-| Wahlberechtigt | Rang ≥ SOLDAT (Mitläufer nicht) | `clans.election_voter_min_rank` |
-| Wählbar | Rang ≥ CAPO **und** ≥ 1 008 Ticks Mitgliedschaft; gibt es niemanden: jeder ab SOLDAT; sonst alle | `clans.election_candidate_min_rank`, `clans.election_candidate_min_tenure_ticks` |
+| Wahlberechtigt | Rang ≥ SOLDIER (Mitläufer nicht) | `clans.election_voter_min_rank` |
+| Wählbar | Rang ≥ CAPO **und** ≥ 1 008 Ticks Mitgliedschaft; gibt es niemanden: jeder ab SOLDIER; sonst alle | `clans.election_candidate_min_rank`, `clans.election_candidate_min_tenure_ticks` |
 | Nicht wählbar | ein per Misstrauensvotum abgesetzter Pate (in genau dieser Wahl), außer er ist der Letzte | – |
 | Dauer | 72 Ticks (12 h); jede wahlberechtigte Person hat eine Stimme, Selbstwahl erlaubt, Stimme änderbar bis Ende | `clans.election_duration_ticks` |
 | Sieger | meiste gültige Stimmen (einfache Mehrheit der abgegebenen Stimmen) | – |
@@ -163,7 +164,7 @@ Formal, mit Kandidatenmenge $\mathcal{K}$ und Stimmen $v(c)$:
 \text{Pate} = \operatorname*{arg\,min}_{c \in \mathcal{K}} \big(-v(c),\; \text{Rangindex}(c),\; -\text{Mitgliedschaft}(c),\; \text{ID}(c)\big)
 ```
 
-(lexikografischer Vergleich, Rangindex 0 = PATE … 4 = MITLAEUFER). Das Ergebnis ist immer eindeutig (INV-13).
+(lexikografischer Vergleich, Rangindex 0 = GODFATHER … 4 = ASSOCIATE). Das Ergebnis ist immer eindeutig (INV-13).
 
 **Während der Wahl:** Auszahlungen aus der Clankasse gesperrt, Einzahlungen erlaubt, Steuern und Schutzgeld
 laufen weiter. Keine Kriegserklärung, kein Friedensschluss, keine Rangänderungen, keine Ausschlüsse. Laufende
@@ -201,7 +202,7 @@ tick:
 leave_clan(player):                  # auch bei Kontolöschung
     player.join_block_until = t + (1008 if clan at war else 432)
     if clan has no members left: dissolve(clan, payout = False)   # Kasse verfällt
-    elif player was PATE: start_election(clan)                    # F-CLN-08
+    elif player was GODFATHER: start_election(clan)                    # F-CLN-08
 
 start_election(clan):
     if len(clan.members) == 1: make_pate(the member); return

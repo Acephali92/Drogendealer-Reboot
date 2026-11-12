@@ -68,9 +68,9 @@ Freischaltungen kombinieren Level **und** Kapital (Kaufpreis) – Kapital allein
 | Freischaltung | Bedingung Level | Weitere Bedingung | Schlüssel |
 |---|---|---|---|
 | LKW mit Schmuggelversteck | Schmuggel ≥ 5 | Kaufpreis 90 000 € | `unlocks.lkw.level` |
-| Maschinenpistole | Gewalt ≥ 5 | 15 000 € | `unlocks.mp.level` |
-| Sturmgewehr | Gewalt ≥ 10 | 40 000 € | `unlocks.sturmgewehr.level` |
-| Profi-Crew | Gewalt ≥ 8 | 5 000 € je Person | `unlocks.profi.level` |
+| Rattermaschine (`mp`) | Gewalt ≥ 5 | 15 000 € | `unlocks.mp.level` |
+| Dauerfeuer 3000 (`sturmgewehr`) | Gewalt ≥ 10 | 40 000 € | `unlocks.sturmgewehr.level` |
+| Crew „Herr Meier vom Inkasso“ (`profi`) | Gewalt ≥ 8 | 5 000 € je Person | `unlocks.profi.level` |
 | Plantage | Produktion ≥ 1 | 120 000 € Weißgeld | `unlocks.plantage.level` |
 | Labor | Produktion ≥ 3 | 250 000 € Weißgeld | `unlocks.labor.level` |
 | Spielhalle | Finanzen ≥ 3 | 300 000 € Weißgeld | `unlocks.spielhalle.level` |
@@ -78,7 +78,7 @@ Freischaltungen kombinieren Level **und** Kapital (Kaufpreis) – Kapital allein
 | Clan gründen | Summe aller Level ≥ 15 | 50 000 € Weißgeld | `unlocks.clan_gruendung.level_sum` |
 | Weltraum | Schmuggel ≥ 10 | Nettovermögen ≥ 5 Mio. €, Raumhafen | `unlocks.weltraum.networth` |
 
-Alles andere (Kleinwagen, Transporter, Waschsalon, Bar, Pistole …) ist nur eine Kapitalfrage.
+Alles andere (Kleinwagen, Transporter, Waschsalon, Bar, Taschenkanone …) ist nur eine Kapitalfrage.
 
 ## 4. Formeln
 

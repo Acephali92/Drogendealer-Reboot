@@ -527,7 +527,7 @@ def rank_at_least(rank: str, min_rank: str) -> bool:
 
 
 def election_candidates(members: list[dict]) -> list[dict]:
-    """F-CLN-08 (a): Wählbar ab CAPO mit Mindest-Mitgliedschaft; Fallback ab SOLDAT, dann alle.
+    """F-CLN-08 (a): Wählbar ab CAPO mit Mindest-Mitgliedschaft; Fallback ab SOLDIER, dann alle.
 
     Mitglieder mit excluded=True (abgesetzter Pate) sind nur wählbar, wenn sonst niemand übrig ist.
     """
@@ -1006,9 +1006,9 @@ CLAN_DEMO = [
     {"id": "A", "rank": "CONSIGLIERE", "tenure": 3_000},
     {"id": "B", "rank": "CAPO", "tenure": 2_000},
     {"id": "C", "rank": "CAPO", "tenure": 500},
-    {"id": "D", "rank": "SOLDAT", "tenure": 5_000},
-    {"id": "E", "rank": "SOLDAT", "tenure": 300},
-    {"id": "F", "rank": "MITLAEUFER", "tenure": 50},
+    {"id": "D", "rank": "SOLDIER", "tenure": 5_000},
+    {"id": "E", "rank": "SOLDIER", "tenure": 300},
+    {"id": "F", "rank": "ASSOCIATE", "tenure": 50},
 ]
 
 
@@ -1017,14 +1017,14 @@ def ex_cln_05():
             "majority": election_result(CLAN_DEMO, {"A": "B", "B": "B", "C": "A", "D": "A", "E": "B", "F": "A"}),
             "tie": election_result(CLAN_DEMO, {"A": "A", "B": "B"}),
             "no_votes": election_result(CLAN_DEMO, {}),
-            "single": election_result([{"id": "D", "rank": "SOLDAT", "tenure": 5_000}], {})}
+            "single": election_result([{"id": "D", "rank": "SOLDIER", "tenure": 5_000}], {})}
 
 
 def ex_cln_06():
-    big = [{"id": "P", "rank": "PATE", "tenure": 9_000}] + [
-        {"id": f"S{i:02d}", "rank": "SOLDAT", "tenure": 2_000} for i in range(14)]
-    small = [{"id": "P", "rank": "PATE", "tenure": 9_000}, {"id": "X", "rank": "CAPO", "tenure": 2_000},
-             {"id": "Y", "rank": "SOLDAT", "tenure": 2_000}, {"id": "Z", "rank": "SOLDAT", "tenure": 2_000}]
+    big = [{"id": "P", "rank": "GODFATHER", "tenure": 9_000}] + [
+        {"id": f"S{i:02d}", "rank": "SOLDIER", "tenure": 2_000} for i in range(14)]
+    small = [{"id": "P", "rank": "GODFATHER", "tenure": 9_000}, {"id": "X", "rank": "CAPO", "tenure": 2_000},
+             {"id": "Y", "rank": "SOLDIER", "tenure": 2_000}, {"id": "Z", "rank": "SOLDIER", "tenure": 2_000}]
     nine = no_confidence(big, "P", {f"S{i:02d}" for i in range(9)})
     ten = no_confidence(big, "P", {f"S{i:02d}" for i in range(10)})
     sm = no_confidence(small, "P", {"X", "Y"})
