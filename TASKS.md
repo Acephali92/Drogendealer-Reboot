@@ -38,12 +38,13 @@
 | T-110 | Frontend-Nacharbeiten aus PR #3: Schriften selbst hosten (ADR-015), Mock-Default `off` in Production, CI `frontend.yml`, `UI-GUIDE.md` | A4 | todo | T-006 |
 | T-111 | Production-Start verweigern, wenn `JWT_SECRET` dem Platzhalter aus `.env.example` entspricht | A3 | todo | T-004 |
 | T-112 | Interne Schlüssel (`city.berlin`, Warenschlüssel) nie in der UI anzeigen, nur `name` (ADR-013) | A3 + A4 | todo | T-003 |
-| T-114a | Parameter-Schema: `image` (optional) und `[images]` zulassen, damit T-113 das Backend nicht bricht (ADR-020) | A3 | todo | T-101 |
-| T-113 | `image`-Felder und `[images]`-Fallbacks in `parameters.toml`, Pfadprüfung in `verify.py` (ADR-020) | A2 | todo | T-114a |
+| T-114a | Parameter-Schema: `image` (optional) und `[images]` zulassen, damit T-113 das Backend nicht bricht (ADR-020) | A3 | done ([PR #20](https://github.com/Acephali92/Drogendealer-Reboot/pull/20), 320 Tests) | T-101 |
+| T-113 | `image`-Felder und `[images]`-Fallbacks in `parameters.toml`, Pfadprüfung in `verify.py` (ADR-020) | A2 | done ([PR #17](https://github.com/Acephali92/Drogendealer-Reboot/pull/17)) | T-114a |
 | T-114 | API liefert `image` für Waren, Fahrzeuge, Ausrüstung, Schiffe aus `parameters.toml` (ADR-020) | A3 | todo | T-113 |
 | T-115 | `GameImage`-Komponente mit Fallback-Kette, Kategorie-Platzhalter `_fallback.svg`, Mocks aus `parameters.toml` (ADR-020) | A4 | done ([PR #15](https://github.com/Acephali92/Drogendealer-Reboot/pull/15), 46 Tests) | – |
-| T-117 | Clan-Ränge im Game Design auf technische Werte `GODFATHER…ASSOCIATE` umstellen (ADR-021) | A2 | todo | – |
-| T-118 | Offene Fragen von A4 aus PR #13: Laderaum in Gramm oder Volumen, Kapazität ohne Fahrzeug, `durationSeconds`/`cost` an Verbindungen, Rechte-Matrix der Clan-Ränge | A2 → A3 | todo | – |
+| T-117 | Clan-Ränge im Game Design auf technische Werte `GODFATHER…ASSOCIATE` umstellen (ADR-021) | A2 | done (in #17/#20) | – |
+| T-118 | Offene Fragen von A4 aus PR #13 (Laderaum, Kapazität ohne Fahrzeug, Reisedauer/-kosten, Clan-Rechte) | A2 | done (PO-Entscheidung, siehe T-119) | – |
+| T-119 | Umsetzung der T-118-Antworten: Laderaum in Volumeneinheiten (`goods.<id>.volume`, Rucksack `player.backpack_capacity` = 60 VE + `vehicles.<id>.capacity`; API-Felder `unitVolume`/`capacity` statt `unitWeightG`/`capacityG`); Reisedauer/-kosten aus Formeln F-TRV-01..03 statt fester Werte pro Verbindung; Clan-Rechte-Matrix laut `docs/game-design/clans.md` §3.1 | A3 (API, Vertrag) → A4 (UI) | todo | T-101 |
 | T-116 | Bilder für Waren, Fahrzeuge, Waffen usw. einstellen (`frontend/public/images/`) | Product Owner | jederzeit | – |
 
 ## M2 – Reisen & Spielerfortschritt
