@@ -1,0 +1,278 @@
+# =============================================================================
+# Metadaten zum Parameterverzeichnis (Agent 5 – Game Balancing & Simulation)
+# =============================================================================
+# Enthält KEINE Werte. Werte stehen ausschließlich in docs/game-design/parameters.toml (Agent 2)
+# bzw. – für noch nicht beschlossene Vorschläge – in sim/proposals.toml.
+# `npm run sim -- registry` erzeugt daraus docs/balancing/BALANCING_PARAMETERS.md (Abschnitt 2).
+#
+# Felder: desc, unit, min, max (wenn nicht in [bounds] von parameters.toml), scope (Einflussbereich),
+#         deps (Abhängigkeiten), why (Begründung), owner (fachlich), interval (Aktualisierung), changed
+# =============================================================================
+
+["meta.tick_minutes"]
+desc = "Länge eines Server-Ticks"
+unit = "min"
+min = 1
+max = 60
+scope = "alle zeitabhängigen Raten"
+deps = "meta.ticks_per_day, alle *_ticks, reversion_rate"
+why = "10 min: Reisen dauern Minuten bis Stunden, Märkte reagieren spürbar innerhalb einer Sitzung"
+owner = "Agent 2 / Agent 1 (ADR-006)"
+interval = "fest"
+changed = "v0.1.0 (Agent 2)"
+
+["player.start_cash_black"]
+desc = "Startkapital (Schwarzgeld)"
+unit = "ct"
+min = 50_000
+max = 1_000_000
+scope = "Progression Phase I, erste Erfolgserlebnisse"
+deps = "goods.*.base_price, player.backpack_capacity, travel.train_price_per_km"
+why = "2 000 € reichen für eine volle Rucksackladung günstiger Ware plus Bahnticket (INV-04)"
+owner = "Agent 5"
+interval = "einmalig bei Registrierung"
+changed = "v0.1.0 (Agent 2)"
+
+["player.backpack_capacity"]
+desc = "Tragekapazität ohne Fahrzeug"
+unit = "Volumeneinheiten"
+min = 20
+max = 200
+scope = "Progression Phase I→II (Transport-Engpass), Bahnreisen"
+deps = "vehicles.*.capacity, goods.*.volume"
+why = "Begrenzt das Wachstum vor dem ersten Fahrzeug; macht den Kleinwagen zum ersten Ziel"
+owner = "Agent 5"
+interval = "fest"
+changed = "v0.1.0 (Agent 2)"
+
+["economy.elasticity"]
+desc = "ε: Preiselastizität bzgl. Knappheit"
+unit = "–"
+scope = "Preisspreizung zwischen Städten (P* ∝ (m_d/m_s)^ε), Slippage, Marktreaktion"
+deps = "city.*.supply/demand, trade.spread_base"
+why = "0,5: 25 % Bestandsentnahme hebt den Preis um ≈ 15 %; Spreizung Faktor 2–3 zwischen Erzeuger- und Verbraucherstädten"
+owner = "Agent 5"
+interval = "wirkt bei jedem Preis (Order sofort, Tick)"
+changed = "v0.1.0 (Agent 2)"
+
+["economy.wealth_price_exponent"]
+desc = "ω: Wohlstand hebt das Preisniveau"
+unit = "–"
+scope = "regionale Preisunterschiede"
+deps = "city.*.wealth"
+why = "0,3: reiche Städte zahlen spürbar, aber nicht dominant mehr"
+owner = "Agent 5"
+interval = "Tick"
+changed = "v0.1.0 (Agent 2)"
+
+["economy.cover_ticks"]
+desc = "Lagerreichweite im Gleichgewicht"
+unit = "Ticks"
+min = 36
+max = 1008
+scope = "Markttiefe (S_ref, S_target) → Slippage, Gewinnpool je Route"
+deps = "goods.*.consumption, city.*.pop"
+why = "144 = 1 Tag Nachfrage auf Lager: große Orders bewegen den Preis deutlich"
+owner = "Agent 5"
+interval = "Tick"
+changed = "v0.1.0 (Agent 2)"
+
+["economy.reversion_rate"]
+desc = "λ: Rückkehr des Bestands zum Ziel pro Tick"
+unit = "1/Tick"
+scope = "Erholung nach Spieler-Orders (T½), Routensättigung"
+deps = "meta.tick_minutes"
+why = "0,02 → T½ ≈ 34 Ticks (5,7 h): ein ausgebeuteter Markt erholt sich innerhalb eines Spieltags"
+owner = "Agent 5"
+interval = "Tick"
+changed = "v0.1.0 (Agent 2)"
+
+["economy.noise_rho"]
+desc = "ρ: Autokorrelation des Preisrauschens"
+unit = "–"
+scope = "Preisbewegung ohne Spieler"
+deps = "goods.*.volatility"
+why = "0,95: Trends über Stunden statt Zufallszittern; stationär σ/√(1−ρ²) ≈ 3,2 σ"
+owner = "Agent 5"
+interval = "Tick"
+changed = "v0.1.0 (Agent 2)"
+
+["economy.price_min_factor"]
+desc = "Preisuntergrenze relativ zu P_base"
+unit = "× P_base"
+scope = "Schutz vor Preisverfall (Überangebot)"
+deps = "economy.price_max_factor"
+why = "0,25: Dumping bleibt teuer, Preise fallen nie gegen null"
+owner = "Agent 5"
+interval = "jede Preisberechnung"
+changed = "v0.1.0 (Agent 2)"
+
+["economy.price_max_factor"]
+desc = "Preisobergrenze relativ zu P_base"
+unit = "× P_base"
+scope = "Schutz vor Preisexplosion (Knappheit, Cornering E-03)"
+deps = "economy.price_min_factor, INV-02"
+why = "4,0: Knappheit lohnt sich, aber ohne Ausreißer; Gleichgewichtspreise liegen nicht am Clamp (INV-02)"
+owner = "Agent 5"
+interval = "jede Preisberechnung"
+changed = "v0.1.0 (Agent 2)"
+
+["economy.min_stock"]
+desc = "Mindestbestand eines Marktes"
+unit = "Einheiten"
+min = 1
+max = 1
+scope = "Edge-Case Leerkauf"
+deps = "trade.max_trade_share"
+why = "Division durch null vermeiden"
+owner = "Agent 5"
+interval = "Tick/Order"
+changed = "v0.1.0 (Agent 2)"
+
+["cities.demand_wealth_exponent"]
+desc = "β: reiche Städte konsumieren mehr"
+unit = "–"
+min = 0
+max = 2
+scope = "Marktgröße und -tiefe je Stadt"
+deps = "city.*.wealth, city.*.pop"
+why = "1,0: Nachfrage proportional zur Kaufkraft"
+owner = "Agent 5"
+interval = "Tick"
+changed = "v0.1.0 (Agent 2)"
+
+["trade.spread_base"]
+desc = "Spanne zwischen Kauf- und Verkaufspreis"
+unit = "Anteil"
+scope = "Händlerpreise, Rund-Trip-Verlust (INV-03), Geldsenke"
+deps = "professions.handel_spread_reduction(_cap)"
+why = "10 %, mit Handel L20 4 %: sofortige Arbitrage verliert immer"
+owner = "Agent 5"
+interval = "jede Order"
+changed = "v0.1.0 (Agent 2)"
+
+["trade.max_trade_share"]
+desc = "Max. Anteil des Bestands je Order"
+unit = "Anteil"
+scope = "Cornering (E-03), Slippage"
+deps = "economy.min_stock"
+why = "90 %: Markt nie ganz leer"
+owner = "Agent 5"
+interval = "jede Order"
+changed = "v0.1.0 (Agent 2)"
+
+["heat.trade_heat_per_keur"]
+desc = "Heat je 1 000 € Handelsvolumen × Heat-Faktor der Ware"
+unit = "Heat/1 000 €"
+min = 0
+max = 5
+scope = "Risiko/Belohnung: Kontrollwahrscheinlichkeit"
+deps = "goods.*.heat, travel.control_base, heat.decay_base"
+why = "großer Umsatz in einer Stadt macht auffällig"
+owner = "Agent 2 (Kontrollen) / Agent 5 (Handel)"
+interval = "jede Order; Zerfall pro Tick"
+changed = "v0.1.0 (Agent 2)"
+
+["heat.decay_base"]
+desc = "Grundzerfall der Heat pro Tick"
+unit = "1/Tick"
+scope = "Erholung nach Kontrollen/Handel"
+deps = "heat.police_decay_damping, city.*.police"
+why = "≈ 1 Tag bis zur Halbierung in Städten mit mittlerer Polizei"
+owner = "Agent 2"
+interval = "Tick (lazy)"
+changed = "v0.1.0 (Agent 2)"
+
+["travel.control_base"]
+desc = "Grundwahrscheinlichkeit einer Kontrolle je 100-km-Segment"
+unit = "Wahrscheinlichkeit"
+scope = "Risiko/Belohnung, Verlustquote, Sackgassen"
+deps = "travel.segment_km, city.*.police, goods.*.heat, vehicles.*.hide"
+why = "2 % je Segment → ≈ 14 % je langer Fahrt mit voller Ladung (EX-TRV-02)"
+owner = "Agent 2"
+interval = "bei Abfahrt gewürfelt"
+changed = "v0.1.0 (Agent 2)"
+
+["travel.fine_rate"]
+desc = "Strafe als Anteil des Ladungs-Basiswerts"
+unit = "Anteil"
+min = 0
+max = 1
+scope = "Rückschläge, Geldsenke"
+deps = "travel.debt_repayment_rate"
+why = "zusätzlich zur Beschlagnahme; erzeugt bei leerem Konto Schulden"
+owner = "Agent 2"
+interval = "bei Kontrolle"
+changed = "v0.1.0 (Agent 2)"
+
+["travel.debt_repayment_rate"]
+desc = "Anteil künftiger Verkaufserlöse, der Schulden tilgt"
+unit = "Anteil"
+min = 0
+max = 1
+scope = "Rückschläge ohne Sackgasse"
+deps = "travel.fine_rate, safety_net.*"
+why = "50 %: Spieler bleibt handlungsfähig, Schuld verschwindet aber spürbar"
+owner = "Agent 2"
+interval = "bei jedem Verkauf"
+changed = "v0.1.0 (Agent 2)"
+
+["travel.vehicle_resale_rate"]
+desc = "Wiederverkaufswert von Fahrzeugen"
+unit = "Anteil des Kaufpreises"
+min = 0
+max = 1
+scope = "Erholung nach Totalverlust, Exploit E-08"
+deps = "vehicles.*.price"
+why = "60 %: Fahrzeuge sind Investition, kein Geldspeicher"
+owner = "Agent 2"
+interval = "bei Verkauf"
+changed = "v0.1.0 (Agent 2)"
+
+["travel.train_price_per_km"]
+desc = "Bahnticket je km"
+unit = "ct/km"
+min = 1
+max = 50
+scope = "Einstieg ohne Fahrzeug"
+deps = "player.backpack_capacity"
+why = "15 ct/km: lohnt sich nur mit voller Rucksackladung (INV-04)"
+owner = "Agent 2"
+interval = "bei Abfahrt"
+changed = "v0.1.0 (Agent 2)"
+
+["professions.xp_per_level_k"]
+desc = "k der Level-Kurve XP(L) = k · L²"
+unit = "XP"
+min = 10
+max = 1000
+scope = "Progression der Betätigungsfelder, Freischaltungen (LKW: Schmuggel L5)"
+deps = "professions.*_xp_*, unlocks.*"
+why = "quadratisch: frühe Level schnell, späte Level langsam"
+owner = "Agent 5 (Progression)"
+interval = "bei XP-Gewinn"
+changed = "v0.1.0 (Agent 2)"
+
+["professions.handel_spread_reduction"]
+desc = "Spread-Rabatt je Handel-Level"
+unit = "Anteil je Level"
+min = 0
+max = 0.05
+scope = "Belohnung für Spezialisierung, Marge"
+deps = "professions.handel_spread_reduction_cap, trade.spread_base"
+why = "3 %/Level, Deckel 60 % → Spread nie unter 4 % (INV-03)"
+owner = "Agent 5"
+interval = "jede Order"
+changed = "v0.1.0 (Agent 2)"
+
+["professions.handel_xp_per_eur"]
+desc = "Handels-XP je Euro Umsatz"
+unit = "XP/€"
+min = 0
+max = 0.1
+scope = "Progression Handel"
+deps = "professions.xp_per_level_k"
+why = "1 XP je 100 € Umsatz: L10 nach ≈ 1 Mio. € Umsatz"
+owner = "Agent 5"
+interval = "jede Order"
+changed = "v0.1.0 (Agent 2)"

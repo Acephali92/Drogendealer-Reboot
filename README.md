@@ -191,10 +191,10 @@ Bilder für Waren, Fahrzeuge, Waffen und mehr gehören nach [`frontend/public/im
 | [`backend/`](backend/README.md) | API-Server: Node.js, TypeScript, Fastify, Prisma, PostgreSQL | Agent 3 |
 | `frontend/` | Spieloberfläche: React, TypeScript, Vite | Agent 4 |
 | [`docs/game-design/`](docs/game-design/README.md) | Spielregeln, Formeln, `parameters.toml`, Prüfskript `tools/verify.py` | Agent 2 |
-| `docs/database/` | Datenmodell, Nachvollziehbarkeit | Agent 5 |
+| `docs/database/` | Datenmodell, Nachvollziehbarkeit | Agent 3 |
 | [`docs/api/`](docs/api/API-CONTRACT.md) | API-Vertrag | Agent 3 |
 | `docs/frontend/` | UI-Richtlinien | Agent 4 |
-| [`docs/balancing/`](docs/balancing/README.md), `sim/` | Balancing-Konzept, Simulation | Agent 6 |
+| [`docs/balancing/`](docs/balancing/README.md), `sim/` | Balancing, Simulation | Agent 5 |
 
 ## Projektdokumente
 

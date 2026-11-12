@@ -42,7 +42,7 @@
 
 ## M5 – Immobilien, Ereignisse, Ranglisten, Balancing
 - **Ziel:** Restliche Spielsysteme und eine ausgewogene Wirtschaft.
-- **Exit-Kriterien:** Simulationswerkzeug (Agent 6) zeigt stabile Wirtschaft über eine Saison; keine dominante Strategie laut Balancing-Bericht.
+- **Exit-Kriterien:** Simulationswerkzeug (Agent 5) zeigt stabile Wirtschaft über 365 Simulationstage (keine Saisons, ADR-016); keine dominante Strategie laut Balancing-Bericht.
 - **Abhängigkeiten:** M1 (Simulation kann früher beginnen), M4.
 
 ## M6 – Betrieb & Release
@@ -55,8 +55,8 @@
 ## Parallelisierung
 
 ```
-M0 ─► M1 (Backend + Agent 5 + Agent 2) ─► M2 ─► M3 ─► M4 ─► M5 ─► M6
+M0 ─► M1 (Agent 3 + Agent 2 + Agent 5) ─► M2 ─► M3 ─► M4 ─► M5 ─► M6
          │                                       ▲
          ├─► Frontend-Seiten gegen MSW (Agent 4) ─┘
-         └─► Simulation gegen Parameterdatei (Agent 6) ─► Balancing in M5
+         └─► Simulation gegen Parameterdatei (Agent 5) ─► Balancing in M5
 ```

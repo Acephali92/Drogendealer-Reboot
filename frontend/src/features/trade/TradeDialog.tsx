@@ -8,7 +8,7 @@ import { Money } from '@/components/ui/Money';
 import { NumberStepper } from '@/components/ui/NumberStepper';
 import { Tabs } from '@/components/ui/Tabs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { CommodityIcon } from '@/components/ui/CommodityIcon';
+import { CommodityImage } from '@/components/ui/GameImages';
 import { formatNumber, formatWeight, multiplyMoney, toCents } from '@/lib/money';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
@@ -20,7 +20,7 @@ interface Props {
   player: Player;
   owned: InventoryItem | undefined;
   cityId: string;
-  cargo: { used: number; capacity: number };
+  cargo: { used: number; capacity: number | null; free: number | null };
   onClose: () => void;
 }
 
@@ -44,21 +44,24 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
     unitPrice: unit,
     supply: entry.supply,
     owned: ownedQty,
-    freeG: cargo.capacity - cargo.used,
+    freeG: cargo.free,
     unitWeightG: c.unitWeightG,
   });
   const q = Math.min(qty, max);
   const total = multiplyMoney(unit, q);
   const weight = q * c.unitWeightG;
   const usedAfter = side === 'BUY' ? cargo.used + weight : cargo.used - weight;
-  const profit = side === 'SELL' && owned ? (toCents(entry.sellPrice) - toCents(owned.avgBuyPrice)) * BigInt(q) : null;
+  const profit =
+    side === 'SELL' && owned ? (toCents(entry.sellPrice) - toCents(owned.avgBuyPrice)) * BigInt(q) : null;
 
   const submit = () =>
     trade.mutate(
       { cityId, commodityId: c.id, side, quantity: q },
       {
         onSuccess: () => {
-          toast.success(t(side === 'BUY' ? 'trade.bought' : 'trade.sold', { qty: formatNumber(q), name: c.name }));
+          toast.success(
+            t(side === 'BUY' ? 'trade.bought' : 'trade.sold', { qty: formatNumber(q), name: c.name }),
+          );
           onClose();
         },
         onError: (e) => toast.error(errorMessage(e)),
@@ -69,7 +72,7 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
     <Modal open={!!entry} onClose={onClose} title={c.name}>
       <div className="space-y-5">
         <div className="flex items-center gap-3">
-          <CommodityIcon slug={c.slug} size={52} />
+          <CommodityImage commodity={c} size={52} />
           <div className="min-w-0 flex-1">
             <Tabs
               value={side}
@@ -90,12 +93,16 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
             <dt className="label">{side === 'BUY' ? t('trade.buyPrice') : t('trade.sellPrice')}</dt>
             <dd>
               <Money value={unit} className="text-lg font-semibold text-ink" />
-              <span className="ml-1 text-xs text-ink-faint">{t('trade.perUnit', { unit: formatWeight(c.unitWeightG) })}</span>
+              <span className="ml-1 text-xs text-ink-faint">
+                {t('trade.perUnit', { unit: formatWeight(c.unitWeightG) })}
+              </span>
             </dd>
           </div>
           <div>
             <dt className="label">{side === 'BUY' ? t('trade.available') : t('trade.owned')}</dt>
-            <dd className="num text-lg font-semibold text-ink">{formatNumber(side === 'BUY' ? entry.supply : ownedQty)}</dd>
+            <dd className="num text-lg font-semibold text-ink">
+              {formatNumber(side === 'BUY' ? entry.supply : ownedQty)}
+            </dd>
           </div>
         </dl>
 
@@ -113,7 +120,10 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
         <div className="space-y-2 rounded-xl bg-surface-2 p-4 ring-1 ring-line/10">
           <div className="flex items-center justify-between">
             <span className="text-sm text-ink-muted">{t('trade.total')}</span>
-            <Money value={total} className={side === 'BUY' ? 'text-xl font-bold text-ink' : 'text-xl font-bold text-neon'} />
+            <Money
+              value={total}
+              className={side === 'BUY' ? 'text-xl font-bold text-ink' : 'text-xl font-bold text-neon'}
+            />
           </div>
           {profit !== null && q > 0 && (
             <div className="flex items-center justify-between">
@@ -125,10 +135,15 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
             <div className="mb-1 flex justify-between text-xs text-ink-faint">
               <span>{t('stats.cargo')}</span>
               <span className="num">
-                {formatWeight(usedAfter)} / {formatWeight(cargo.capacity)}
+                {formatWeight(usedAfter)}
+                {cargo.capacity !== null
+                  ? ` / ${formatWeight(cargo.capacity)}`
+                  : ` · ${t('stats.noVehicle')}`}
               </span>
             </div>
-            <ProgressBar value={usedAfter / Math.max(1, cargo.capacity)} tone="auto" />
+            {cargo.capacity !== null && (
+              <ProgressBar value={usedAfter / Math.max(1, cargo.capacity)} tone="auto" />
+            )}
           </div>
         </div>
 

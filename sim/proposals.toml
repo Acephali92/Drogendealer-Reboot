@@ -1,0 +1,68 @@
+# =============================================================================
+# Vorschlagsparameter von Agent 5 (Game Balancing & Simulation) – NICHT verbindlich
+# =============================================================================
+# Diese Werte gehören zu Mechaniken, die Agent 5 in docs/balancing/ als [Design-Vorschlag]
+# spezifiziert (F-ECO-10…14, npc.*, safety_net.*). Sie werden hier nur für Simulations-
+# Varianten genutzt. Verbindlich werden sie erst per PR in docs/game-design/parameters.toml
+# (Datei von Agent 2, Abschnitte Wirtschaft/NPC in fachlicher Verantwortung von Agent 5).
+# Konventionen wie parameters.toml: Geld in Cent, Raten pro Tick, wenn nicht anders angegeben.
+# =============================================================================
+
+[meta]
+version = "0.1.0"
+status = "Vorschlag – nur Simulation"
+
+# -----------------------------------------------------------------------------
+# Wirtschaftliche Eigendynamik (GAME_ECONOMY.md §5)
+# -----------------------------------------------------------------------------
+[economy_ext]
+# F-ECO-10 Wohlstandszyklus: W_eff = W · (1 + a · sin(2π t / T + φ_Stadt))
+wealth_cycle_amplitude = 0.08          # ±8 % Kaufkraft
+wealth_cycle_period_days = 56          # 8 Wochen
+# F-ECO-12 Regionale Krise: Nachfrage aller Waren einer Stadt sinkt zeitweise
+crisis_probability_per_day = 0.004     # ≈ 1,5 Krisen pro Stadt und Jahr
+crisis_demand_mult = 0.7
+crisis_duration_days = [5, 14]
+# F-ECO-11 Regionale Kopplung: Anteil des Preisrauschens, der für eine Ware in allen Städten gleich ist
+regional_noise_share = 0.5
+# F-ECO-13 Angebotsreaktion (Überproduktion/Verknappung): m_sup folgt P/P* mit Verzögerung
+supply_response_rate = 0.0005          # pro Tick, × (P/P* − 1)
+supply_response_min = 0.7
+supply_response_max = 1.5
+# F-ECO-14 Wochenrhythmus ohne Reset: Freitag/Samstag mehr Nachfrage nach Partywaren
+weekend_demand_mult = 1.15
+weekend_goods = ["ecstasy", "speed", "lsd", "pilze"]
+
+# -----------------------------------------------------------------------------
+# NPC-Verhalten (NPC_BEHAVIOR.md)
+# -----------------------------------------------------------------------------
+[npc_ext]
+# Konsumentensegmente: Kundenbindung/Abwanderung
+consumer_satisfaction_rate = 0.0005    # pro Tick Annäherung an Zielwert
+consumer_scarcity_threshold = 0.5      # v = S/S_ref darunter gilt als „knapp“ (F-CTY-03)
+consumer_demand_min = 0.75             # Abwanderung höchstens −25 %
+consumer_demand_max = 1.10             # Kundenbindung höchstens +10 %
+# NPC-Händler: ersetzt durch F-NPC-01 (Agent 2, parameters.toml [npc])
+# Polizei als Akteur: Druck steigt mit Handelsvolumen in der Stadt
+police_pressure_per_keur_day = 0.00002 # +0,002 % Polizeistärke je 1 000 € Tagesvolumen
+police_pressure_max = 0.3              # höchstens +30 % Polizeistärke
+police_pressure_decay = 0.01           # pro Tick Rückgang Richtung 0
+
+# -----------------------------------------------------------------------------
+# Sicherheitsnetz gegen wirtschaftliche Sackgassen (PROGRESSION_MODEL.md §6)
+# -----------------------------------------------------------------------------
+[safety_net]
+start_loan_ct = 100_000                # 1 000 € Kredit, Tilgung über travel.debt_repayment_rate
+min_cash_threshold_ct = 20_000         # verfügbar, wenn Bargeld + Warenwert < 200 €
+cooldown_days = 7
+
+# -----------------------------------------------------------------------------
+# Progression und vermögensabhängige Senken (PROGRESSION_MODEL.md §7, T-505/T-508)
+# -----------------------------------------------------------------------------
+[progression]
+org_cost_rate_per_day = 0.005          # F-PRG-01: 0,5 % des Nettovermögens über der Schwelle, täglich
+org_cost_threshold_ct = 50_000_000     # ab 500 000 € Nettovermögen
+catchup_xp_bonus = 0.5                 # F-PRG-02: bis +50 % XP unter dem Server-Median (nicht simuliert)
+growth_ranking_min_base_ct = 5_000_000 # F-PRG-03: Untergrenze 50 000 € für Zuwachs-Ranglisten
+prestige_base_ct = 5_000_000           # F-PRG-04: erster Prestigekauf 50 000 €, Verdopplung je Kauf
+

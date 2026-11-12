@@ -27,6 +27,9 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-018 | Gemeinsames Clan-Guthaben, Wahl eines neuen Paten | Akzeptiert (Wahlverfahren durch Agent 2) | 2026-11-08 |
 | ADR-019 | Geld überall in Cent (ganzzahlig) | Akzeptiert | 2026-11-09 |
 | ADR-020 | Datengetriebene Spielbilder mit Fallback | Akzeptiert | 2026-11-09 |
+| ADR-021 | Technische Enum-Werte englisch, deutsche Namen nur zur Anzeige | Akzeptiert | 2026-11-09 |
+| ADR-022 | Team aus fünf Agenten; Spielregeln geteilt nach Systemen | Akzeptiert | 2026-11-09 |
+| ADR-023 | Polizeikontrolle beschlagnahmt alles Mitgeführte; Geldwäsche als Progressionssystem | Akzeptiert | 2026-11-12 |
 
 ---
 
@@ -141,7 +144,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   3. Gegen Inflation und Abhängen von Neulingen: Geldsenken, die mit dem Vermögen wachsen, und Aufhol-Mechaniken für neue Spieler (Ausgestaltung: Agent 2, Prüfung: Agent 6).
   4. Ranglisten zusätzlich für Zeiträume ohne Reset (z. B. „Aufsteiger der Woche/des Monats“), damit auch neue Spieler Ziele haben.
   5. NPC-Händler und NPC-Gegner als Ausgleich für eine kleine Spielerzahl werden von Agent 2 geprüft (Vorschlag N-1/N-2 von Agent 6). Ihre Stärke soll mit steigender Spielerzahl sinken; die Schwelle ist offen (PROJECT.md Q12).
-- **Nachtrag 2026-11-08 (Q12):** Der Product Owner hat gegenüber Agent 6 festgelegt: „Erst wenn genug Spieler regelmäßig Online sind um die Spielmechanik zu tragen.“ Umsetzung (Agent 6, `docs/balancing/balancing-concept.md` §2, R-4): Es gibt keine feste Spielerzahl. Die NPC-Intensität k (Start 1) sinkt erst, wenn Kennzahlen aus echten Spielern 14 Tage am Stück erfüllt sind: Routen-Konkurrenz, Zielverfügbarkeit ohne NPCs, Marktaktivität, gleichzeitig Online zur Abendspitze; „regelmäßig aktiv“ heißt Login an ≥ 4 von 7 Tagen. k sinkt dann um 0,1 pro Woche und steigt wieder, wenn die Kennzahlen 7 Tage verfehlt werden (Hysterese). Schwellenwerte sind Parameter in `parameters.toml`, nicht im Code.
+- **Nachtrag 2026-11-08 (Q12):** Der Product Owner hat gegenüber Agent 6 festgelegt: „Erst wenn genug Spieler regelmäßig Online sind um die Spielmechanik zu tragen.“ Umsetzung (Balancing-Agent, R-4; seit #19 in `docs/balancing/NPC_BEHAVIOR.md` §4): Es gibt keine feste Spielerzahl. Die NPC-Intensität k (Start 1) sinkt erst, wenn Kennzahlen aus echten Spielern 14 Tage am Stück erfüllt sind: Routen-Konkurrenz, Zielverfügbarkeit ohne NPCs, Marktaktivität, gleichzeitig Online zur Abendspitze; „regelmäßig aktiv“ heißt Login an ≥ 4 von 7 Tagen. k sinkt dann um 0,1 pro Woche und steigt wieder, wenn die Kennzahlen 7 Tage verfehlt werden (Hysterese). Schwellenwerte sind Parameter in `parameters.toml`, nicht im Code.
 - **Konsequenzen:** Ein einzelner VPS reicht vorerst (passt zu ADR-014). Journale wachsen dauerhaft, deshalb plant Agent 5 Partitionierung bzw. Archivierung (T-507). NPC-Logik läuft serverseitig im Tick und muss als reine Regelfunktion simulierbar sein (ADR-012). Jede Parameteränderung im Live-Betrieb wirkt auf eine bestehende Welt; sie braucht vorher einen Simulationslauf und ggf. eine Datenmigration.
 
 ## ADR-017 – Kontolöschung pseudonymisiert statt Journale zu löschen
@@ -181,7 +184,41 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   4. **API (Agent 3):** Endpunkte für Waren, Fahrzeuge, Ausrüstung und Schiffe liefern das Feld `image` (relativer Pfad oder `null`) aus `parameters.toml` mit aus (Teil von T-101). Bildpfade werden nicht in der Datenbank gespeichert.
   5. **Frontend (Agent 4):** eine zentrale Komponente (z. B. `GameImage`) lädt das Bild aus `${BASE_URL}images/<image>`. Fallback-Kette: `image` fehlt oder lädt nicht → Kategorie-Platzhalter aus `[images]` → eingebautes neutrales Symbol. Dazu `loading="lazy"`, festes Seitenverhältnis (kein Layout-Springen) und `alt` = Anzeigename (`name`), nie der Schlüssel (ADR-013). Im Mock-Modus kommen die Pfade aus derselben `parameters.toml` (beim Build eingelesen), damit Mock und Backend identisch sind.
   6. **Bildregeln:** WebP (bevorzugt), PNG oder SVG; quadratisch 512 × 512 px; höchstens 300 KB. Stil satirisch-comicartig (ADR-013): keine echten Markenlogos, keine realen Personen, keine realistischen Drogen- oder Konsumdarstellungen. Nur eigene oder passend lizenzierte Bilder.
+- **Nachtrag 2026-11-09 (Reihenfolge):** Das Backend validiert `parameters.toml` strikt und lehnt unbekannte Schlüssel ab (T-101). Deshalb zuerst T-114a: Agent 3 nimmt `image` (optional) und `[images]` ins Parameter-Schema auf. Erst danach trägt Agent 2 die Felder ein (T-113). Die Auslieferung über die API (T-114) folgt im Anschluss.
 - **Konsequenzen:** Neue Bilder brauchen keine Code-Änderung, nur Datei plus Eintrag in `parameters.toml`. Ohne Bilder sieht das Spiel dank Fallback trotzdem vollständig aus. Bild-PRs prüft Agent 1 auf Format, Größe, Stil und Rechte. Bilder werden von Caddy als statische Dateien ausgeliefert (ADR-014); ein späterer Wechsel auf ein CDN ändert nur den Basis-Pfad.
+
+## ADR-021 – Technische Enum-Werte englisch, deutsche Namen nur zur Anzeige
+- **Status:** Akzeptiert · **Datum:** 2026-11-09 · **Anlass:** Befund B-15 (Agent 3)
+- **Kontext:** Das Game Design (Agent 2) nennt die Clan-Ränge `PATE/CONSIGLIERE/CAPO/SOLDAT/MITLAEUFER` als verbindliche API-Werte. Datenbank-Enum, API-Vertrag und Frontend nutzen bereits `GODFATHER/CONSIGLIERE/CAPO/SOLDIER/ASSOCIATE`. Dasselbe Muster kann bei weiteren Aufzählungen (Status, Kontoarten …) auftreten.
+- **Entscheidung:**
+  1. Technische Werte in Datenbank, API und Code sind **englisch in Großbuchstaben** und bleiben stabil. Den API-Vertrag verantwortet Agent 3 (ADR-011).
+  2. Deutsche Bezeichnungen sind **Anzeigetexte** (Frontend-i18n bzw. `name`-Felder in `parameters.toml`), nie API-Werte.
+  3. Für Clan-Ränge gilt: `GODFATHER` = Pate, `CONSIGLIERE` = Consigliere, `CAPO` = Capo, `SOLDIER` = Soldat, `ASSOCIATE` = Mitläufer.
+  4. Das Game Design verwendet in Regeln und Parametern die technischen Werte, z. B. `clans.election_voter_min_rank = "SOLDIER"`, und führt die deutsche Bezeichnung als Erläuterung.
+- **Konsequenzen:** Agent 2 passt `clans.md` und die Rang-Parameter in `parameters.toml` an (T-117). Agent 3 prüft die Werte beim Laden der Parameter gegen den Enum. Keine Datenbankmigration nötig.
+
+## ADR-022 – Team aus fünf Agenten; Spielregeln geteilt nach Systemen
+- **Status:** Akzeptiert · **Datum:** 2026-11-09 · **Entschieden von:** Product Owner (gegenüber Agent 1 bestätigt)
+- **Kontext:** Bisher waren sechs Agenten geführt (5 = Database Architect, 6 = Balancing). Die Datenbank-Sitzung hatte kein Repository und hat nie geliefert; der Balancing-Agent arbeitet als „Agent 5“. Außerdem war offen, wer die Wirtschaftsregeln verantwortet.
+- **Entscheidung:**
+  1. **Fünf Agenten:** 1 Project Director, 2 Game Design, 3 Backend **inklusive Datenmodell**, 4 Frontend, 5 Game Balancing & Simulation. Die Rolle „Database Architect“ entfällt.
+  2. **Datenmodell:** Agent 3 entwirft, dokumentiert (`docs/database/`) und setzt um. ADR-010 gilt weiter (ein Prisma-Schema, Journale). Wo frühere ADRs (ADR-010, ADR-016 bis ADR-019) „Agent 5“ für Datenbankaufgaben nennen, ist jetzt Agent 3 gemeint. Wo sie „Agent 6“ nennen, ist der Balancing-Agent gemeint, also jetzt Agent 5.
+  3. **Spielregeln geteilt nach Systemen:** Agent 5 verantwortet fachlich Spielökonomie, Preise, Angebot/Nachfrage, Marktdynamik, Wirtschaftsereignisse, NPC-Marktverhalten, Progression und Simulation. Agent 2 verantwortet Kampf, Clans, Geldwäsche, Immobilien, Weltraum und Reisen/Kontrollen.
+  4. `docs/game-design/parameters.toml` und `verify.py` bleiben in Agent 2s Eigentum. Änderungen an den Abschnitten von Agent 5 bringt Agent 5 per PR ein, abgestimmt mit Agent 2. Bei Streit entscheidet Agent 1.
+- **Konsequenzen:** Die offenen Datenbank-Aufgaben (T-005, ADR-017-Pseudonymisierung, ADR-018-Clan-Kasse, B-9 bis B-15, T-507, T-605) liegen bei Agent 3. Die Datenbank-Sitzung wird nicht mehr genutzt. Systemübergreifende Regeln (z. B. Beschlagnahme bei Kontrollen beeinflusst die Wirtschaft) stimmen Agent 2 und Agent 5 gemeinsam ab.
+
+## ADR-023 – Polizeikontrolle beschlagnahmt alles Mitgeführte; Geldwäsche als Progressionssystem
+- **Status:** Akzeptiert · **Datum:** 2026-11-12 · **Entschieden von:** Product Owner (gegenüber Agent 1)
+- **Kontext:** Der Balancing-Agent hatte empfohlen, bei Kontrollen nur 50 % zu beschlagnahmen, weil Totalverlust in der Simulation Sackgassen erzeugt (`docs/balancing/GAME_BALANCING.md` §6). Der Product Owner will das Risiko bewusst hoch halten und stattdessen über Geldwäsche einen Ausweg und eine Progression schaffen.
+- **Entscheidung (Vorgaben des Product Owners):**
+  1. **Polizeikontrolle:** Beschlagnahmt werden **alles mitgeführte Bargeld (Schwarzgeld) und alle mitgeführten Drogen**. Die 50-%-Empfehlung ist damit abgelehnt. Nicht mitgeführte Werte (Bankkonto, Lager/Immobilien) sind nicht betroffen.
+  2. **Zwei Geldarten:** Bargeld = Schwarzgeld (mitgeführt, beschlagnahmbar). Bankkonto = gewaschenes Geld (sicher vor Kontrollen). Damit ist die Grundfrage von Befund B-9 entschieden.
+  3. **Sichern über legale Geschäfte:** Spieler sollen Geld in Geschäfte anlegen, aufsteigend vom kleinen Rotlicht-Einstieg bis zum Bordell. Erträge daraus gelten als gewaschen und landen auf dem Bankkonto.
+  4. **Bargeld jederzeit waschen:** Spieler können Bargeld jederzeit direkt waschen. Am Anfang geht das nur über **Glücksspiel**, mit stark schwankendem Umtauschkurs Schwarz → Weiß.
+  5. **Progression:** Mit steigendem Level werden die Waschmethoden **stabiler und lukrativer**. Am Ende stehen Methoden für Superreiche: Offshore-Enthüllungen à la „Panama Papers“, Scheinfirmen in Steuerparadiesen, Stiftungen.
+  6. **Darstellung (ADR-013):** satirisch überzeichnet, mit fiktiven Namen für Steueroasen, Firmen und Enthüllungen, keine realen Personen oder Firmen. Rein spielmechanisch abstrahiert, keine Anleitung zu realer Geldwäsche; das Rotlicht-Gewerbe bleibt wie bisher eine abstrakte Wirtschaftseinheit.
+  7. **Zusammenarbeit:** Agent 2 (Geldwäsche, Kontrollen) und Agent 5 (Wirtschaft, Progression) erarbeiten die Regeln **gemeinsam** (ADR-022). Ziel ist ein ansprechender Spielfortschritt trotz Totalbeschlagnahme. Agent 5 weist per Simulation nach, dass Durchschnittsspieler nicht in Sackgassen geraten.
+- **Konsequenzen:** `money-laundering.md`, die Kontrollregeln und `parameters.toml` werden überarbeitet (T-120); die Simulation bekommt ein neues Szenario mit Totalbeschlagnahme und Wäsche-Progression. Agent 3 trennt im Datenmodell Bargeld (schwarz) und Bankkonto (weiß) und journalisiert jede Wäsche und jede Beschlagnahme (ADR-010). Agent 4 zeigt beide Geldarten und das Kontrollrisiko deutlich an.
 
 ---
 

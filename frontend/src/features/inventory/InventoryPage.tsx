@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Crosshair, Package, Shield } from 'lucide-react';
+import { Crosshair, Package } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEquipment, useMarket } from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
@@ -10,7 +10,7 @@ import { Money } from '@/components/ui/Money';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { CommodityIcon } from '@/components/ui/CommodityIcon';
+import { CommodityImage, EquipmentImage } from '@/components/ui/GameImages';
 import { EmptyState, Skeleton } from '@/components/ui/Feedback';
 import { formatMoney, formatNumber, formatWeight, multiplyMoney, percentDelta } from '@/lib/money';
 import { cn } from '@/lib/cn';
@@ -24,7 +24,10 @@ export function InventoryPage() {
   const sellPrice = new Map((market.data ?? []).map((m) => [m.commodity.id, m.sellPrice]));
 
   const cost = items.reduce((s, i) => s + multiplyMoney(i.avgBuyPrice, i.quantity), 0n);
-  const value = items.reduce((s, i) => s + multiplyMoney(sellPrice.get(i.commodity.id) ?? i.avgBuyPrice, i.quantity), 0n);
+  const value = items.reduce(
+    (s, i) => s + multiplyMoney(sellPrice.get(i.commodity.id) ?? i.avgBuyPrice, i.quantity),
+    0n,
+  );
 
   return (
     <div className="space-y-6">
@@ -37,9 +40,12 @@ export function InventoryPage() {
           hint={
             cargo && (
               <div className="space-y-1">
-                <ProgressBar value={cargo.used / Math.max(1, cargo.capacity)} tone="auto" size="xs" />
+                {cargo.capacity !== null && (
+                  <ProgressBar value={cargo.used / Math.max(1, cargo.capacity)} tone="auto" size="xs" />
+                )}
                 <span className="num">
-                  {t('stats.freeCargo')}: {formatWeight(cargo.capacity - cargo.used)}
+                  {t('stats.freeCargo')}:{' '}
+                  {cargo.free !== null ? formatWeight(cargo.free) : t('stats.noVehicle')}
                 </span>
               </div>
             )
@@ -92,10 +98,12 @@ export function InventoryPage() {
                     <tr key={i.commodity.id} className="hover:bg-surface-2/60">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <CommodityIcon slug={i.commodity.slug} size={36} />
+                          <CommodityImage commodity={i.commodity} size={36} />
                           <div>
                             <p className="font-semibold text-ink">{i.commodity.name}</p>
-                            <p className="text-xs text-ink-faint">{formatWeight(i.quantity * i.commodity.unitWeightG)}</p>
+                            <p className="text-xs text-ink-faint">
+                              {formatWeight(i.quantity * i.commodity.unitWeightG)}
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -113,7 +121,10 @@ export function InventoryPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Money value={multiplyMoney(sp ?? i.avgBuyPrice, i.quantity)} className="font-semibold text-neon" />
+                        <Money
+                          value={multiplyMoney(sp ?? i.avgBuyPrice, i.quantity)}
+                          className="font-semibold text-neon"
+                        />
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link to={`/handel?ware=${i.commodity.slug}`}>
@@ -133,14 +144,17 @@ export function InventoryPage() {
                 return (
                   <li key={i.commodity.id}>
                     <Link to={`/handel?ware=${i.commodity.slug}`} className="flex items-center gap-3 p-4">
-                      <CommodityIcon slug={i.commodity.slug} size={40} />
+                      <CommodityImage commodity={i.commodity} size={40} />
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-ink">{i.commodity.name}</p>
                         <p className="num text-xs text-ink-muted">
                           {formatNumber(i.quantity)} · Ø {formatMoney(i.avgBuyPrice)}
                         </p>
                       </div>
-                      <Money value={multiplyMoney(sp ?? i.avgBuyPrice, i.quantity)} className="font-semibold text-neon" />
+                      <Money
+                        value={multiplyMoney(sp ?? i.avgBuyPrice, i.quantity)}
+                        className="font-semibold text-neon"
+                      />
                     </Link>
                   </li>
                 );
@@ -154,10 +168,11 @@ export function InventoryPage() {
         {equipment.data?.length ? (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {equipment.data.map((e) => (
-              <li key={e.id} className="flex items-center gap-3 rounded-xl bg-surface-2 p-3 ring-1 ring-line/10">
-                <span className="grid h-10 w-10 place-items-center rounded-lg bg-surface-3 text-brass">
-                  {e.equipmentType.slot === 'WEAPON' ? <Crosshair className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
-                </span>
+              <li
+                key={e.id}
+                className="flex items-center gap-3 rounded-xl bg-surface-2 p-3 ring-1 ring-line/10"
+              >
+                <EquipmentImage type={e.equipmentType} size={40} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-ink">{e.equipmentType.name}</p>
                   <p className="num text-xs text-ink-muted">
@@ -167,7 +182,9 @@ export function InventoryPage() {
                     · {formatWeight(e.equipmentType.weightG)}
                   </p>
                 </div>
-                <Badge tone={e.equipped ? 'brass' : 'neutral'}>{e.equipped ? t('inventory.equipped') : t('inventory.inStock')}</Badge>
+                <Badge tone={e.equipped ? 'brass' : 'neutral'}>
+                  {e.equipped ? t('inventory.equipped') : t('inventory.inStock')}
+                </Badge>
               </li>
             ))}
           </ul>

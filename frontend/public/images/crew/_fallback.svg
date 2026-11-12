@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Platzhalter: Crew">
+  <title>Platzhalter: Crew</title>
+  <defs>
+    <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+      <circle cx="4" cy="4" r="3.2" fill="#1b140c" opacity=".18"/>
+    </pattern>
+  </defs>
+  <circle cx="256" cy="256" r="236" fill="#ffb547" stroke="#1b140c" stroke-width="14"/>
+  <circle cx="256" cy="256" r="229" fill="url(#dots)"/>
+  <g stroke="#1b140c" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Schläger mit Hut und Sonnenbrille -->
+    <path d="M136 420 Q146 316 256 316 Q366 316 376 420" fill="#3a3a46"/>
+    <circle cx="256" cy="234" r="78" fill="#f0c9a0"/>
+    <path d="M166 186 H346 L326 168 Q312 120 256 120 Q200 120 186 168 Z" fill="#2b2b2b"/>
+    <path d="M150 190 H362" fill="none"/>
+    <path d="M196 228 H316 L306 254 Q290 268 268 254 L256 240 L244 254 Q222 268 206 254 Z" fill="#2b2b2b"/>
+    <path d="M226 290 Q256 280 286 292" fill="none" stroke-width="10"/>
+  </g>
+  <g transform="rotate(12 400 112)">
+    <rect x="344" y="62" width="112" height="100" rx="18" fill="#ffd23f" stroke="#1b140c" stroke-width="12"/>
+    <text x="400" y="140" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="78" fill="#1b140c">?</text>
+  </g>
+</svg>

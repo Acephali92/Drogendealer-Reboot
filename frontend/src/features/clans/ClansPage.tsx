@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, Crown, Plus, Users, X } from 'lucide-react';
+import { CalendarDays, Check, Plus, Users, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAnswerInvite, useClans, useCreateClan, useInvites } from '@/api/queries';
 import { useGame } from '@/features/game/useGame';
@@ -8,18 +8,17 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { Money } from '@/components/ui/Money';
 import { Modal } from '@/components/ui/Modal';
 import { Field } from '@/components/ui/Field';
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/Feedback';
 import { formatMoney } from '@/lib/money';
-import { formatRelative } from '@/lib/time';
+import { formatDateTime, formatRelative } from '@/lib/time';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
 import { cn } from '@/lib/cn';
 
-/** Gründungskosten laut Mock; wird durch Backend-Wert ersetzt (siehe API-CONTRACT.md). */
-const FOUNDING_COST = '1000000';
+/** Gründungskosten laut parameters.toml (clans.founding_cost); kommt später vom Backend. */
+const FOUNDING_COST = '5000000';
 
 export function ClansPage() {
   const { t } = useTranslation();
@@ -77,7 +76,8 @@ export function ClansPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-ink">{inv.clan.name}</p>
                   <p className="text-xs text-ink-muted">
-                    {t('clans.invitedBy', { name: inv.invitedByName })} · {formatRelative(inv.createdAt)}
+                    {inv.invitedByName ? `${t('clans.invitedBy', { name: inv.invitedByName })} · ` : ''}
+                    {formatRelative(inv.createdAt)}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -104,7 +104,12 @@ export function ClansPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => answer.mutate({ id: inv.id, accept: false }, { onError: (e) => toast.error(errorMessage(e)) })}
+                    onClick={() =>
+                      answer.mutate(
+                        { id: inv.id, accept: false },
+                        { onError: (e) => toast.error(errorMessage(e)) },
+                      )
+                    }
                   >
                     <X className="h-4 w-4" />
                     {t('clans.decline')}
@@ -119,7 +124,9 @@ export function ClansPage() {
       {clans.isError && <ErrorState error={clans.error} onRetry={() => clans.refetch()} />}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {clans.isPending && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-40" />)}
-        {clans.data?.length === 0 && <EmptyState title={t('clans.noClans')} className="sm:col-span-2 xl:col-span-3" />}
+        {clans.data?.length === 0 && (
+          <EmptyState title={t('clans.noClans')} className="sm:col-span-2 xl:col-span-3" />
+        )}
         {clans.data?.map((c, i) => (
           <Link
             key={c.id}
@@ -134,16 +141,18 @@ export function ClansPage() {
               <div className="grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-brass/30 to-brass-dim/10 font-display text-lg font-bold text-brass ring-1 ring-brass/30">
                 {c.tag}
               </div>
-              <span className="label">#{i + 1}</span>
             </div>
             <h3 className="mt-4 font-display text-lg font-semibold text-ink">{c.name}</h3>
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-muted">
-              <Crown className="h-3.5 w-3.5 text-brass" aria-hidden />
-              {c.leaderName}
-            </p>
-            <div className="mt-4 flex items-center justify-between text-sm">
-              <span className="text-ink-muted">{t('clans.memberCount', { count: c.memberCount })}</span>
-              <Money value={c.wealth} className="font-semibold text-neon" />
+            {c.description && <p className="mt-1 line-clamp-2 text-sm text-ink-muted">{c.description}</p>}
+            <div className="mt-4 flex items-center justify-between text-sm text-ink-muted">
+              <span className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" aria-hidden />
+                {t('clans.memberCount', { count: c.memberCount })}
+              </span>
+              <span className="flex items-center gap-1.5 text-xs">
+                <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                {formatDateTime(c.createdAt).split(',')[0]}
+              </span>
             </div>
           </Link>
         ))}
@@ -165,13 +174,20 @@ export function ClansPage() {
         }
       >
         <form id="create-clan" onSubmit={submit} className="space-y-4">
-          <Field label={t('clans.name')} value={form.name} maxLength={32} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Field
+            label={t('clans.name')}
+            value={form.name}
+            maxLength={32}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
           <Field
             label={t('clans.tag')}
             value={form.tag}
             maxLength={5}
             hint={t('clans.tagHint')}
-            onChange={(e) => setForm({ ...form, tag: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
+            onChange={(e) =>
+              setForm({ ...form, tag: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })
+            }
           />
           <Field
             label={t('clans.description')}
@@ -179,7 +195,9 @@ export function ClansPage() {
             maxLength={200}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
-          <p className="text-xs text-ink-muted">{t('clans.createCost', { cost: formatMoney(FOUNDING_COST) })}</p>
+          <p className="text-xs text-ink-muted">
+            {t('clans.createCost', { cost: formatMoney(FOUNDING_COST) })}
+          </p>
         </form>
       </Modal>
     </div>

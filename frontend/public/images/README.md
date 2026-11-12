@@ -20,6 +20,13 @@ Fehlt ein Bild oder lässt es sich nicht laden, zeigt das Spiel automatisch ein 
 `[vehicles.sportwagen]` heißt die Datei also `vehicles/sportwagen.webp`.
 Dateien, deren Name mit `_` beginnt (z. B. `_fallback.svg`), sind Platzhalter des Frontends und werden nicht überschrieben.
 
+## Platzhalter
+
+Jeder Ordner enthält ein `_fallback.svg` im Comicstil (betreut von Agent 4). Das Spiel zeigt es, wenn ein
+Objekt kein Bild hat oder das Bild nicht lädt. Welcher Platzhalter gilt, steht ebenfalls in `parameters.toml`
+(`[images]` → `fallback.<kategorie>`). Lädt auch der Platzhalter nicht, erscheint ein eingebautes Symbol.
+So sieht das Spiel auch ohne eigene Bilder vollständig aus.
+
 ## Anforderungen an Bilder
 
 - **Format:** WebP (bevorzugt), PNG oder SVG.
