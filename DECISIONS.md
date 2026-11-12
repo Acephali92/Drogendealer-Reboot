@@ -29,6 +29,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-020 | Datengetriebene Spielbilder mit Fallback | Akzeptiert | 2026-11-09 |
 | ADR-021 | Technische Enum-Werte englisch, deutsche Namen nur zur Anzeige | Akzeptiert | 2026-11-09 |
 | ADR-022 | Team aus fünf Agenten; Spielregeln geteilt nach Systemen | Akzeptiert | 2026-11-09 |
+| ADR-023 | Polizeikontrolle beschlagnahmt alles Mitgeführte; Geldwäsche als Progressionssystem | Akzeptiert | 2026-11-12 |
 
 ---
 
@@ -205,6 +206,19 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
   3. **Spielregeln geteilt nach Systemen:** Agent 5 verantwortet fachlich Spielökonomie, Preise, Angebot/Nachfrage, Marktdynamik, Wirtschaftsereignisse, NPC-Marktverhalten, Progression und Simulation. Agent 2 verantwortet Kampf, Clans, Geldwäsche, Immobilien, Weltraum und Reisen/Kontrollen.
   4. `docs/game-design/parameters.toml` und `verify.py` bleiben in Agent 2s Eigentum. Änderungen an den Abschnitten von Agent 5 bringt Agent 5 per PR ein, abgestimmt mit Agent 2. Bei Streit entscheidet Agent 1.
 - **Konsequenzen:** Die offenen Datenbank-Aufgaben (T-005, ADR-017-Pseudonymisierung, ADR-018-Clan-Kasse, B-9 bis B-15, T-507, T-605) liegen bei Agent 3. Die Datenbank-Sitzung wird nicht mehr genutzt. Systemübergreifende Regeln (z. B. Beschlagnahme bei Kontrollen beeinflusst die Wirtschaft) stimmen Agent 2 und Agent 5 gemeinsam ab.
+
+## ADR-023 – Polizeikontrolle beschlagnahmt alles Mitgeführte; Geldwäsche als Progressionssystem
+- **Status:** Akzeptiert · **Datum:** 2026-11-12 · **Entschieden von:** Product Owner (gegenüber Agent 1)
+- **Kontext:** Der Balancing-Agent hatte empfohlen, bei Kontrollen nur 50 % zu beschlagnahmen, weil Totalverlust in der Simulation Sackgassen erzeugt (`docs/balancing/GAME_BALANCING.md` §6). Der Product Owner will das Risiko bewusst hoch halten und stattdessen über Geldwäsche einen Ausweg und eine Progression schaffen.
+- **Entscheidung (Vorgaben des Product Owners):**
+  1. **Polizeikontrolle:** Beschlagnahmt werden **alles mitgeführte Bargeld (Schwarzgeld) und alle mitgeführten Drogen**. Die 50-%-Empfehlung ist damit abgelehnt. Nicht mitgeführte Werte (Bankkonto, Lager/Immobilien) sind nicht betroffen.
+  2. **Zwei Geldarten:** Bargeld = Schwarzgeld (mitgeführt, beschlagnahmbar). Bankkonto = gewaschenes Geld (sicher vor Kontrollen). Damit ist die Grundfrage von Befund B-9 entschieden.
+  3. **Sichern über legale Geschäfte:** Spieler sollen Geld in Geschäfte anlegen, aufsteigend vom kleinen Rotlicht-Einstieg bis zum Bordell. Erträge daraus gelten als gewaschen und landen auf dem Bankkonto.
+  4. **Bargeld jederzeit waschen:** Spieler können Bargeld jederzeit direkt waschen. Am Anfang geht das nur über **Glücksspiel**, mit stark schwankendem Umtauschkurs Schwarz → Weiß.
+  5. **Progression:** Mit steigendem Level werden die Waschmethoden **stabiler und lukrativer**. Am Ende stehen Methoden für Superreiche: Offshore-Enthüllungen à la „Panama Papers“, Scheinfirmen in Steuerparadiesen, Stiftungen.
+  6. **Darstellung (ADR-013):** satirisch überzeichnet, mit fiktiven Namen für Steueroasen, Firmen und Enthüllungen, keine realen Personen oder Firmen. Rein spielmechanisch abstrahiert, keine Anleitung zu realer Geldwäsche; das Rotlicht-Gewerbe bleibt wie bisher eine abstrakte Wirtschaftseinheit.
+  7. **Zusammenarbeit:** Agent 2 (Geldwäsche, Kontrollen) und Agent 5 (Wirtschaft, Progression) erarbeiten die Regeln **gemeinsam** (ADR-022). Ziel ist ein ansprechender Spielfortschritt trotz Totalbeschlagnahme. Agent 5 weist per Simulation nach, dass Durchschnittsspieler nicht in Sackgassen geraten.
+- **Konsequenzen:** `money-laundering.md`, die Kontrollregeln und `parameters.toml` werden überarbeitet (T-120); die Simulation bekommt ein neues Szenario mit Totalbeschlagnahme und Wäsche-Progression. Agent 3 trennt im Datenmodell Bargeld (schwarz) und Bankkonto (weiß) und journalisiert jede Wäsche und jede Beschlagnahme (ADR-010). Agent 4 zeigt beide Geldarten und das Kontrollrisiko deutlich an.
 
 ---
 
