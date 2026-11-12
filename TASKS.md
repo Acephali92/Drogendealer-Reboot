@@ -44,6 +44,9 @@
 | T-115 | `GameImage`-Komponente mit Fallback-Kette, Kategorie-Platzhalter `_fallback.svg`, Mocks aus `parameters.toml` (ADR-020) | A4 | done ([PR #15](https://github.com/Acephali92/Drogendealer-Reboot/pull/15), 46 Tests) | – |
 | T-117 | Clan-Ränge im Game Design auf technische Werte `GODFATHER…ASSOCIATE` umstellen (ADR-021) | A2 | done (in #17/#20) | – |
 | T-118 | Offene Fragen von A4 aus PR #13 (Laderaum, Kapazität ohne Fahrzeug, Reisedauer/-kosten, Clan-Rechte) | A2 | done (PO-Entscheidung, siehe T-119) | – |
+| T-120 | Geldwäsche-Progression und Totalbeschlagnahme (ADR-023): Waschmethoden je Level (Glücksspiel mit schwankendem Kurs → Geschäfte → Offshore/Scheinfirmen/Stiftungen), Kontrollregel, Parameter; Simulationsnachweis „keine Sackgassen“ | A2 + A5 gemeinsam | todo | – |
+| T-121 | Datenmodell und API: Bargeld (schwarz) und Bankkonto (weiß) getrennt, Journal für Wäsche und Beschlagnahme (ADR-023, B-9) | A3 | todo | T-120 (Regeln), T-005 |
+| T-122 | UI: Schwarz- und Weißgeld getrennt anzeigen, Kontrollrisiko sichtbar machen, Wäsche-Aktionen (ADR-023) | A4 | todo | T-121 |
 | T-119 | Umsetzung der T-118-Antworten: Laderaum in Volumeneinheiten (`goods.<id>.volume`, Rucksack `player.backpack_capacity` = 60 VE + `vehicles.<id>.capacity`; API-Felder `unitVolume`/`capacity` statt `unitWeightG`/`capacityG`); Reisedauer/-kosten aus Formeln F-TRV-01..03 statt fester Werte pro Verbindung; Clan-Rechte-Matrix laut `docs/game-design/clans.md` §3.1 | A3 (API, Vertrag) → A4 (UI) | todo | T-101 |
 | T-116 | Bilder für Waren, Fahrzeuge, Waffen usw. einstellen (`frontend/public/images/`) | Product Owner | jederzeit | – |
 
