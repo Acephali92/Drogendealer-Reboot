@@ -15,6 +15,7 @@ export const CLAN_ROLE_ORDER: readonly ClanRole[] = [
 export async function listClans(prisma: PrismaClient, page: Pagination) {
   const [clans, total] = await prisma.$transaction([
     prisma.clan.findMany({
+      where: { dissolvedAt: null },
       orderBy: { name: 'asc' },
       skip: page.offset,
       take: page.limit,
@@ -27,7 +28,7 @@ export async function listClans(prisma: PrismaClient, page: Pagination) {
         _count: { select: { members: true } },
       },
     }),
-    prisma.clan.count(),
+    prisma.clan.count({ where: { dissolvedAt: null } }),
   ]);
   return {
     clans: clans.map(({ _count, ...c }) => ({ ...c, memberCount: _count.members })),
@@ -37,7 +38,7 @@ export async function listClans(prisma: PrismaClient, page: Pagination) {
   };
 }
 
-/** Clan details. The clan bank is only visible to members. */
+/** Clan details. The treasury (cash/bank, ADR-018) is only visible to members; dissolved clans are gone. */
 export async function getClan(prisma: PrismaClient, clanId: string, viewerPlayerId: string) {
   const clan = await prisma.clan.findUnique({
     where: { id: clanId },
@@ -46,8 +47,10 @@ export async function getClan(prisma: PrismaClient, clanId: string, viewerPlayer
       name: true,
       tag: true,
       description: true,
-      bank: true,
+      treasuryCash: true,
+      treasuryBank: true,
       createdAt: true,
+      dissolvedAt: true,
       members: {
         select: {
           role: true,
@@ -57,7 +60,7 @@ export async function getClan(prisma: PrismaClient, clanId: string, viewerPlayer
       },
     },
   });
-  if (!clan) throw notFound('CLAN_NOT_FOUND', 'Clan does not exist');
+  if (!clan || clan.dissolvedAt) throw notFound('CLAN_NOT_FOUND', 'Clan does not exist');
 
   const isMember = clan.members.some((m) => m.player.id === viewerPlayerId);
   const members = clan.members
@@ -75,10 +78,11 @@ export async function getClan(prisma: PrismaClient, clanId: string, viewerPlayer
         a.joinedAt.getTime() - b.joinedAt.getTime(),
     );
 
+  const { treasuryCash, treasuryBank, dissolvedAt: _dissolved, ...rest } = clan;
   return serialize({
     clan: {
-      ...clan,
-      bank: isMember ? clan.bank : null,
+      ...rest,
+      treasury: isMember ? { cash: treasuryCash, bank: treasuryBank } : null,
       memberCount: members.length,
       members,
     },

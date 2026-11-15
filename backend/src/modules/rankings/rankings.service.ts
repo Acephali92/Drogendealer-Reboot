@@ -31,7 +31,8 @@ interface ClanRankRow {
  * Leaderboards. `value` is always a string (wealth can exceed JS number precision).
  * - wealth: cash + bank
  * - level: level, tie-break experience
- * - clans: PLACEHOLDER definition = clan bank + summed wealth of all members
+ * - clans: PLACEHOLDER definition = clan treasury (cash + bank) + summed wealth of all members
+ * Deleted players (ADR-017) and dissolved clans are not ranked.
  */
 export async function getRanking(prisma: PrismaClient, type: RankingType, page: Pagination) {
   if (type === 'clans') {
@@ -39,14 +40,15 @@ export async function getRanking(prisma: PrismaClient, type: RankingType, page: 
       prisma.$queryRaw<ClanRankRow[]>`
         SELECT c."id", c."name", c."tag",
                COUNT(m."id") AS "memberCount",
-               (c."bank" + COALESCE(SUM(p."cash" + p."bank"), 0))::bigint AS "value"
+               (c."treasuryCash" + c."treasuryBank" + COALESCE(SUM(p."cash" + p."bank"), 0))::bigint AS "value"
         FROM "Clan" c
         LEFT JOIN "ClanMember" m ON m."clanId" = c."id"
         LEFT JOIN "Player" p ON p."id" = m."playerId"
+        WHERE c."dissolvedAt" IS NULL
         GROUP BY c."id"
         ORDER BY "value" DESC, c."name" ASC
         LIMIT ${page.limit} OFFSET ${page.offset}`,
-      prisma.clan.count(),
+      prisma.clan.count({ where: { dissolvedAt: null } }),
     ]);
     return {
       type,
@@ -69,9 +71,10 @@ export async function getRanking(prisma: PrismaClient, type: RankingType, page: 
       FROM "Player" p
       LEFT JOIN "ClanMember" m ON m."playerId" = p."id"
       LEFT JOIN "Clan" c ON c."id" = m."clanId"
+      WHERE p."status" <> 'DELETED'
       ORDER BY "value" DESC, ${tieBreak} p."name" ASC
       LIMIT ${page.limit} OFFSET ${page.offset}`,
-    prisma.player.count(),
+    prisma.player.count({ where: { status: { not: 'DELETED' } } }),
   ]);
   return {
     type,

@@ -2,14 +2,16 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createTestApp, truncateAll } from './helpers.js';
 import {
+  addLot,
   auth,
-  connectCities,
   createCity,
   createCommodity,
+  createEquipmentType,
   createUser,
   createVehicleType,
-  setPrice,
+  setMarket,
 } from './fixtures.js';
+import { golden } from './domain/golden.js';
 
 let app: FastifyInstance;
 let token: string;
@@ -29,49 +31,48 @@ beforeEach(async () => {
 const get = (url: string) => app.inject({ method: 'GET', url: `/api/v1${url}`, headers: auth(token) });
 
 async function seedWorld() {
-  const nebelstadt = await createCity(app, { slug: 'nebelstadt', name: 'Nebelstadt', policeStrength: 60 });
-  const rostkueste = await createCity(app, { slug: 'rostkueste', name: 'Rostküste' });
-  const munich = await createCity(app, { slug: 'schattental', name: 'Schattental' });
-  await connectCities(app, nebelstadt.id, rostkueste.id, 290);
-  await connectCities(app, nebelstadt.id, munich.id, 585);
-  const kraut = await createCommodity(app, 'kraut', 2);
-  const pulver = await createCommodity(app, 'pulver', 5);
-  await setPrice(app, nebelstadt.id, kraut.id, 100n, 90n);
-  await setPrice(app, rostkueste.id, kraut.id, 80n, 70n);
-  await setPrice(app, munich.id, kraut.id, 150n, 140n);
-  await setPrice(app, nebelstadt.id, pulver.id, 9_000_000_000n, 8_000_000_000n); // > 2^31 to check BigInt
-  return { nebelstadt, rostkueste, munich, kraut, pulver };
+  const berlin = await createCity(app, 'berlin');
+  const hamburg = await createCity(app, 'hamburg');
+  const muenchen = await createCity(app, 'muenchen');
+  const amsterdam = await createCity(app, 'amsterdam');
+  const gras = await createCommodity(app, 'gras');
+  const kokain = await createCommodity(app, 'kokain');
+  await setMarket(app, amsterdam.id, gras.id);
+  await setMarket(app, muenchen.id, gras.id);
+  await setMarket(app, berlin.id, gras.id);
+  await setMarket(app, berlin.id, kokain.id, 123.5);
+  return { berlin, hamburg, muenchen, amsterdam, gras, kokain };
 }
 
-describe('cities', () => {
-  it('lists cities with frontend fields', async () => {
+describe('cities (values from parameters.toml)', () => {
+  it('lists locations with name, population, wealth, police and fuel price', async () => {
     await seedWorld();
     const res = await get('/cities');
     expect(res.statusCode).toBe(200);
-    const { cities } = res.json();
-    expect(cities.map((c: { slug: string }) => c.slug)).toEqual(['nebelstadt', 'rostkueste', 'schattental']);
-    expect(cities[0]).toMatchObject({
-      name: 'Nebelstadt',
-      country: 'Testland',
-      techLevel: 2,
-      policeStrength: 60,
-      population: 1000,
+    const berlin = res.json().cities.find((c: { slug: string }) => c.slug === 'berlin');
+    const p = app.gameParams.city.berlin!;
+    expect(berlin).toMatchObject({
+      name: p.name,
+      realm: 'earth',
+      pop: p.pop,
+      wealth: p.wealth,
+      police: p.police,
+      fuelPrice: p.fuel_price.toString(),
+      spaceport: p.spaceport,
     });
+    expect(berlin).not.toHaveProperty('country');
   });
 
-  it('returns city details with connections sorted by distance', async () => {
-    const { rostkueste } = await seedWorld();
-    const res = await get('/cities/nebelstadt');
-    expect(res.statusCode).toBe(200);
-    const { city } = res.json();
-    expect(city.connections).toEqual([
-      {
-        toCityId: rostkueste.id,
-        distanceKm: 290,
-        toCity: { id: rostkueste.id, slug: 'rostkueste', name: 'Rostküste' },
-      },
-      expect.objectContaining({ distanceKm: 585 }),
-    ]);
+  it('returns road connections from [distances], sorted by distance', async () => {
+    const { hamburg } = await seedWorld();
+    const { city } = (await get('/cities/berlin')).json();
+    expect(city.connections[0]).toEqual({
+      toCityId: hamburg.id,
+      toCity: { id: hamburg.id, slug: 'hamburg', name: app.gameParams.city.hamburg!.name },
+      distanceKm: app.gameParams.distances['berlin-hamburg'],
+    });
+    const distances = city.connections.map((c: { distanceKm: number }) => c.distanceKm);
+    expect(distances).toEqual([...distances].sort((a, b) => a - b));
   });
 
   it('returns 404 for unknown cities', async () => {
@@ -84,83 +85,115 @@ describe('cities', () => {
 });
 
 describe('market', () => {
-  it('returns the market of a city with prices as strings', async () => {
+  it('returns market state and the equilibrium price F-ECO-07 (EX-ECO-01)', async () => {
     await seedWorld();
-    const res = await get('/cities/nebelstadt/market');
-    expect(res.statusCode).toBe(200);
-    const body = res.json();
-    expect(body.city.slug).toBe('nebelstadt');
-    expect(body.prices).toHaveLength(2);
-    const pulver = body.prices.find((p: { commodity: { slug: string } }) => p.commodity.slug === 'pulver');
-    expect(pulver).toMatchObject({ buyPrice: '9000000000', sellPrice: '8000000000', supply: 50 });
-    expect(pulver.commodity).toMatchObject({ illegal: true, unitWeightG: 5, basePrice: '100' });
+    const ex = golden.examples['EX-ECO-01'] as { P_amsterdam: number; P_muenchen: number };
+    const ams = (await get('/cities/amsterdam/market')).json();
+    expect(ams.city).toMatchObject({ slug: 'amsterdam', name: app.gameParams.city.amsterdam!.name });
+    expect(ams.markets[0]).toMatchObject({
+      stock: 500,
+      referencePrice: String(Math.round(ex.P_amsterdam)),
+      activeEvent: null,
+      commodity: {
+        slug: 'gras',
+        name: app.gameParams.goods.gras!.name,
+        unitVolume: app.gameParams.goods.gras!.volume,
+        basePrice: app.gameParams.goods.gras!.base_price.toString(),
+        image: 'goods/gras.webp',
+      },
+    });
+    const berlinKokain = (await get('/cities/berlin/market'))
+      .json()
+      .markets.find((m: { commodity: { slug: string } }) => m.commodity.slug === 'kokain');
+    expect(berlinKokain.stock).toBe(123.5); // float stock (B-14)
   });
 
-  it('finds the cheapest buy and best sell city per commodity', async () => {
+  it('finds the cheapest and the most expensive city per good', async () => {
     await seedWorld();
-    const res = await get('/market/overview');
-    expect(res.statusCode).toBe(200);
-    const kraut = res
+    const ex = golden.examples['EX-ECO-01'] as { P_amsterdam: number; P_muenchen: number };
+    const gras = (await get('/market/overview'))
       .json()
-      .commodities.find((c: { commodity: { slug: string } }) => c.commodity.slug === 'kraut');
-    expect(kraut.lowestBuy).toMatchObject({ price: '80', city: { slug: 'rostkueste' } });
-    expect(kraut.highestSell).toMatchObject({ price: '140', city: { slug: 'schattental' } });
+      .commodities.find((c: { commodity: { slug: string } }) => c.commodity.slug === 'gras');
+    expect(gras.lowestPrice).toMatchObject({
+      city: { slug: 'amsterdam' },
+      referencePrice: String(Math.round(ex.P_amsterdam)),
+    });
+    expect(gras.highestPrice).toMatchObject({
+      city: { slug: 'muenchen' },
+      referencePrice: String(Math.round(ex.P_muenchen)),
+    });
   });
 });
 
-describe('inventory', () => {
-  it('is empty with null capacity for a new player', async () => {
+describe('inventory (volume units, T-119)', () => {
+  it('has the backpack capacity without a vehicle', async () => {
     const res = await get('/inventory');
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ items: [], capacityG: null, usedG: 0 });
+    expect(res.json()).toEqual({ items: [], capacity: app.gameParams.player.backpack_capacity, used: 0 });
   });
 
-  it('sums weight and uses the active vehicle capacity', async () => {
-    const { kraut, pulver } = await seedWorld();
-    await app.prisma.inventoryItem.createMany({
-      data: [
-        { playerId, commodityId: kraut.id, quantity: 10, avgBuyPrice: 95n },
-        { playerId, commodityId: pulver.id, quantity: 3, avgBuyPrice: 1000n },
-      ],
-    });
-    const van = await createVehicleType(app, 'van', 50_000);
-    const bike = await createVehicleType(app, 'bike', 2_000);
-    await app.prisma.vehicle.create({ data: { playerId, vehicleTypeId: bike.id, isActive: false } });
-    await app.prisma.vehicle.create({ data: { playerId, vehicleTypeId: van.id, isActive: true } });
+  it('adds the active vehicle capacity, sums volume and computes the average buy price', async () => {
+    const { gras, kokain } = await seedWorld();
+    await addLot(app, playerId, gras.id, 10, 9_000n);
+    await addLot(app, playerId, gras.id, 5, 6_001n);
+    await addLot(app, playerId, kokain.id, 3, 30_000n);
+    const kleinwagen = await createVehicleType(app, 'kleinwagen');
+    const lkw = await createVehicleType(app, 'lkw');
+    await app.prisma.vehicle.create({ data: { playerId, vehicleTypeId: lkw.id, isActive: false } });
+    await app.prisma.vehicle.create({ data: { playerId, vehicleTypeId: kleinwagen.id, isActive: true } });
 
     const body = (await get('/inventory')).json();
-    expect(body.capacityG).toBe(50_000);
-    expect(body.usedG).toBe(10 * 2 + 3 * 5);
-    expect(
-      body.items.find((i: { commodity: { slug: string } }) => i.commodity.slug === 'kraut'),
-    ).toMatchObject({ quantity: 10, avgBuyPrice: '95', commodity: { slug: 'kraut' } });
+    const p = app.gameParams;
+    expect(body.capacity).toBe(p.player.backpack_capacity + p.vehicles.kleinwagen!.capacity);
+    expect(body.used).toBe(15 * p.goods.gras!.volume + 3 * p.goods.kokain!.volume);
+    const grasItem = body.items.find((i: { commodity: { slug: string } }) => i.commodity.slug === 'gras');
+    expect(grasItem).toMatchObject({ quantity: 15, avgBuyPrice: '1000' }); // 15001 / 15 rounded down
   });
 });
 
-describe('vehicles and equipment', () => {
-  it('lists catalogs and own items', async () => {
-    const van = await createVehicleType(app, 'van', 50_000, 5000n);
-    await createVehicleType(app, 'bike', 2_000, 300n);
-    await app.prisma.vehicle.create({ data: { playerId, vehicleTypeId: van.id, isActive: true } });
-    const pistol = await app.prisma.equipmentType.create({
-      data: { slug: 'pistol', name: 'Pistole', slot: 'WEAPON', attack: 5, weightG: 900, price: 700n },
-    });
+describe('vehicles and equipment (catalog from parameters.toml)', () => {
+  it('lists catalogs by price and own items', async () => {
+    const kleinwagen = await createVehicleType(app, 'kleinwagen');
+    await createVehicleType(app, 'lkw');
+    await app.prisma.vehicle.create({ data: { playerId, vehicleTypeId: kleinwagen.id, isActive: true } });
+    const messer = await createEquipmentType(app, 'messer', 'WEAPON');
+    await createEquipmentType(app, 'weste', 'ARMOR');
     await app.prisma.playerEquipment.create({
-      data: { playerId, equipmentTypeId: pistol.id, equipped: true },
+      data: { playerId, equipmentTypeId: messer.id, equipped: true },
     });
 
     const types = (await get('/vehicle-types')).json().vehicleTypes;
-    expect(types.map((t: { slug: string }) => t.slug)).toEqual(['bike', 'van']);
-    expect(types[1]).toMatchObject({ capacityG: 50_000, speedKmh: 80, price: '5000', licenseClass: null });
+    expect(types.map((t: { slug: string }) => t.slug)).toEqual(['kleinwagen', 'lkw']);
+    const v = app.gameParams.vehicles.kleinwagen!;
+    expect(types[0]).toEqual({
+      id: kleinwagen.id,
+      slug: 'kleinwagen',
+      name: v.name,
+      price: v.price.toString(),
+      speedKmh: v.speed,
+      consumptionPer100Km: v.consumption,
+      capacity: v.capacity,
+      hide: v.hide,
+      image: 'vehicles/kleinwagen.webp',
+    });
+    expect((await get('/vehicles')).json().vehicles[0]).toMatchObject({
+      isActive: true,
+      vehicleType: { slug: 'kleinwagen', capacity: v.capacity },
+    });
 
-    const vehicles = (await get('/vehicles')).json().vehicles;
-    expect(vehicles).toHaveLength(1);
-    expect(vehicles[0]).toMatchObject({ isActive: true, vehicleType: { slug: 'van' } });
-
-    const eqTypes = (await get('/equipment-types')).json().equipmentTypes;
-    expect(eqTypes[0]).toMatchObject({ slug: 'pistol', weightG: 900, price: '700' });
-    const equipment = (await get('/equipment')).json().equipment;
-    expect(equipment[0]).toMatchObject({ equipped: true, equipmentType: { slug: 'pistol' } });
+    const eq = (await get('/equipment-types')).json().equipmentTypes;
+    expect(eq.map((e: { slot: string }) => e.slot)).toEqual(['WEAPON', 'ARMOR']);
+    expect(eq[0]).toMatchObject({
+      slug: 'messer',
+      name: app.gameParams.weapons.messer!.name ?? null,
+      strength: app.gameParams.weapons.messer!.strength,
+      price: app.gameParams.weapons.messer!.price.toString(),
+      image: 'weapons/messer.webp',
+    });
+    expect((await get('/equipment')).json().equipment[0]).toMatchObject({
+      equipped: true,
+      equipmentType: { slug: 'messer' },
+    });
   });
 });
 
@@ -168,17 +201,17 @@ describe('travel', () => {
   it('returns null without an active travel and the travel otherwise', async () => {
     expect((await get('/travel/current')).json()).toEqual({ travel: null });
 
-    const { nebelstadt, rostkueste } = await seedWorld();
+    const { berlin, hamburg } = await seedWorld();
     const arrivesAt = new Date(Date.now() + 60_000);
     await app.prisma.travel.create({
-      data: { playerId, fromCityId: nebelstadt.id, toCityId: rostkueste.id, arrivesAt },
+      data: { playerId, fromCityId: berlin.id, toCityId: hamburg.id, arrivesAt },
     });
     const { travel } = (await get('/travel/current')).json();
     expect(travel).toMatchObject({
       status: 'IN_PROGRESS',
       arrivesAt: arrivesAt.toISOString(),
-      fromCity: { slug: 'nebelstadt' },
-      toCity: { slug: 'rostkueste' },
+      fromCity: { slug: 'berlin', name: app.gameParams.city.berlin!.name },
+      toCity: { slug: 'hamburg' },
       vehicle: null,
     });
   });

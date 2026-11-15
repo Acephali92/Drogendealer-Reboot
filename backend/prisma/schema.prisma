@@ -1,14 +1,18 @@
-// Drogendealer-Reboot – Datenmodell
+// Drogendealer-Reboot – Datenmodell (v2, ADR-022: Datenmodell bei Agent 3)
 //
-// Dieses Schema deckt alle Spielbereiche ab (Konten, Spieler, Wirtschaft, Handel,
-// Reisen, Kampf, Clans/Soziales). Spiel-Logik und konkrete Balancing-Werte kommen
-// später vom Game Designer; hier werden nur Struktur und Integritätsregeln festgelegt.
+// Fachmodell und Nachvollziehbarkeitskonzept: docs/database/DATA_MODEL.md
+// Technische Umsetzung (Constraints, Trigger, Migrationsablauf): backend/docs/DATA_MODELS.md
 //
-// Konventionen:
-// - IDs: cuid() Strings
-// - Geldbeträge: BigInt in ganzzahligen Cent (ADR-019; reicht bis ca. 9,2 · 10^16 €)
-// - Zeitbasierte Echtzeit-Aktionen speichern Endzeitpunkte (arrivesAt, statusUntil),
-//   damit sie später "lazy" beim nächsten Zugriff aufgelöst werden können.
+// Grundsätze:
+// - Katalogwerte (Waren, Orte, Fahrzeug- und Ausrüstungstypen mit Namen, Preisen, Kapazitäten …)
+//   stehen ausschließlich in docs/game-design/parameters.toml. Die Katalogtabellen hier enthalten
+//   nur den technischen Schlüssel (`slug`) für Fremdschlüssel und Journale; sie werden beim
+//   Start aus den Parametern synchronisiert.
+// - Zustand (Geld, Bestände, Marktzustand) ist eine Projektion. Jede Änderung wird in einem
+//   append-only Journal festgehalten (ADR-010); UPDATE/DELETE auf Journalen verhindern Trigger.
+// - Geld: BigInt in ganzzahligen Cent (ADR-019). Bargeld (`cash`) = Schwarzgeld, mitgeführt;
+//   Bankkonto (`bank`) = gewaschenes Geld (ADR-023).
+// - Kontolöschung pseudonymisiert den Spieler, Journale bleiben erhalten (ADR-017).
 
 generator client {
   provider = "prisma-client-js"
@@ -35,7 +39,7 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   lastLoginAt    DateTime?
-  /// Zeitpunkt der Pflicht-Bestätigung \"ich bin mindestens 18\" bei der Registrierung (ADR-013).
+  /// Zeitpunkt der Pflicht-Bestätigung "ich bin mindestens 18" bei der Registrierung (ADR-013).
   ageConfirmedAt DateTime
 
   player        Player?
@@ -66,153 +70,177 @@ enum PlayerStatus {
   IN_COMBAT
   HOSPITAL
   JAIL
+  /// Konto gelöscht, Spieler bleibt als pseudonymisierter Akteur in den Journalen (ADR-017).
+  DELETED
 }
 
 model Player {
   id            String       @id @default(cuid())
-  userId        String       @unique
+  /// null nach Kontolöschung (ADR-017): der Spieler ist vom Login getrennt.
+  userId        String?      @unique
   name          String       @unique
+  /// Bargeld = Schwarzgeld, mitgeführt, beschlagnahmbar (ADR-023). Projektion des Kontobuchs (CASH).
   cash          BigInt       @default(0)
+  /// Bankkonto = gewaschenes Geld (ADR-023). Projektion des Kontobuchs (BANK).
   bank          BigInt       @default(0)
   health        Int          @default(100)
   maxHealth     Int          @default(100)
   level         Int          @default(1)
   experience    Int          @default(0)
   reputation    Int          @default(0)
-  /// Fahndungsdruck 0–100 (Mechanik folgt mit dem Game Design).
-  heat          Int          @default(0)
   currentCityId String?
   status        PlayerStatus @default(IDLE)
   statusUntil   DateTime?
-  /// Letzte authentifizierte Anfrage (für \"online\"-Anzeige, max. 1 Update/Minute).
+  /// Letzte authentifizierte Anfrage (für "online"-Anzeige, max. 1 Update/Minute).
   lastSeenAt    DateTime?
+  deletedAt     DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
-  user        User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   currentCity City? @relation(fields: [currentCityId], references: [id], onDelete: SetNull)
 
-  inventory         InventoryItem[]
-  tradeTransactions TradeTransaction[]
-  moneyTransactions MoneyTransaction[]
-  vehicles          Vehicle[]
-  travels           Travel[]
-  equipment         PlayerEquipment[]
-  attacks           Combat[]           @relation("CombatAttacker")
-  defenses          Combat[]           @relation("CombatDefender")
-  combatsWon        Combat[]           @relation("CombatWinner")
-  clanMembership    ClanMember?
-  clanInvites       ClanInvite[]       @relation("ClanInviteInvitee")
-  sentClanInvites   ClanInvite[]       @relation("ClanInviteInviter")
-  sentMessages      Message[]          @relation("MessageSender")
-  receivedMessages  Message[]          @relation("MessageRecipient")
-  notifications     Notification[]
+  heat               PlayerCityHeat[]
+  inventoryLots      InventoryLot[]
+  inventoryMovements InventoryMovement[]
+  tradeTransactions  TradeTransaction[]
+  moneyTransactions  MoneyTransaction[]
+  vehicles           Vehicle[]
+  travels            Travel[]
+  equipment          PlayerEquipment[]
+  attacks            Combat[]                  @relation("CombatAttacker")
+  defenses           Combat[]                  @relation("CombatDefender")
+  combatsWon         Combat[]                  @relation("CombatWinner")
+  clanMembership     ClanMember?
+  clanInvites        ClanInvite[]              @relation("ClanInviteInvitee")
+  sentClanInvites    ClanInvite[]              @relation("ClanInviteInviter")
+  clanTreasuryTxs    ClanTreasuryTransaction[]
+  sentMessages       Message[]                 @relation("MessageSender")
+  receivedMessages   Message[]                 @relation("MessageRecipient")
+  notifications      Notification[]
 
   @@index([currentCityId])
   @@index([status, statusUntil])
   @@index([lastSeenAt])
 }
 
-// ─────────────────────────── Welt & Wirtschaft ───────────────────────────
+/// Fahndungsdruck (Heat) je Spieler und Stadt, 0 … heat.max (trade.md §2).
+model PlayerCityHeat {
+  playerId  String
+  cityId    String
+  heat      Float    @default(0)
+  updatedAt DateTime @updatedAt
 
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  city   City   @relation(fields: [cityId], references: [id], onDelete: Restrict)
+
+  @@id([playerId, cityId])
+  @@index([cityId])
+}
+
+// ─────────────────────────── Katalog (Schlüssel aus parameters.toml) ───────────────────────────
+
+/// Ort: Stadt auf der Erde ([city.*]) oder Ort im Weltraum ([space_location.*]).
 model City {
-  id             String  @id @default(cuid())
-  slug           String  @unique
-  name           String
-  description    String?
-  country        String?
-  techLevel      Int     @default(1)
-  policeStrength Int     @default(0)
-  population     Int     @default(0)
+  id   String @id @default(cuid())
+  slug String @unique
 
-  connectionsFrom CityConnection[]    @relation("ConnectionFrom")
-  connectionsTo   CityConnection[]    @relation("ConnectionTo")
-  marketPrices    MarketPrice[]
-  priceChanges    MarketPriceChange[]
-  players         Player[]
-  trades          TradeTransaction[]
-  travelsFrom     Travel[]            @relation("TravelFrom")
-  travelsTo       Travel[]            @relation("TravelTo")
-  combats         Combat[]
+  marketStates  MarketState[]
+  marketChanges MarketStateChange[]
+  players       Player[]
+  heat          PlayerCityHeat[]
+  trades        TradeTransaction[]
+  travelsFrom   Travel[]            @relation("TravelFrom")
+  travelsTo     Travel[]            @relation("TravelTo")
+  combats       Combat[]
 }
 
-/// Gerichtete Verbindung zwischen zwei Städten (für Hin- und Rückweg je ein Eintrag).
-model CityConnection {
-  id         String @id @default(cuid())
-  fromCityId String
-  toCityId   String
-  distanceKm Int
-
-  fromCity City @relation("ConnectionFrom", fields: [fromCityId], references: [id], onDelete: Cascade)
-  toCity   City @relation("ConnectionTo", fields: [toCityId], references: [id], onDelete: Cascade)
-
-  @@unique([fromCityId, toCityId])
-  @@index([toCityId])
-}
-
-/// Handelbare Ware.
+/// Handelbare Ware ([goods.*]).
 model Commodity {
-  id          String  @id @default(cuid())
-  slug        String  @unique
-  name        String
-  description String?
-  illegal     Boolean @default(true)
-  /// Gewicht einer Einheit in Gramm (für Transportkapazität).
-  unitWeightG Int     @default(1)
-  basePrice   BigInt
-  minPrice    BigInt
-  maxPrice    BigInt
+  id   String @id @default(cuid())
+  slug String @unique
 
-  marketPrices MarketPrice[]
-  priceChanges MarketPriceChange[]
-  inventory    InventoryItem[]
-  trades       TradeTransaction[]
+  marketStates       MarketState[]
+  marketChanges      MarketStateChange[]
+  inventoryLots      InventoryLot[]
+  inventoryMovements InventoryMovement[]
+  trades             TradeTransaction[]
 }
 
-/// Aktueller Marktpreis einer Ware in einer Stadt.
-model MarketPrice {
-  id          String   @id @default(cuid())
-  cityId      String
-  commodityId String
-  buyPrice    BigInt
-  sellPrice   BigInt
-  supply      Int      @default(0)
-  updatedAt   DateTime @updatedAt
+/// Fahrzeugtyp ([vehicles.*]).
+model VehicleType {
+  id   String @id @default(cuid())
+  slug String @unique
 
-  city      City      @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Cascade)
+  vehicles Vehicle[]
+}
+
+enum EquipmentSlot {
+  WEAPON
+  ARMOR
+}
+
+/// Ausrüstungstyp: Waffe ([weapons.*]) oder Rüstung ([armor.*]).
+model EquipmentType {
+  id   String        @id @default(cuid())
+  slug String        @unique
+  slot EquipmentSlot
+
+  owned PlayerEquipment[]
+}
+
+// ───────────────────────────────── Markt ─────────────────────────────────
+
+/// Zustand eines Marktes (Ort × Ware), economy.md §2. Preise werden nicht gespeichert,
+/// sondern aus Bestand, Rauschen und Ereignis per Formel berechnet.
+model MarketState {
+  id             String   @id @default(cuid())
+  cityId         String
+  commodityId    String
+  /// Marktbestand S (float, ≥ economy.min_stock).
+  stock          Float
+  /// Log-Rauschen x des Preises.
+  noise          Float    @default(0)
+  /// Aktives Ereignis (Schlüssel aus [events.*]) oder null.
+  activeEvent    String?
+  eventTicksLeft Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
 
   @@unique([cityId, commodityId])
   @@index([commodityId])
 }
 
-enum MarketPriceChangeCause {
+enum MarketChangeCause {
   INITIAL
   TRADE
   TICK
   EVENT
+  NPC
   ADMIN
   UNSPECIFIED
 }
 
-/// Append-only Journal aller Marktpreis-Änderungen (T-105).
-/// Wird per DB-Trigger auf "MarketPrice" geschrieben – kein Anwendungscode kann es umgehen.
-/// UPDATE/DELETE sind per Trigger verboten. Ursache/Referenz setzt die Anwendung pro
-/// Transaktion über setPriceChangeContext() (src/modules/world/price-journal.ts).
-model MarketPriceChange {
-  id           String                 @id @default(cuid())
-  cityId       String
-  commodityId  String
-  oldBuyPrice  BigInt?
-  newBuyPrice  BigInt
-  oldSellPrice BigInt?
-  newSellPrice BigInt
-  oldSupply    Int?
-  newSupply    Int
-  cause        MarketPriceChangeCause
-  /// Referenz auf den Auslöser, z. B. TradeTransaction-ID oder Tick-Nummer.
-  refId        String?
-  createdAt    DateTime               @default(now())
+/// Append-only Journal aller Marktzustands-Änderungen (T-105, GAME_ECONOMY.md §7 T-2/T-6).
+/// Wird per DB-Trigger auf "MarketState" geschrieben. Ursache, Referenz und Tick setzt die
+/// Anwendung pro Transaktion über setMarketChangeContext() (src/modules/world/market-journal.ts).
+model MarketStateChange {
+  id          String            @id @default(cuid())
+  cityId      String
+  commodityId String
+  oldStock    Float?
+  newStock    Float
+  oldNoise    Float?
+  newNoise    Float
+  oldEvent    String?
+  newEvent    String?
+  cause       MarketChangeCause
+  /// Referenz auf den Auslöser, z. B. TradeTransaction-ID.
+  refId       String?
+  tick        Int?
+  createdAt   DateTime          @default(now())
 
   city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
   commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
@@ -222,46 +250,110 @@ model MarketPriceChange {
   @@index([cause, createdAt])
 }
 
-enum MoneyTransactionReason {
-  TRADE
-  TRAVEL
-  VEHICLE
-  EQUIPMENT
-  COMBAT
-  CLAN
+// ───────────────────────────────── Geld ─────────────────────────────────
+
+enum MoneyAccount {
+  /// Bargeld (Schwarzgeld)
+  CASH
+  /// Bankkonto (gewaschen)
   BANK
+}
+
+/// Grund einer Geldbewegung = Quelle oder Senke laut docs/balancing/GAME_ECONOMY.md §6.
+enum MoneyTransactionReason {
+  START_CAPITAL
+  TRADE_BUY
+  TRADE_SELL
+  TRAVEL_FUEL
+  TRAVEL_TICKET
+  BRIBE
+  CONFISCATION
+  VEHICLE_BUY
+  VEHICLE_SALE
+  EQUIPMENT_BUY
+  EQUIPMENT_SALE
+  CREW
+  LOOT_GAINED
+  LOOT_LOST
+  LAUNDERING
+  BUSINESS_INCOME
+  BUSINESS_UPKEEP
+  CLAN_DEPOSIT
+  CLAN_PAYOUT
+  CLAN_TAX
+  EMERGENCY_LOAN
+  LOAN_REPAYMENT
+  ACCOUNT_DELETION
   ADMIN
 }
 
-/// Kontobuch aller Geldbewegungen eines Spielers (Audit / Anti-Cheat).
+/// Append-only Kontobuch aller Geldbewegungen eines Spielers, getrennt nach Konto.
+/// Invariante: Σ amount je (Spieler, Konto) = Player.cash bzw. Player.bank.
 model MoneyTransaction {
   id           String                 @id @default(cuid())
   playerId     String
+  account      MoneyAccount
   amount       BigInt
   balanceAfter BigInt
   reason       MoneyTransactionReason
   refId        String?
   createdAt    DateTime               @default(now())
 
-  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Restrict)
 
   @@index([playerId, createdAt])
+  @@index([playerId, account])
+  @@index([reason, createdAt])
 }
 
-// ───────────────────────────────── Handel ─────────────────────────────────
+// ─────────────────────────── Handel & Inventar ───────────────────────────
 
-model InventoryItem {
-  id          String @id @default(cuid())
+/// Warenstapel eines Spielers je Kaufzeitpunkt (trade.md §2, für Verderb und Einstandspreis).
+model InventoryLot {
+  id          String   @id @default(cuid())
   playerId    String
   commodityId String
-  quantity    Int    @default(0)
-  /// Gewichteter Durchschnitts-Einkaufspreis pro Einheit.
-  avgBuyPrice BigInt @default(0)
+  quantity    Int
+  /// Einstandskosten des verbleibenden Stapels in Cent (für den Durchschnitts-Einkaufspreis).
+  costBasis   BigInt   @default(0)
+  acquiredAt  DateTime @default(now())
 
   player    Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
   commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
 
-  @@unique([playerId, commodityId])
+  @@index([playerId, commodityId])
+  @@index([commodityId])
+}
+
+enum InventoryMovementReason {
+  TRADE_BUY
+  TRADE_SELL
+  SPOILAGE
+  CONFISCATION
+  LOOT_GAINED
+  LOOT_LOST
+  PRODUCTION
+  ACCOUNT_DELETION
+  ADMIN
+}
+
+/// Append-only Journal aller Warenein- und -ausgänge eines Spielers.
+/// Invariante: Σ delta je (Spieler, Ware) = Σ InventoryLot.quantity.
+model InventoryMovement {
+  id            String                  @id @default(cuid())
+  playerId      String
+  commodityId   String
+  delta         Int
+  quantityAfter Int
+  reason        InventoryMovementReason
+  refId         String?
+  createdAt     DateTime                @default(now())
+
+  player    Player    @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
+
+  @@index([playerId, createdAt])
+  @@index([playerId, commodityId])
   @@index([commodityId])
 }
 
@@ -270,6 +362,7 @@ enum TradeSide {
   SELL
 }
 
+/// Append-only Journal aller Handelsvorgänge.
 model TradeTransaction {
   id          String    @id @default(cuid())
   playerId    String
@@ -281,7 +374,7 @@ model TradeTransaction {
   total       BigInt
   createdAt   DateTime  @default(now())
 
-  player    Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  player    Player    @relation(fields: [playerId], references: [id], onDelete: Restrict)
   city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
   commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
 
@@ -291,19 +384,6 @@ model TradeTransaction {
 }
 
 // ─────────────────────────── Reisen & Fahrzeuge ───────────────────────────
-
-model VehicleType {
-  id           String  @id @default(cuid())
-  slug         String  @unique
-  name         String
-  price        BigInt
-  /// Ladekapazität in Gramm.
-  capacityG    Int
-  speedKmh     Int
-  licenseClass String?
-
-  vehicles Vehicle[]
-}
 
 model Vehicle {
   id            String   @id @default(cuid())
@@ -337,7 +417,7 @@ model Travel {
   arrivesAt  DateTime
   status     TravelStatus @default(IN_PROGRESS)
 
-  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Restrict)
   vehicle  Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   fromCity City     @relation("TravelFrom", fields: [fromCityId], references: [id], onDelete: Restrict)
   toCity   City     @relation("TravelTo", fields: [toCityId], references: [id], onDelete: Restrict)
@@ -350,25 +430,6 @@ model Travel {
 }
 
 // ───────────────────────────────── Kampf ─────────────────────────────────
-
-enum EquipmentSlot {
-  WEAPON
-  ARMOR
-}
-
-model EquipmentType {
-  id          String        @id @default(cuid())
-  slug        String        @unique
-  name        String
-  description String?
-  slot        EquipmentSlot
-  attack      Int           @default(0)
-  defense     Int           @default(0)
-  weightG     Int           @default(0)
-  price       BigInt
-
-  owned PlayerEquipment[]
-}
 
 model PlayerEquipment {
   id              String   @id @default(cuid())
@@ -402,8 +463,8 @@ model Combat {
   createdAt  DateTime     @default(now())
   resolvedAt DateTime?
 
-  attacker Player  @relation("CombatAttacker", fields: [attackerId], references: [id], onDelete: Cascade)
-  defender Player  @relation("CombatDefender", fields: [defenderId], references: [id], onDelete: Cascade)
+  attacker Player  @relation("CombatAttacker", fields: [attackerId], references: [id], onDelete: Restrict)
+  defender Player  @relation("CombatDefender", fields: [defenderId], references: [id], onDelete: Restrict)
   winner   Player? @relation("CombatWinner", fields: [winnerId], references: [id], onDelete: SetNull)
   city     City    @relation(fields: [cityId], references: [id], onDelete: Restrict)
 
@@ -416,18 +477,24 @@ model Combat {
 // ─────────────────────────── Clans & Soziales ───────────────────────────
 
 model Clan {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  tag         String   @unique
-  description String?
-  bank        BigInt   @default(0)
-  createdAt   DateTime @default(now())
+  id           String    @id @default(cuid())
+  name         String    @unique
+  tag          String    @unique
+  description  String?
+  /// Clan-Kasse Bargeld (schwarz) – Projektion von ClanTreasuryTransaction (CASH).
+  treasuryCash BigInt    @default(0)
+  /// Clan-Kasse Bankkonto (weiß) – Projektion von ClanTreasuryTransaction (BANK).
+  treasuryBank BigInt    @default(0)
+  createdAt    DateTime  @default(now())
+  /// Aufgelöst (letztes Mitglied gegangen, ADR-017/018). Bleibt für Journale erhalten.
+  dissolvedAt  DateTime?
 
-  members ClanMember[]
-  invites ClanInvite[]
+  members              ClanMember[]
+  invites              ClanInvite[]
+  treasuryTransactions ClanTreasuryTransaction[]
 }
 
-/// Pate / Consigliere / Capo / Soldat / Mitläufer (Anzeige-Namen macht das Frontend).
+/// Pate / Consigliere / Capo / Soldat / Mitläufer (ADR-021; Anzeige-Namen macht das Frontend).
 enum ClanRole {
   GODFATHER
   CONSIGLIERE
@@ -448,6 +515,38 @@ model ClanMember {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@index([clanId])
+}
+
+enum ClanTreasuryReason {
+  DEPOSIT
+  PAYOUT
+  TAX
+  UPGRADE
+  DISTRICT
+  WAR
+  DISSOLUTION
+  ADMIN
+}
+
+/// Append-only Journal der Clan-Kasse (ADR-018). Endpunkte folgen mit T-309.
+/// Invariante: Σ amount je (Clan, Konto) = Clan.treasuryCash bzw. treasuryBank.
+model ClanTreasuryTransaction {
+  id           String             @id @default(cuid())
+  clanId       String
+  /// Auslösender Spieler (Einzahlung, Auszahlung …) oder null (Systembuchung).
+  playerId     String?
+  account      MoneyAccount
+  amount       BigInt
+  balanceAfter BigInt
+  reason       ClanTreasuryReason
+  refId        String?
+  createdAt    DateTime           @default(now())
+
+  clan   Clan    @relation(fields: [clanId], references: [id], onDelete: Restrict)
+  player Player? @relation(fields: [playerId], references: [id], onDelete: Restrict)
+
+  @@index([clanId, createdAt])
+  @@index([playerId])
 }
 
 enum ClanInviteStatus {
