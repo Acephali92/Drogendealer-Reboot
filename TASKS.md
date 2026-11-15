@@ -40,9 +40,9 @@
 | T-112 | Interne Schlüssel (`city.berlin`, Warenschlüssel) nie in der UI anzeigen, nur `name` (ADR-013) | A3 + A4 | todo | T-003 |
 | T-114a | Parameter-Schema: `image` (optional) und `[images]` zulassen, damit T-113 das Backend nicht bricht (ADR-020) | A3 | done ([PR #20](https://github.com/Acephali92/Drogendealer-Reboot/pull/20), 320 Tests) | T-101 |
 | T-113 | `image`-Felder und `[images]`-Fallbacks in `parameters.toml`, Pfadprüfung in `verify.py` (ADR-020) | A2 | done ([PR #17](https://github.com/Acephali92/Drogendealer-Reboot/pull/17)) | T-114a |
-| T-114 | API liefert `image` für Waren, Fahrzeuge, Ausrüstung, Schiffe aus `parameters.toml` (ADR-020) | A3 | todo | T-113 |
+| T-114 | API liefert `image` für Waren, Fahrzeuge, Ausrüstung, Schiffe aus `parameters.toml` (ADR-020) | A3 | done ([PR #25](https://github.com/Acephali92/Drogendealer-Reboot/pull/25), 328 Tests) | T-113 |
 | T-115 | `GameImage`-Komponente mit Fallback-Kette, Kategorie-Platzhalter `_fallback.svg`, Mocks aus `parameters.toml` (ADR-020) | A4 | done ([PR #15](https://github.com/Acephali92/Drogendealer-Reboot/pull/15), 46 Tests) | – |
-| T-117 | Clan-Ränge im Game Design auf technische Werte `GODFATHER…ASSOCIATE` umstellen (ADR-021) | A2 | done (in #17/#20) | – |
+| T-117 | Clan-Ränge im Game Design auf technische Werte `GODFATHER…ASSOCIATE` umstellen (ADR-021) | A2 (umgesetzt auf Branch, Commit `ae3a184`) → A3 (Schema: neue `name`-Felder bei weapons/armor/crew) | in progress: noch nicht in `main`; bricht ohne Schema-Anpassung das Backend, Integration über A3 wie bei #17/#20 | – |
 | T-118 | Offene Fragen von A4 aus PR #13 (Laderaum, Kapazität ohne Fahrzeug, Reisedauer/-kosten, Clan-Rechte) | A2 | done (PO-Entscheidung, siehe T-119) | – |
 | T-120 | Geldwäsche-Progression und Totalbeschlagnahme (ADR-023): Waschmethoden je Level (Glücksspiel mit schwankendem Kurs → Geschäfte → Offshore/Scheinfirmen/Stiftungen), Kontrollregel, Parameter; Simulationsnachweis „keine Sackgassen“ | A2 + A5 gemeinsam | todo | – |
 | T-121 | Datenmodell und API: Bargeld (schwarz) und Bankkonto (weiß) getrennt, Journal für Wäsche und Beschlagnahme (ADR-023, B-9) | A3 | todo | T-120 (Regeln), T-005 |
