@@ -80,6 +80,60 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     scenario: sc('h-wealth-sink', 'Hypothese: Organisationskosten F-PRG-01 (0,5 %/Tag über 500 000 € NW)', 365, 8, 30, { ...BASE_OPTIONS, wealthSink: true }),
     hypothesis: 'Die Organisationskosten lassen frühe Phasen unberührt (< 500 000 €) und flachen das Spätspiel ab: Geldmenge und Vorsprung des reichsten Spielers wachsen langsamer als in base.',
   },
+  // ---------------------------------------------------------------- ADR-023 / T-120
+  // Werte aus parameters.toml mit [laundering.tiers.*] und [loan_shark] (Agent 2, T-120).
+  // Kette: nowash → adr023 (Wäsche) → Kredit-Varianten bzw. Wäsche-Varianten (je eine Änderung ggü. adr023).
+  'adr023-nowash': {
+    scenario: sc('adr023-nowash', 'ADR-023: Totalbeschlagnahme Ware + Bargeld, ohne Wäsche, ohne Kredithai', 90, 12, 30, { ...BASE_OPTIONS, adr023: true }),
+    hypothesis: 'Ohne Wäsche und Kredit führt die Totalbeschlagnahme (inkl. Bargeld) zu mindestens so vielen Sackgassen wie die bisherige Regel (base-short).',
+  },
+  adr023: {
+    scenario: sc('adr023', 'ADR-023 + Waschstufen (Startwerte Agent 2), ohne Kredithai', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true }),
+    hypothesis: 'Regelmäßiges Waschen hält nach einer Kontrolle eine Reserve auf dem Konto; Sackgassen sinken.',
+  },
+  'adr023-loan100k': {
+    scenario: sc('adr023-loan100k', 'adr023 + Kredithai 100 000 €, Schwelle 2 000 € (Werte ADR-023-Nachtrag)', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    hypothesis: 'Der große Kredit beseitigt Sackgassen, wird aber auch ohne Pleite genommen (Schwelle = Startkapital) und ist eine große Geldquelle.',
+  },
+  'adr023-loan10k': {
+    scenario: sc('adr023-loan10k', 'adr023 + Kredithai 10 000 €, Schwelle 2 000 €', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { 'loan_shark.amount': 1_000_000 },
+    hypothesis: 'Ein mittlerer Kredit reicht für einen Neustart (Kleinwagen 8 000 €).',
+  },
+  'adr023-loan1k': {
+    scenario: sc('adr023-loan1k', 'adr023 + Kredithai 1 000 €, Schwelle 2 000 €', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { 'loan_shark.amount': 100_000 },
+    hypothesis: 'Ein kleiner Kredit reicht für einen Neustart mit der Bahn (Startroute ≈ 780 €, INV-04).',
+  },
+  'adr023-loan100k-200': {
+    scenario: sc('adr023-loan100k-200', 'wie adr023-loan100k, Schwelle 200 € statt 2 000 €', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { 'loan_shark.max_assets': 20_000 },
+    hypothesis: 'Eine niedrigere Schwelle verhindert, dass Einsteiger den Kredit ohne Not nehmen.',
+  },
+  'adr023-loan100k-bust': {
+    scenario: sc('adr023-loan100k-bust', 'wie adr023-loan100k, Kredit nur innerhalb von 7 Tagen nach einer Beschlagnahme [Design]', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, loanAfterConfiscation: true }),
+    hypothesis: 'Die Bindung an eine Beschlagnahme macht den Kredit zum echten Notkredit.',
+  },
+  'adr023-repay12': {
+    scenario: sc('adr023-repay12', 'wie adr023-loan100k-bust, repay_factor 1,2', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, loanAfterConfiscation: true }),
+    overrides: { 'loan_shark.repay_factor': 1.2 },
+    hypothesis: 'Ein Aufschlag von 20 % verlängert die Tilgung, ohne Sackgassen zu erzeugen.',
+  },
+  'adr023-w0-085': {
+    scenario: sc('adr023-w0-085', 'wie adr023, W0-Kurs 0,70–1,00 (Ø 0,85) statt 0,40–1,00 (Ø 0,70)', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true }),
+    overrides: { 'laundering.tiers.gambling.rate_min': 0.7 },
+    hypothesis: 'Ein günstigerer Einstiegskurs macht Waschen gegenüber dem Kontrollrisiko (2–6 % je Fahrt) lohnend und senkt Sackgassen.',
+  },
+  'adr023-w0narrow': {
+    scenario: sc('adr023-w0narrow', 'wie adr023, W0-Kurs 0,55–0,85 (gleicher Mittelwert 0,70)', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true }),
+    overrides: { 'laundering.tiers.gambling.rate_min': 0.55, 'laundering.tiers.gambling.rate_max': 0.85 },
+    hypothesis: 'Die Spanne beeinflusst nur die Streuung, nicht Sackgassen oder Median.',
+  },
+  'adr023-xp10': {
+    scenario: sc('adr023-xp10', 'wie adr023, professions.finanzen_xp_per_eur 0,001 → 0,01', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true }),
+    overrides: { 'professions.finanzen_xp_per_eur': 0.01 },
+    hypothesis: 'Mit 10-facher Finanzen-XP erreichen aktive Spieler W1 (L2) in Wochen statt nie; die Wäsche-Progression wird erlebbar.',
+  },
   'h-control': {
     scenario: sc('h-control', 'Hypothese: travel.control_base 0,02 → 0,015', 90, 12, 30),
     overrides: { 'travel.control_base': 0.015 },

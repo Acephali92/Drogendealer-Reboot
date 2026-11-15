@@ -8,6 +8,7 @@ import { marketPrice, markets, targetStock } from '../src/model/economy.js';
 import { buyCost, maxOrder, sellRevenue } from '../src/model/trade.js';
 import { loadParams, loadProposals, paramsAvailable } from '../src/params.js';
 import { runSeed, type Scenario } from '../src/run.js';
+import { hasAdr023 } from '../src/model/laundering.js';
 
 const ready = paramsAvailable();
 
@@ -83,5 +84,17 @@ describe.skipIf(!ready)('Invarianten', () => {
     expect(a.stateHash).toBe(b.stateHash);
     expect(a.tracked.map((t) => t.nw)).toEqual(b.tracked.map((t) => t.nw));
     expect(c.stateHash).not.toBe(a.stateHash);
+  });
+
+  it('E-08: Fahrzeug kaufen und sofort zurückverkaufen bringt immer Verlust', () => {
+    const rate = p.travel.vehicle_resale_rate ?? 0.6;
+    expect(rate).toBeLessThan(1);
+    for (const v of Object.values(p.vehicles)) expect(Math.floor(v.price * rate)).toBeLessThan(v.price);
+  });
+
+  it.skipIf(!hasAdr023(p))('ADR-023: Geldbilanz mit Bankkonto, Wäsche, Beschlagnahme und Kredithai bleibt exakt', () => {
+    const sc2: Scenario = { ...scenario, options: { economyExt: false, npc: false, npcIntensity: 0, safetyNet: false, adr023: true, laundering: true, loanShark: true } };
+    const r = runSeed(p, pr, sc2, 'inv-adr023');
+    expect(r.invariantViolations).toEqual([]);
   });
 });

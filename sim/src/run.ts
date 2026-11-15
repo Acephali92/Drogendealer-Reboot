@@ -49,6 +49,15 @@ export interface PlayerResult {
   stuckDays: number;
   recoveries: number;
   vehicle: string | null;
+  /** ADR-023 */
+  bankEnd: number;
+  washedCt: number;
+  confiscatedCashCt: number;
+  confiscatedGoodsCt: number;
+  loans: number;
+  loanOpenEnd: number;
+  papersHits: number;
+  levelFinanzen: number;
 }
 
 export interface SeedResult {
@@ -150,6 +159,14 @@ export function runSeed(p: Params, pr: Proposals, sc: Scenario, seed: string): S
       stuckDays: pl.stuckDays,
       recoveries: pl.recoveries,
       vehicle: pl.active,
+      bankEnd: pl.bank,
+      washedCt: pl.washedCt,
+      confiscatedCashCt: pl.confiscatedCashCt,
+      confiscatedGoodsCt: pl.confiscatedCt,
+      loans: pl.loans,
+      loanOpenEnd: pl.debt,
+      papersHits: pl.papersHits,
+      levelFinanzen: w.levelFinanzen(pl),
     })),
     population: { nwFinal: w.players.map((pl) => w.networth(pl)), profiles: w.players.map((pl) => pl.profile.id) },
     market: { dailyPriceRatio, dailyScarce, dailyVolumeCt, perMarket },

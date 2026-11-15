@@ -70,7 +70,9 @@ function evalTrade(w: World, pl: Player, from: string, to: string, g: string, bu
     // Erlös am Ziel heute × gelernter Prognosefaktor (Preise ändern sich während der Fahrt)
     const revenue = Math.floor(w.quoteSell(pl, to, g, q) * pl.forecastBias);
     const risk = w.quoteRisk(pl, from, to, { [g]: q });
-    const expLoss = risk.pTotal * (revenue + risk.fine);
+    // ADR-023: Bei Kontrolle sind Ware und das nicht gewaschene Restbargeld weg (keine Strafe)
+    const carried = w.o.adr023 ? Math.max(0, pl.cash - cost - travel.cost) * (w.o.laundering ? 1 - pl.profile.washShare : 1) : 0;
+    const expLoss = risk.pTotal * (revenue + (w.o.adr023 ? carried : risk.fine));
     const profit = revenue - cost - travel.cost - pl.profile.riskAversion * expLoss;
     const ticks = travel.ticks + overhead(w, pl);
     const opt: Option = { kind: 'trade', from, to, good: g, q, cost, revenue, profit, ticks, score: profit / ticks };
@@ -116,7 +118,7 @@ function maybeBuyVehicle(w: World, pl: Player): void {
   const prof = pl.profile;
   const curCap = w.capacity(pl);
   const resale = pl.active ? Math.floor(w.p.vehicles[pl.active]!.price * (w.p.travel.vehicle_resale_rate ?? 0.6)) : 0;
-  const avail = pl.cash + resale;
+  const avail = w.liquid(pl) + resale;
   const candidates = Object.keys(w.p.vehicles)
     .filter((v) => !pl.vehicles.includes(v) && unlocked(w, pl, v))
     .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
@@ -165,7 +167,7 @@ export function decide(w: World, pl: Player): void {
   maybeBuyVehicle(w, pl);
   // 3. Route wählen
   const prof = pl.profile;
-  const budget = Math.floor(pl.cash * (1 - prof.cashReserve));
+  const budget = Math.floor(w.liquid(pl) * (1 - prof.cashReserve));
   const cap = freeCapacity(w, pl);
   let opts = tradeOptions(w, pl, pl.city, budget, cap);
 
@@ -204,7 +206,7 @@ export function decide(w: World, pl: Player): void {
     choice = best(opts.filter((o) => o.profit > 0));
   }
   if (!choice) {
-    const broke = pl.cash < w.p.player.start_cash_black / 10 && pl.lots.size === 0;
+    const broke = w.liquid(pl) < w.p.player.start_cash_black / 10 && pl.lots.size === 0;
     // Erholung nach Totalverlust: Fahrzeug verkaufen und mit der Bahn neu anfangen (rationale Spielerreaktion)
     if (broke && pl.active && pl.profile.id !== 'D') {
       w.sellVehicle(pl);
@@ -222,8 +224,29 @@ export function decide(w: World, pl: Player): void {
     if (!w.depart(pl, choice.to, plan)) {
       // Abfahrt scheitert (Bargeld): Ware sofort zurückverkaufen
       w.sell(pl, choice.good);
+    } else if (w.o.adr023 && w.o.laundering) {
+      washBeforeTrip(w, pl);
     }
   } else {
     w.depart(pl, choice.to, null);
   }
 }
+
+/**
+ * ADR-023: Vor einer Handelsfahrt wäscht der Bot den Anteil `washShare` seines restlichen Bargelds
+ * (Bargeld ist auf der Reise beschlagnahmbar, das Konto nicht). Stufen nach erwartetem Kurs,
+ * bei ausgeschöpftem Limit oder Mindestbetrag die nächste. Profil D wählt zufällig.
+ */
+function washBeforeTrip(w: World, pl: Player): void {
+  let rest = Math.floor(pl.cash * pl.profile.washShare);
+  if (rest <= 0) return;
+  let options = w.washOptions(pl);
+  if (pl.profile.id === 'D' && options.length > 1) options = [options[Math.floor(rand(w, pl, 'wash') * options.length)]!];
+  for (const tier of options) {
+    if (rest <= 0) break;
+    const before = pl.cash;
+    w.wash(pl, tier, rest);
+    rest -= before - pl.cash;
+  }
+}
+
