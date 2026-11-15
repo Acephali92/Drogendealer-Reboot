@@ -244,9 +244,16 @@ describe('clan ranks (ADR-021)', () => {
     expect([...CLAN_RANKS].sort()).toEqual(Object.values($Enums.ClanRole).sort());
   });
 
-  it('maps the legacy German values and reports them as warnings (until T-117)', () => {
-    const result = validateGameParameters(raw());
-    if (!result.ok) throw new Error('unexpected');
+  // Both tests set the rank values themselves, so they hold before and after T-117 changes the file.
+  it('maps the legacy German values and reports them as warnings (transition)', () => {
+    const r = raw();
+    const clans = section(r, 'clans');
+    clans.ranks = ['PATE', 'CONSIGLIERE', 'CAPO', 'SOLDAT', 'MITLAEUFER'];
+    clans.election_voter_min_rank = 'SOLDAT';
+    clans.election_candidate_min_rank = 'CAPO';
+    clans.no_confidence_min_rank = 'CAPO';
+    const result = validateGameParameters(r);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues));
     expect(result.params.clans.ranks).toEqual(['GODFATHER', 'CONSIGLIERE', 'CAPO', 'SOLDIER', 'ASSOCIATE']);
     expect(result.params.clans.election_voter_min_rank).toBe('SOLDIER');
     expect(result.warnings.map((w) => w.path)).toEqual([
@@ -262,8 +269,33 @@ describe('clan ranks (ADR-021)', () => {
     const clans = section(r, 'clans');
     clans.ranks = [...CLAN_RANKS];
     clans.election_voter_min_rank = 'SOLDIER';
+    clans.election_candidate_min_rank = 'CAPO';
+    clans.no_confidence_min_rank = 'CAPO';
     const result = validateGameParameters(r);
     if (!result.ok) throw new Error(JSON.stringify(result.issues));
     expect(result.warnings).toEqual([]);
+    expect(result.params.clans.ranks).toEqual([...CLAN_RANKS]);
+  });
+});
+
+describe('display names on weapons, armor and crew (T-117)', () => {
+  it('accepts an optional name and keeps it', () => {
+    const r = raw();
+    section(r, 'weapons', 'messer').name = 'Klappmesser';
+    section(r, 'armor', 'weste').name = 'Schutzweste';
+    section(r, 'crew', 'profi').name = 'Profi';
+    const result = validateGameParameters(r);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues));
+    expect(result.params.weapons.messer?.name).toBe('Klappmesser');
+    expect(result.params.crew.profi?.name).toBe('Profi');
+  });
+
+  it('rejects an empty name and still rejects unknown keys', () => {
+    expect(issuesFor((r) => (section(r, 'armor', 'weste').name = '')).map((i) => i.path)).toContain(
+      'armor.weste.name',
+    );
+    expect(issuesFor((r) => (section(r, 'crew', 'profi').nme = 'x')).map((i) => i.path)).toContain(
+      'crew.profi',
+    );
   });
 });

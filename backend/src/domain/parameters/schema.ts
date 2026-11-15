@@ -281,9 +281,18 @@ const combat = z
   })
   .strict();
 
-const gear = z.object({ strength: nonNegInt, price: money, image: imagePath.optional() }).strict();
+/** Weapons and armor. `name` (display name) is optional until every entry has one (T-117). */
+const gear = z
+  .object({ name: name.optional(), strength: nonNegInt, price: money, image: imagePath.optional() })
+  .strict();
 const crewMember = z
-  .object({ strength: nonNegInt, hire: money, upkeep: money, image: imagePath.optional() })
+  .object({
+    name: name.optional(),
+    strength: nonNegInt,
+    hire: money,
+    upkeep: money,
+    image: imagePath.optional(),
+  })
   .strict();
 
 const clans = z
