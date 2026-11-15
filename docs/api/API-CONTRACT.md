@@ -4,19 +4,24 @@ Basis-URL: `/api/v1`. Alle Antworten sind JSON.
 
 ## Konventionen
 
-- **Auth:** Alle Endpunkte außer `/health` und `/auth/*` brauchen den Header `Authorization: Bearer <accessToken>`. Ohne gültiges Token kommt `401 INVALID_ACCESS_TOKEN`.
+- **Auth:** Alle Endpunkte außer `/health`, `/images` und `/auth/*` brauchen den Header `Authorization: Bearer <accessToken>`. Ohne gültiges Token kommt `401 INVALID_ACCESS_TOKEN`.
 - **Fehler:** `{ "error": { "code": "STRING", "message": "…", "details"?: [{ "path", "message" }] } }`.
   `400 VALIDATION_ERROR`, `401`, `404 *_NOT_FOUND`, `409 *_TAKEN`, `429 RATE_LIMITED`, `500 INTERNAL_ERROR`.
 - **Geld (ADR-019):** Alle Beträge sind **ganzzahlige Cent** als String (`"cash": "150000"` = 1.500,00 €). Das gilt für alle Geldfelder (`cash`, `bank`, Preise, `amount`, `balanceAfter`, `value` in Ranglisten …). Gleitkommazahlen kommen nicht vor; in Euro umgerechnet wird nur bei der Anzeige. Grund für den String: In der DB ist Geld `BigInt` und kann die Genauigkeit von JS-Zahlen übersteigen.
 - **Zeit:** ISO-8601-Strings in UTC.
 - **Pagination:** `?limit=20&offset=0` (`limit` 1–100). Antworten enthalten `total`, `limit` und `offset`.
 - **Clan-Rollen:** `GODFATHER | CONSIGLIERE | CAPO | SOLDIER | ASSOCIATE`, angezeigt als Pate / Consigliere / Capo / Soldat / Mitläufer.
+- **Bilder (ADR-020, T-114):** Waren (`Commodity`), Fahrzeugtypen und Ausrüstungstypen haben das Feld `image`.
+  - Der Wert ist ein relativer Pfad unter `images/` (z. B. `"goods/gras.webp"`) oder `null`.
+  - Er stammt aus `parameters.toml` und wird nicht in der Datenbank gespeichert. Zugeordnet wird über den technischen Schlüssel (`slug`). Ausrüstung wird je nach `slot` unter `weapons` bzw. `armor` gesucht.
+  - Das Frontend lädt `${BASE_URL}images/<image>`. Fehlt das Bild, nimmt es den Kategorie-Fallback aus `GET /images`.
 
 ## Auth & System
 
 | Methode | Pfad | Body | Antwort |
 |---|---|---|---|
 | GET | `/health` | – | `{ status, database }` |
+| GET | `/images` | – | `{ fallback: { goods, vehicles, weapons, armor, crew, ships }, allowedExtensions }`. Jeder Fallback ist ein relativer Pfad oder `null`, z. B. `"goods/_fallback.svg"`. `allowedExtensions` ist z. B. `[".webp", ".png", ".svg"]`. Öffentlich, ohne Token |
 | POST | `/auth/register` | `{ email, username, password, ageConfirmed: true }` | `201 { accessToken, refreshToken, user: { id, email, username, role, playerId } }` |
 | POST | `/auth/login` | `{ login, password }` | wie register (`200`) |
 | POST | `/auth/refresh` | `{ refreshToken }` | wie register (`200`), altes Refresh-Token ist danach ungültig |
@@ -72,7 +77,7 @@ Was dabei passiert:
 - **GET `/cities/:slug`**: Antwort `{ city: City & { connections: [{ toCityId, toCity: { id, slug, name }, distanceKm }] } }`.
   Die Verbindungen sind nach Entfernung sortiert. `404 CITY_NOT_FOUND` bei unbekanntem Slug.
 - **GET `/cities/:slug/market`**: Antwort `{ city: { id, slug, name }, prices: [{ commodity: Commodity, buyPrice, sellPrice, supply, updatedAt }] }`.
-  `Commodity` = `{ id, slug, name, description, illegal, unitWeightG, basePrice }`.
+  `Commodity` = `{ id, slug, name, description, illegal, unitWeightG, basePrice, image }`.
 - **GET `/market/overview`**: Antwort `{ commodities: [{ commodity, lowestBuy: { city, price, updatedAt }, highestSell: { city, price, updatedAt } }] }`.
   `lowestBuy` ist die günstigste Stadt zum Kaufen, `highestSell` die beste Stadt zum Verkaufen.
 
@@ -81,11 +86,11 @@ Was dabei passiert:
 - **GET `/inventory`**: Antwort `{ items: [{ commodity, quantity, avgBuyPrice }], capacityG, usedG }`.
   - `capacityG` ist die Ladekapazität des aktiven Fahrzeugs, oder `null`, wenn keines aktiv ist.
   - `usedG` ist die Summe aus `quantity × unitWeightG`. Ausrüstung zählt hier noch nicht mit.
-- **GET `/vehicle-types`**: Antwort `{ vehicleTypes: [{ id, slug, name, price, capacityG, speedKmh, licenseClass }] }`.
+- **GET `/vehicle-types`**: Antwort `{ vehicleTypes: [{ id, slug, name, price, capacityG, speedKmh, licenseClass, image }] }`.
 - **GET `/vehicles`**: Antwort `{ vehicles: [{ id, condition, isActive, purchasedAt, vehicleType }] }`.
-- **GET `/equipment-types`**: Antwort `{ equipmentTypes: [{ id, slug, name, description, slot, attack, defense, weightG, price }] }`. `slot` ist `WEAPON` oder `ARMOR`.
+- **GET `/equipment-types`**: Antwort `{ equipmentTypes: [{ id, slug, name, description, slot, attack, defense, weightG, price, image }] }`. `slot` ist `WEAPON` oder `ARMOR`.
 - **GET `/equipment`**: Antwort `{ equipment: [{ id, equipped, acquiredAt, equipmentType }] }`.
-- **GET `/travel/current`**: Antwort `{ travel: null }` oder `{ travel: { id, status, departedAt, arrivesAt, fromCity, toCity, vehicle: { id, vehicleType: { slug, name } } | null } }`.
+- **GET `/travel/current`**: Antwort `{ travel: null }` oder `{ travel: { id, status, departedAt, arrivesAt, fromCity, toCity, vehicle: { id, vehicleType: { slug, name, image } } | null } }`.
   Ankünfte werden noch nicht automatisch aufgelöst, weil die Reiselogik fehlt.
 
 ## Clans & Soziales

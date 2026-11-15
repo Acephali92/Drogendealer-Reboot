@@ -12,10 +12,10 @@ const worldRoutes: FastifyPluginAsync = async (app) => {
 
   app.get('/cities/:slug/market', async (request) => {
     const { slug } = slugParamSchema.parse(request.params);
-    return getCityMarket(app.prisma, slug);
+    return getCityMarket(app.prisma, app.gameParams, slug);
   });
 
-  app.get('/market/overview', async () => getMarketOverview(app.prisma));
+  app.get('/market/overview', async () => getMarketOverview(app.prisma, app.gameParams));
 };
 
 export default worldRoutes;

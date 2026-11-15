@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { withImage, type GameParameters } from '../../domain/index.js';
 import { notFound } from '../../lib/errors.js';
 import { serialize } from '../../lib/serialize.js';
 import { citySelect, citySummarySelect, commoditySelect } from './world.selects.js';
@@ -26,7 +27,7 @@ export async function getCity(prisma: PrismaClient, slug: string) {
   return { city: { ...rest, connections: connectionsFrom } };
 }
 
-export async function getCityMarket(prisma: PrismaClient, slug: string) {
+export async function getCityMarket(prisma: PrismaClient, params: GameParameters, slug: string) {
   const city = await prisma.city.findUnique({
     where: { slug },
     select: {
@@ -45,11 +46,14 @@ export async function getCityMarket(prisma: PrismaClient, slug: string) {
   });
   if (!city) throw cityNotFound(slug);
   const { marketPrices, ...summary } = city;
-  return serialize({ city: summary, prices: marketPrices });
+  return serialize({
+    city: summary,
+    prices: marketPrices.map((p) => ({ ...p, commodity: withImage(params, 'goods', p.commodity) })),
+  });
 }
 
 /** For every commodity: the cheapest city to buy and the best city to sell. */
-export async function getMarketOverview(prisma: PrismaClient) {
+export async function getMarketOverview(prisma: PrismaClient, params: GameParameters) {
   const prices = await prisma.marketPrice.findMany({
     select: {
       buyPrice: true,
@@ -75,7 +79,7 @@ export async function getMarketOverview(prisma: PrismaClient) {
   const commodities = [...byCommodity.values()]
     .sort((a, b) => a.commodity.name.localeCompare(b.commodity.name))
     .map(({ commodity, bestBuy, bestSell }) => ({
-      commodity,
+      commodity: withImage(params, 'goods', commodity),
       lowestBuy: { city: bestBuy.city, price: bestBuy.buyPrice, updatedAt: bestBuy.updatedAt },
       highestSell: { city: bestSell.city, price: bestSell.sellPrice, updatedAt: bestSell.updatedAt },
     }));
