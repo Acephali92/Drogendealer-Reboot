@@ -50,15 +50,15 @@ Kämpfe werden **sofort aufgelöst** (eine Aktion, ein Ergebnis); es gibt keine 
 
 | Waffe | Stärke | Preis | | Rüstung | Stärke | Preis |
 |---|---:|---:|---|---|---:|---:|
-| Messer | 5 | 500 € | | Lederjacke | 5 | 300 € |
-| Pistole | 20 | 3 000 € | | Schutzweste | 15 | 2 500 € |
-| Maschinenpistole (Gewalt L5) | 45 | 15 000 € | | Plattenweste | 35 | 12 000 € |
-| Sturmgewehr (Gewalt L10) | 80 | 40 000 € | | | | |
+| Buttermesser deluxe (`messer`) | 5 | 500 € | | Rockerjacke vom Flohmarkt (`lederjacke`) | 5 | 300 € |
+| Taschenkanone (`pistole`) | 20 | 3 000 € | | Kugelweste (gebraucht) (`weste`) | 15 | 2 500 € |
+| Rattermaschine (`mp`, Gewalt L5) | 45 | 15 000 € | | Panzerplatten-Kombi (`plattenweste`) | 35 | 12 000 € |
+| Dauerfeuer 3000 (`sturmgewehr`, Gewalt L10) | 80 | 40 000 € | | | | |
 
 | Crew | Stärke je Person | Anheuern | Unterhalt pro Tick (pro Tag) |
 |---|---:|---:|---:|
-| Schläger | 8 | 1 000 € | 150 ct (216 €) |
-| Profi (Gewalt L8) | 20 | 5 000 € | 400 ct (576 €) |
+| Schrankwand (`schlaeger`) | 8 | 1 000 € | 150 ct (216 €) |
+| Herr Meier vom Inkasso (`profi`, Gewalt L8) | 20 | 5 000 € | 400 ct (576 €) |
 
 Schlüssel z. B. `weapons.pistole.strength`, `armor.weste.strength`, `crew.schlaeger.upkeep`.
 Kann der Crew-Unterhalt nicht bezahlt werden, verlässt pro Tick eine Person (die teuerste) die Crew.
@@ -179,8 +179,8 @@ function attack(att, def):
 
 | | Angreifer | Verteidiger |
 |---|---|---|
-| Ausrüstung | Pistole (20), Schutzweste (15) | Messer (5), Lederjacke (5) |
-| Crew | 3 Schläger (24) | 2 Schläger (16) |
+| Ausrüstung | Taschenkanone (20), Kugelweste (15) | Buttermesser deluxe (5), Rockerjacke (5) |
+| Crew | 3 × Schrankwand (24) | 2 × Schrankwand (16) |
 | Rohkraft | $10 + 20 + 0{,}5 \cdot 15 + 24 = 61{,}5$ | $10 + 0{,}5 \cdot 5 + 5 + 16 = 33{,}5$ |
 | Gewalt-Level | 6 → × 1,18 | 3 → × 1,09 |
 | HP / Moral | 100 / 1,20 | 80 / 1,12 |
@@ -189,8 +189,8 @@ function attack(att, def):
 
 - Siegchance: $87{,}084^{1{,}5} / (87{,}084^{1{,}5} + 49{,}076^{1{,}5}) =$ **0,7027**
 - Falls der Angreifer gewinnt:
-  - $f_w = 0{,}4 \cdot 49{,}076 / 136{,}16 =$ **0,1442** → $\operatorname{round}(3 \cdot 0{,}1442) =$ **0** Schläger verloren
-  - $f_l = 0{,}8 \cdot 87{,}084 / 136{,}16 =$ **0,5117** → $\operatorname{round}(2 \cdot 0{,}5117) =$ **1** Schläger verloren
+  - $f_w = 0{,}4 \cdot 49{,}076 / 136{,}16 =$ **0,1442** → $\operatorname{round}(3 \cdot 0{,}1442) =$ **0** Crew verloren
+  - $f_l = 0{,}8 \cdot 87{,}084 / 136{,}16 =$ **0,5117** → $\operatorname{round}(2 \cdot 0{,}5117) =$ **1** Crew verloren
   - Beute bei 5 000 € Bargeld und 40 Schneegestöber (erster Überfall des Tages, $k = 0$):
     Opfer verliert $\min(125\,000;\; 175\,000) =$ **125 000 ct** und **10** Schneegestöber,
     der Angreifer erhält nach Hehlerabschlag **106 250 ct** und **8** Schneegestöber
