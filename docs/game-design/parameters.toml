@@ -493,41 +493,50 @@ attack_cooldown_ticks = 3
 heat_attack = 15.0
 
 [weapons.messer]
+name = "Buttermesser deluxe"
 image = "weapons/messer.webp"
 strength = 5
 price = 50_000
 [weapons.pistole]
+name = "Taschenkanone"
 image = "weapons/pistole.webp"
 strength = 20
 price = 300_000
 [weapons.mp]
+name = "Rattermaschine"
 image = "weapons/mp.webp"
 strength = 45
 price = 1_500_000
 [weapons.sturmgewehr]
+name = "Dauerfeuer 3000"
 image = "weapons/sturmgewehr.webp"
 strength = 80
 price = 4_000_000
 
 [armor.lederjacke]
+name = "Rockerjacke vom Flohmarkt"
 image = "armor/lederjacke.webp"
 strength = 5
 price = 30_000
 [armor.weste]
+name = "Kugelweste (gebraucht)"
 image = "armor/weste.webp"
 strength = 15
 price = 250_000
 [armor.plattenweste]
+name = "Panzerplatten-Kombi"
 image = "armor/plattenweste.webp"
 strength = 35
 price = 1_200_000
 
 [crew.schlaeger]
+name = "Schrankwand"
 image = "crew/schlaeger.webp"
 strength = 8
 hire = 100_000
 upkeep = 150                      # ct pro Tick
 [crew.profi]
+name = "Herr Meier vom Inkasso"
 image = "crew/profi.webp"
 strength = 20
 hire = 500_000
@@ -560,12 +569,12 @@ leave_cooldown_war_ticks = 1_008
 capo_daily_payout_limit = 0.05
 consigliere_max = 1
 capo_per_members = 8              # 1 Capo je angefangene 8 Mitglieder
-ranks = ["PATE", "CONSIGLIERE", "CAPO", "SOLDAT", "MITLAEUFER"]   # verbindliche API-Werte
+ranks = ["GODFATHER", "CONSIGLIERE", "CAPO", "SOLDIER", "ASSOCIATE"]   # API-Werte (ADR-021), Anzeige: Pate … Mitläufer
 networth_treasury_share = 1.0     # Pro-Kopf-Anteil der Clankasse zählt zum Nettovermögen
 probation_ticks = 144             # Mitläufer-Probezeit
 inactive_pate_ticks = 1_008       # danach Wahl eines neuen Paten
 election_duration_ticks = 72      # 12 h
-election_voter_min_rank = "SOLDAT"
+election_voter_min_rank = "SOLDIER"
 election_candidate_min_rank = "CAPO"
 election_candidate_min_tenure_ticks = 1_008
 no_confidence_min_rank = "CAPO"   # wer ein Misstrauensvotum beantragen darf
