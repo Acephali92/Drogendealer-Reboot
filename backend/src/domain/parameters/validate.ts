@@ -2,13 +2,7 @@
  * Validation of game parameters: schema (types, ranges, unknown keys) plus cross-references the
  * schema alone cannot express. Pure function – the I/O wrapper is src/config/parameters.ts.
  */
-import {
-  gameParametersSchema,
-  IMAGE_CATEGORIES,
-  LEGACY_CLAN_RANKS,
-  type GameParameters,
-  type ImageCategory,
-} from './schema.js';
+import { gameParametersSchema, IMAGE_CATEGORIES, type GameParameters, type ImageCategory } from './schema.js';
 
 export interface ParameterIssue {
   /** Dotted path in the TOML file, e.g. "goods.kokain.base_price". */
@@ -137,7 +131,7 @@ export function crossCheck(p: GameParameters): ParameterIssue[] {
   if (new Set(p.clans.ranks).size !== p.clans.ranks.length) {
     issues.push({
       path: 'clans.ranks',
-      message: 'ranks must be unique (after mapping legacy names, ADR-021)',
+      message: 'ranks must be unique (ADR-021)',
     });
   }
   const ranks = new Set(p.clans.ranks);
@@ -187,29 +181,6 @@ export function crossCheck(p: GameParameters): ParameterIssue[] {
   return issues;
 }
 
-/**
- * TRANSITIONAL (ADR-021, until T-117): reports clan ranks still written with the former German
- * values. They are accepted and mapped, but should be replaced in parameters.toml.
- */
-export function legacyRankWarnings(raw: unknown): ParameterIssue[] {
-  const clans = (raw as { clans?: Record<string, unknown> } | null)?.clans;
-  if (!clans) return [];
-  const warnings: ParameterIssue[] = [];
-  const check = (path: string, value: unknown) => {
-    if (typeof value === 'string' && value in LEGACY_CLAN_RANKS) {
-      warnings.push({
-        path,
-        message: `legacy rank "${value}" mapped to "${LEGACY_CLAN_RANKS[value]}" (ADR-021, update parameters.toml)`,
-      });
-    }
-  };
-  if (Array.isArray(clans.ranks)) clans.ranks.forEach((r, i) => check(`clans.ranks.${i}`, r));
-  for (const key of ['election_voter_min_rank', 'election_candidate_min_rank', 'no_confidence_min_rank']) {
-    check(`clans.${key}`, clans[key]);
-  }
-  return warnings;
-}
-
 /** Validates raw TOML data (integers as bigint) against schema and cross-references. */
 export function validateGameParameters(raw: unknown): ParameterValidation {
   const parsed = gameParametersSchema.safeParse(raw);
@@ -220,7 +191,5 @@ export function validateGameParameters(raw: unknown): ParameterValidation {
     };
   }
   const issues = crossCheck(parsed.data);
-  return issues.length > 0
-    ? { ok: false, issues }
-    : { ok: true, params: parsed.data, warnings: legacyRankWarnings(raw) };
+  return issues.length > 0 ? { ok: false, issues } : { ok: true, params: parsed.data, warnings: [] };
 }

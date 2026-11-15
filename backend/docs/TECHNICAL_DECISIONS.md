@@ -136,6 +136,8 @@
 
 ## TD-016 – Bildfelder im Parameter-Schema (T-114a) und Übergang der Clan-Ränge (ADR-021)
 
+> **Nachtrag 2026-11-15:** T-117 ist in `main`; die Übergangsabbildung der deutschen Ränge ist entfernt. Es gelten nur noch die technischen Werte.
+
 - **Kontext:** ADR-020 führt optionale `image`-Felder und `[images]` mit `fallback.<kategorie>` in `parameters.toml` ein. Das strikte Schema (TD-015) würde diese Felder ablehnen. ADR-021 legt die Clan-Ränge technisch auf `GODFATHER/CONSIGLIERE/CAPO/SOLDIER/ASSOCIATE` fest; `parameters.toml` verwendet noch `PATE/SOLDAT/MITLAEUFER`, bis Agent 2 T-117 umsetzt.
 - **Entscheidung:**
   - **`image`** ist optional bei Waren, Fahrzeugen, Waffen, Rüstungen, Crew und Schiffen.

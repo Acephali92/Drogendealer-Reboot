@@ -165,8 +165,8 @@ describe('invalid parameters are rejected with a precise path', () => {
       'images.base_dir',
     ],
     [
-      'duplicate rank after mapping legacy names',
-      (r: Raw) => (section(r, 'clans').ranks = ['PATE', 'GODFATHER', 'CAPO', 'SOLDAT', 'MITLAEUFER']),
+      'duplicate rank',
+      (r: Raw) => (section(r, 'clans').ranks = ['GODFATHER', 'GODFATHER', 'CAPO', 'SOLDIER', 'ASSOCIATE']),
       'clans.ranks',
     ],
   ])('%s', (_name, mutate, path) => {
@@ -174,7 +174,7 @@ describe('invalid parameters are rejected with a precise path', () => {
     expect(issues.map((i) => i.path)).toContain(path);
   });
 
-  it('rejects ranks that are neither technical nor legacy values', () => {
+  it('rejects unknown rank values', () => {
     const issues = issuesFor((r) => (section(r, 'clans').ranks = ['GODFATHER', 'BOSS']));
     expect(issues.map((i) => i.path)).toContain('clans.ranks.1');
   });
@@ -244,24 +244,27 @@ describe('clan ranks (ADR-021)', () => {
     expect([...CLAN_RANKS].sort()).toEqual(Object.values($Enums.ClanRole).sort());
   });
 
-  // Both tests set the rank values themselves, so they hold before and after T-117 changes the file.
-  it('maps the legacy German values and reports them as warnings (transition)', () => {
-    const r = raw();
-    const clans = section(r, 'clans');
-    clans.ranks = ['PATE', 'CONSIGLIERE', 'CAPO', 'SOLDAT', 'MITLAEUFER'];
-    clans.election_voter_min_rank = 'SOLDAT';
-    clans.election_candidate_min_rank = 'CAPO';
-    clans.no_confidence_min_rank = 'CAPO';
-    const result = validateGameParameters(r);
+  it('rejects the former German rank values since T-117 (ADR-021)', () => {
+    const issues = issuesFor((r) => {
+      const clans = section(r, 'clans');
+      clans.ranks = ['PATE', 'CONSIGLIERE', 'CAPO', 'SOLDAT', 'MITLAEUFER'];
+      clans.election_voter_min_rank = 'SOLDAT';
+    });
+    expect(issues.map((i) => i.path)).toEqual(
+      expect.arrayContaining([
+        'clans.ranks.0',
+        'clans.ranks.3',
+        'clans.ranks.4',
+        'clans.election_voter_min_rank',
+      ]),
+    );
+  });
+
+  it('loads the real parameters.toml with the technical rank values and no warnings', () => {
+    const result = validateGameParameters(raw());
     if (!result.ok) throw new Error(JSON.stringify(result.issues));
-    expect(result.params.clans.ranks).toEqual(['GODFATHER', 'CONSIGLIERE', 'CAPO', 'SOLDIER', 'ASSOCIATE']);
-    expect(result.params.clans.election_voter_min_rank).toBe('SOLDIER');
-    expect(result.warnings.map((w) => w.path)).toEqual([
-      'clans.ranks.0',
-      'clans.ranks.3',
-      'clans.ranks.4',
-      'clans.election_voter_min_rank',
-    ]);
+    expect(result.params.clans.ranks).toEqual([...CLAN_RANKS]);
+    expect(result.warnings).toEqual([]);
   });
 
   it('accepts the technical values without warnings (state after T-117)', () => {
