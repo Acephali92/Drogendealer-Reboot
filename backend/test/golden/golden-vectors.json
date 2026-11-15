@@ -342,16 +342,19 @@
     "armor": {
       "lederjacke": {
         "image": "armor/lederjacke.webp",
+        "name": "Rockerjacke vom Flohmarkt",
         "price": 30000,
         "strength": 5
       },
       "plattenweste": {
         "image": "armor/plattenweste.webp",
+        "name": "Panzerplatten-Kombi",
         "price": 1200000,
         "strength": 35
       },
       "weste": {
         "image": "armor/weste.webp",
+        "name": "Kugelweste (gebraucht)",
         "price": 250000,
         "strength": 15
       }
@@ -658,7 +661,7 @@
       "election_candidate_min_rank": "CAPO",
       "election_candidate_min_tenure_ticks": 1008,
       "election_duration_ticks": 72,
-      "election_voter_min_rank": "SOLDAT",
+      "election_voter_min_rank": "SOLDIER",
       "founding_cost": 5000000,
       "inactive_pate_ticks": 1008,
       "leave_cooldown_ticks": 432,
@@ -676,11 +679,11 @@
       "presence_bonus_per_member": 0.05,
       "probation_ticks": 144,
       "ranks": [
-        "PATE",
+        "GODFATHER",
         "CONSIGLIERE",
         "CAPO",
-        "SOLDAT",
-        "MITLAEUFER"
+        "SOLDIER",
+        "ASSOCIATE"
       ],
       "tax_max": 0.1,
       "upgrade_base_cost": 10000000,
@@ -729,12 +732,14 @@
       "profi": {
         "hire": 500000,
         "image": "crew/profi.webp",
+        "name": "Herr Meier vom Inkasso",
         "strength": 20,
         "upkeep": 400
       },
       "schlaeger": {
         "hire": 100000,
         "image": "crew/schlaeger.webp",
+        "name": "Schrankwand",
         "strength": 8,
         "upkeep": 150
       }
@@ -1286,21 +1291,25 @@
     "weapons": {
       "messer": {
         "image": "weapons/messer.webp",
+        "name": "Buttermesser deluxe",
         "price": 50000,
         "strength": 5
       },
       "mp": {
         "image": "weapons/mp.webp",
+        "name": "Rattermaschine",
         "price": 1500000,
         "strength": 45
       },
       "pistole": {
         "image": "weapons/pistole.webp",
+        "name": "Taschenkanone",
         "price": 300000,
         "strength": 20
       },
       "sturmgewehr": {
         "image": "weapons/sturmgewehr.webp",
+        "name": "Dauerfeuer 3000",
         "price": 4000000,
         "strength": 80
       }
@@ -1885,7 +1894,7 @@
     }
   ],
   "sources": {
-    "parameters.toml": "c856766f1a0f600044d11454a3c430cab9ca9da114c4aac69e43452a549c9285",
-    "verify.py": "752d5adf2477a78c8cb8791a327f4743178c55a132f3e871c745f428132df8f7"
+    "parameters.toml": "f9966c1202e3c21d2cf19b3de480d5a4a7d0dad3700d1850da8425fc7a951526",
+    "verify.py": "e740c453d8773108a527ce12ee216073d5a38b8f1838aac08fa1afd5b3c81f5f"
   }
 }
