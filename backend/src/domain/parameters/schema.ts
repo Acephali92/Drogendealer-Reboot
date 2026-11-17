@@ -473,9 +473,12 @@ const npc = z
   })
   .strict();
 
-/** "section.key" → [min, max] for the invariant check. */
+/**
+ * Dotted path to a numeric parameter → [min, max] for the invariant check. Paths may be nested,
+ * e.g. "economy.elasticity" or "laundering.tiers.strawman.rate" (T-120).
+ */
 const bounds = z.record(
-  z.string().regex(/^[a-z_]+\.[a-z_]+$/, 'key must be "section.key"'),
+  z.string().regex(/^[a-z_]+(\.[a-z0-9_]+)+$/, 'key must be a dotted path like "section.key"'),
   z.tuple([real, real]),
 );
 

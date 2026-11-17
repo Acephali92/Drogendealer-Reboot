@@ -121,6 +121,8 @@
 
 ## TD-015 – Spielparameter: Laden beim Start, vollständige Validierung, Fail-fast
 
+> **Nachtrag 2026-11-17:** `[bounds]` akzeptiert verschachtelte Pfade beliebiger Tiefe (z. B. `laundering.tiers.strawman.rate`, T-120). Aufgelöst wird nur über eigene Eigenschaften, Prototyp-Schlüssel werden nie getroffen. Seit ADR-024 passen Agent 2 und Agent 5 `schema.ts` bei neuen Schlüsseln im eigenen PR an; `validate.ts` bleibt bei Agent 3.
+
 - **Kontext:** `docs/game-design/parameters.toml` ist die einzige Quelle für Spielwerte (ARCHITECTURE §3, T-101).
 - **Entscheidung:**
   - **Parsen:** smol-toml mit `integersAsBigInt`. So bleiben Ganzzahl- und Gleitkomma-Literale unterscheidbar, und ein Geldbetrag wie `10.5` fällt auf.

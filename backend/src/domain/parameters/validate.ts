@@ -69,6 +69,25 @@ function checkGoodRefs(
   }
 }
 
+/**
+ * Value at a dotted path ("laundering.tiers.strawman.rate") in the parameters, or undefined.
+ * Only own properties are followed, so paths like "goods.__proto__.x" never reach prototypes.
+ */
+function valueAtPath(root: unknown, path: string): unknown {
+  let current: unknown = root;
+  for (const part of path.split('.')) {
+    if (
+      current === null ||
+      typeof current !== 'object' ||
+      !Object.prototype.hasOwnProperty.call(current, part)
+    ) {
+      return undefined;
+    }
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+}
+
 /** Cross-reference checks on already schema-valid parameters. */
 export function crossCheck(p: GameParameters): ParameterIssue[] {
   const issues: ParameterIssue[] = [];
@@ -165,10 +184,8 @@ export function crossCheck(p: GameParameters): ParameterIssue[] {
   }
 
   // [bounds]: every referenced parameter exists, is numeric and lies within [min, max].
-  const sections = p as unknown as Record<string, Record<string, unknown> | undefined>;
   for (const [ref, [min, max]] of Object.entries(p.bounds)) {
-    const [section, key] = ref.split('.') as [string, string];
-    const value = sections[section]?.[key];
+    const value = valueAtPath(p, ref);
     if (min > max) {
       issues.push({ path: `bounds.${ref}`, message: `min ${min} is greater than max ${max}` });
     } else if (typeof value !== 'number' && typeof value !== 'bigint') {

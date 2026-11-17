@@ -198,6 +198,46 @@ describe('invalid parameters are rejected with a precise path', () => {
   });
 });
 
+describe('[bounds] with nested paths (T-120 prep)', () => {
+  const withBound = (path: string, range: [number, number]) => (r: Raw) => {
+    section(r, 'bounds')[path] = range;
+  };
+
+  it('accepts a bound on a nested numeric parameter that is in range', () => {
+    const volume = Number(section(raw(), 'goods', 'gras').volume);
+    const r = raw();
+    withBound('goods.gras.volume', [volume - 1, volume + 1])(r);
+    const result = validateGameParameters(r);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues));
+  });
+
+  it('reports a nested value outside its bounds with the full path', () => {
+    const volume = Number(section(raw(), 'goods', 'gras').volume);
+    const issues = issuesFor(withBound('goods.gras.volume', [volume + 1, volume + 5]));
+    expect(issues.map((i) => i.path)).toContain('goods.gras.volume');
+  });
+
+  it.each(['goods.gras.name', 'goods.nope.volume', 'goods.__proto__.x', 'goods.gras.volume.deeper'])(
+    'rejects %s as unknown or non-numeric',
+    (path) => {
+      const issues = issuesFor(withBound(path, [0, 1]));
+      expect(issues).toContainEqual(
+        expect.objectContaining({
+          path: `bounds.${path}`,
+          message: expect.stringMatching(/unknown or non-numeric/),
+        }),
+      );
+    },
+  );
+
+  it('rejects malformed bound keys', () => {
+    expect(issuesFor(withBound('economy', [0, 1])).map((i) => i.path)).toContain('bounds.economy');
+    expect(issuesFor(withBound('Economy.Elasticity', [0, 1])).map((i) => i.path)).toContain(
+      'bounds.Economy.Elasticity',
+    );
+  });
+});
+
 describe('images (ADR-020, T-113/T-114a)', () => {
   /** Removes every image field and [images] – the state before T-113. */
   const stripImages = (r: Raw) => {
