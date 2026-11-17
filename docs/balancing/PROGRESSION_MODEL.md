@@ -88,7 +88,7 @@ Profil D (ineffizient) bleibt auch dann in der Hälfte der Läufe unter dem Star
 
 Für diese Zeitpunkte nötig: `professions.finanzen_xp_per_eur` = 0,01 statt 0,001 (B-9). Mit dem bisherigen Wert erreicht niemand W1 in 90 Tagen.
 
-**Notanker Kredithai (F-ML-10):** Empfohlen sind **1.000 €**, nur ab einem Restvermögen (Schwarz + Weiß) unter **200 €**, Tilgung 50 % der Verkaufserlöse, ohne Aufschlag (B-8). Damit nehmen nur Spieler in echter Not den Kredit. 1.000 € reichen für einen Neustart mit Rucksack und Bahn (Startroute ≈ 780 €, INV-04). Der ADR-Wert von 100.000 € wird dagegen als Schwarzgeld ausgezahlt, bei der nächsten Kontrolle beschlagnahmt und hinterlässt eine Schuld, also eine Sackgasse.
+**Notanker Kredithai (F-ML-10):** Vom Product Owner entschieden (ADR-023, PR #35, auf Basis dieser Simulation): **1.000 €**, nur ab einem Restvermögen (Schwarz + Weiß) unter **200 €**, Tilgung 50 % der Verkaufserlöse, ohne Aufschlag (B-8). Damit nehmen nur Spieler in echter Not den Kredit. 1.000 € reichen für einen Neustart mit Rucksack und Bahn (Startroute ≈ 780 €, INV-04). Der ADR-Wert von 100.000 € wird dagegen als Schwarzgeld ausgezahlt, bei der nächsten Kontrolle beschlagnahmt und hinterlässt eine Schuld, also eine Sackgasse.
 
 **Nachweis [gemessen]**, Anteil unter Startkapital nach 90 Tagen, alle Spieler je Profil:
 
