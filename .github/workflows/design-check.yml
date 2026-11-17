@@ -1,7 +1,9 @@
 name: Game-Design-Prüfung
 
 on:
+  # push nur auf main; Arbeits-Branches werden über den PR-Lauf geprüft (ADR-024)
   push:
+    branches: [main]
     paths:
       - "docs/game-design/**"
       - ".github/workflows/design-check.yml"
@@ -10,9 +12,17 @@ on:
       - "docs/game-design/**"
       - ".github/workflows/design-check.yml"
 
+concurrency:
+  group: design-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
