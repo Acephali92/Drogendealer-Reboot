@@ -72,6 +72,8 @@ export interface SimOptions {
   loanShark?: boolean;
   /** [Design] Kredithai nur innerhalb von 7 Tagen nach einer Beschlagnahme */
   loanAfterConfiscation?: boolean;
+  /** [Design] Kredithai zahlt aufs Bankkonto (Weißgeld) statt als Schwarzgeld */
+  loanToBank?: boolean;
 }
 
 export interface Market {
@@ -735,7 +737,8 @@ export class World {
     if (!loanSharkEligible(k, pl.vehicles.length, 0, pl.cash, pl.bank, pl.debt > 0)) return;
     if (pl.lots.size > 0) return; // [Annahme] Spieler mit Ware verkauft zuerst
     if (this.o.loanAfterConfiscation && this.t - pl.lastConfiscationTick > 7 * this.tpd) return;
-    pl.cash += k.amount;
+    if (this.o.loanToBank) pl.bank += k.amount;
+    else pl.cash += k.amount;
     pl.debt += Math.round(k.amount * k.repay_factor);
     this.book(pl, 'loan', k.amount);
     pl.loans += 1;

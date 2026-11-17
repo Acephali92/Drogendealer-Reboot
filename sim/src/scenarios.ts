@@ -84,15 +84,15 @@ export const EXPERIMENTS: Record<string, Experiment> = {
   // Werte aus parameters.toml mit [laundering.tiers.*] und [loan_shark] (Agent 2, T-120).
   // Kette: nowash → adr023 (Wäsche) → Kredit-Varianten bzw. Wäsche-Varianten (je eine Änderung ggü. adr023).
   'adr023-nowash': {
-    scenario: sc('adr023-nowash', 'ADR-023: Totalbeschlagnahme Ware + Bargeld, ohne Wäsche, ohne Kredithai', 90, 12, 30, { ...BASE_OPTIONS, adr023: true }),
+    scenario: sc('adr023-nowash', 'ADR-023: Totalbeschlagnahme Ware + Bargeld, ohne Wäsche, ohne Kredithai', 90, 24, 30, { ...BASE_OPTIONS, adr023: true }),
     hypothesis: 'Ohne Wäsche und Kredit führt die Totalbeschlagnahme (inkl. Bargeld) zu mindestens so vielen Sackgassen wie die bisherige Regel (base-short).',
   },
   adr023: {
-    scenario: sc('adr023', 'ADR-023 + Waschstufen (Startwerte Agent 2), ohne Kredithai', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true }),
+    scenario: sc('adr023', 'ADR-023 + Waschstufen (Startwerte Agent 2), ohne Kredithai', 90, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true }),
     hypothesis: 'Regelmäßiges Waschen hält nach einer Kontrolle eine Reserve auf dem Konto; Sackgassen sinken.',
   },
   'adr023-loan100k': {
-    scenario: sc('adr023-loan100k', 'adr023 + Kredithai 100 000 €, Schwelle 2 000 € (Werte ADR-023-Nachtrag)', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    scenario: sc('adr023-loan100k', 'adr023 + Kredithai 100 000 €, Schwelle 2 000 € (Werte ADR-023-Nachtrag)', 90, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
     hypothesis: 'Der große Kredit beseitigt Sackgassen, wird aber auch ohne Pleite genommen (Schwelle = Startkapital) und ist eine große Geldquelle.',
   },
   'adr023-loan10k': {
@@ -118,6 +118,15 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     scenario: sc('adr023-repay12', 'wie adr023-loan100k-bust, repay_factor 1,2', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, loanAfterConfiscation: true }),
     overrides: { 'loan_shark.repay_factor': 1.2 },
     hypothesis: 'Ein Aufschlag von 20 % verlängert die Tilgung, ohne Sackgassen zu erzeugen.',
+  },
+  'adr023-loanwhite': {
+    scenario: sc('adr023-loanwhite', 'wie adr023-loan100k, Kredit wird aufs Bankkonto (Weißgeld) gezahlt [Design]', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, loanToBank: true }),
+    hypothesis: 'Als Weißgeld kann der Kredit nicht beschlagnahmt werden; die Schuldenfalle verschwindet.',
+  },
+  'adr023-loan1k-200': {
+    scenario: sc('adr023-loan1k-200', 'wie adr023-loan1k, Schwelle 200 € statt 2 000 €', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000 },
+    hypothesis: 'Mit niedriger Schwelle wird der kleine Kredit nur noch in echter Not genommen, ohne dass Sackgassen zunehmen.',
   },
   'adr023-w0-085': {
     scenario: sc('adr023-w0-085', 'wie adr023, W0-Kurs 0,70–1,00 (Ø 0,85) statt 0,40–1,00 (Ø 0,70)', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true }),

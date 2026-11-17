@@ -50,6 +50,8 @@ export interface Summary {
     }
   >;
   population: { giniMedian: number; topToMedianMedian: number };
+  /** Kennzahlen über ALLE Spieler eines Profils (beobachtet + Hintergrund), höhere Stichprobe */
+  allPlayers: Record<string, { n: number; lossShare: number; stuckDaysMean: number; loanShare: number; loansMean: number; confiscatedShare: number; nwMedianEur: number }>;
   market: { priceRatioMean: number; priceRatioMin: number; priceRatioMax: number; scarceShareMean: number; volumePerDayEur: number; topMarkets: Array<{ key: string; volumeEur: number; priceRatio: number; scarce: number }> };
   handover?: HandoverSummary;
   money: { supplyEndMedianEur: number; supplyGrowthLast30Pct: number; sinkFaucetRatio: number; ledgerEur: Record<string, number>; events: number };
@@ -162,6 +164,7 @@ export function summarize(
     invariantViolations: results.reduce((a, r) => a + r.invariantViolations.length, 0),
     profiles,
     population: { giniMedian: Math.round(quantile(ginis, 0.5) * 1000) / 1000, topToMedianMedian: Math.round(quantile(topMed, 0.5) * 10) / 10 },
+    allPlayers: allPlayerStats(results),
     market: {
       priceRatioMean: Math.round(mean(priceRatios) * 1000) / 1000,
       priceRatioMin: Math.round(Math.min(...priceRatios) * 1000) / 1000,
@@ -178,6 +181,33 @@ export function summarize(
       events: Math.round(mean(results.map((r) => r.events))),
     },
   };
+}
+
+function allPlayerStats(results: SeedResult[]): Summary['allPlayers'] {
+  const by: Record<string, { nw: number[]; stuck: number[]; loans: number[]; conf: number[] }> = {};
+  for (const r of results) {
+    const pop = r.population;
+    pop.profiles.forEach((id, i) => {
+      const b = (by[id] ??= { nw: [], stuck: [], loans: [], conf: [] });
+      b.nw.push(pop.nwFinal[i]!);
+      b.stuck.push(pop.stuckDays[i]!);
+      b.loans.push(pop.loans[i]!);
+      b.conf.push(pop.confiscations[i]!);
+    });
+  }
+  const out: Summary['allPlayers'] = {};
+  for (const [id, b] of Object.entries(by)) {
+    out[id] = {
+      n: b.nw.length,
+      lossShare: Math.round((b.nw.filter((x) => x < 200_000).length / b.nw.length) * 1000) / 1000,
+      stuckDaysMean: Math.round(mean(b.stuck) * 10) / 10,
+      loanShare: Math.round((b.loans.filter((x) => x > 0).length / b.nw.length) * 1000) / 1000,
+      loansMean: Math.round(mean(b.loans) * 100) / 100,
+      confiscatedShare: Math.round((b.conf.filter((x) => x > 0).length / b.nw.length) * 1000) / 1000,
+      nwMedianEur: eur(quantile(b.nw, 0.5)),
+    };
+  }
+  return out;
 }
 
 function sumLedgers(results: SeedResult[]) {
@@ -239,6 +269,16 @@ export function toMarkdown(s: Summary): string {
     }
     L.push('');
   }
+  L.push('**Alle Spieler je Profil [gemessen]** (beobachtete + Hintergrund-Bots, Stand letzter Tag; Leitkennzahl für den Sackgassen-Nachweis)');
+  L.push('');
+  L.push('| Profil | n | unter Startkapital | Ø Sackgassen-Tage | mit Beschlagnahme | mit Kredit | Ø Kredite | NW Median € |');
+  L.push('|---|---:|---:|---:|---:|---:|---:|---:|');
+  for (const id of ['A', 'B', 'C', 'D', 'E']) {
+    const a = s.allPlayers[id];
+    if (!a) continue;
+    L.push(`| ${id} ${PROFILES[id as ProfileId].name} | ${a.n} | **${Math.round(a.lossShare * 100)} %** | ${a.stuckDaysMean} | ${Math.round(a.confiscatedShare * 100)} % | ${Math.round(a.loanShare * 100)} % | ${a.loansMean} | ${fmt(a.nwMedianEur)} |`);
+  }
+  L.push('');
   L.push('**Markt und Geldmenge [gemessen]**');
   L.push('');
   L.push(`- Preisniveau P/P* (Tagesmittel über alle Märkte): Ø ${s.market.priceRatioMean}, Spanne ${s.market.priceRatioMin}–${s.market.priceRatioMax}. Anteil knapper Markt-Ticks: ${(s.market.scarceShareMean * 100).toFixed(1)} %. Marktereignisse je Lauf: ${s.money.events}.`);
