@@ -91,6 +91,8 @@ Agent 1 implementiert **keine größeren Features** selbstständig, ohne die zus
 6. **Tests sind Pflicht** für Spiellogik, API-Endpunkte und Datenbank-Constraints.
 7. **Konflikte** (Zuständigkeit, Schnittstellen, widersprüchliche Änderungen) werden an Agent 1 eskaliert; Entscheidung wird in DECISIONS.md festgehalten.
 8. **Status aktuell halten.** Wer einen Task übernimmt, setzt Status und Zuständigkeit in TASKS.md.
+9. **Neue Parameter-Schlüssel samt Schema in einem PR (ADR-024).** Wer `parameters.toml` um Schlüssel erweitert, passt im selben PR `backend/src/domain/parameters/schema.ts` an und erzeugt bei Bedarf die Golden Vectors per Skript neu. Merge nur mit grüner Backend-, Sim- und Game-Design-CI.
+10. **CI auf Arbeits-Branches nur über PRs.** Für frühes Feedback einen Entwurfs-PR (Draft) öffnen.
 
 ## Offene Fragen an den Product Owner
 

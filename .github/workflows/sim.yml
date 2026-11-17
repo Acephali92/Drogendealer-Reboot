@@ -4,7 +4,9 @@
 name: sim
 
 on:
+  # push nur auf main; Arbeits-Branches werden über den PR-Lauf geprüft (ADR-024)
   push:
+    branches: [main]
     paths:
       - "sim/**"
       - "docs/game-design/parameters.toml"
@@ -21,12 +23,17 @@ on:
       - "backend/test/golden/**"
       - ".github/workflows/sim.yml"
 
+concurrency:
+  group: sim-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   sim-fast:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: sim
