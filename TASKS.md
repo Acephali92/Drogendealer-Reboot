@@ -119,7 +119,7 @@ Jeder PR wird geprüft auf:
 2. Änderungen nur im eigenen Ordner bzw. mit Zustimmung des Eigentümers (ADR-009)
 3. Schemaänderungen nachvollziehbar dokumentiert (`docs/database/`, ADR-010); Migration enthalten
 4. API-Änderungen im Vertrag dokumentiert (ADR-011)
-5. Spielwerte aus der Parameterdatei, nicht im Code dupliziert
+5. Spielwerte aus der Parameterdatei, nicht im Code dupliziert; neue Parameter-Schlüssel kommen mit Schema-Anpassung im selben PR (ADR-024), CI des PRs grün
 6. Tests vorhanden, CI grün, keine Secrets im Repo
 7. Dokumente aktualisiert (TASKS.md-Status, ggf. neuer ADR)
 
