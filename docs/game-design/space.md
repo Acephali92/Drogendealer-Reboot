@@ -136,7 +136,7 @@ land(player at orbit -> frankfurt):
 
 **EX-SPC-03 – Piratenrisiko Ceres → Orbit mit 230 Sternenstaub**
 
-Frachter, 2 Profis, Gewalt L10:
+Frachter, 2 × „Herr Meier vom Inkasso“ (`profi`), Gewalt L10:
 
 - $T = \lceil 263\,000 / 10\,000 \cdot 6 \rceil =$ **158 Ticks**, $n = \lceil 158/24 \rceil =$ **7**
 - Gefahr $\bar g = (1{,}0 + 0{,}1)/2 =$ **0,55**; $hv = 230 \cdot 50\,000 \cdot 3 / 100\,000 = 345$, $g =$ **1,8734**

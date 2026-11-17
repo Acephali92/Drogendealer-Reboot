@@ -89,6 +89,7 @@ Vermögensband mit 7-Tage-Höchstwert (F-CMB-06).
 | Mengen | `int` | Ganze Einheiten. Abgeleitete Mengen (Verderb, Produktion, Verluste) werden abgerundet, Crew-Verluste kaufmännisch gerundet. |
 | Wahrscheinlichkeiten | `float64` in [0, 1] | Immer geklemmt. Ereignis tritt ein, wenn $U < p$. |
 | Heat | `float64` in [0, `heat.max`] | Pro (Spieler, Stadt). |
+| Laderaum | `int` in **Volumeneinheiten (VE)** | Abstrakte Einheit, **keine Gramm/Kilogramm**. Ware: `goods.<id>.volume` VE je Einheit; Kapazität: Rucksack `player.backpack_capacity` = 60 VE plus Fahrzeug `vehicles.<id>.capacity`. |
 | Bestände | `float64` | Marktbestände sind kontinuierlich; Spielerbestände ganzzahlig. |
 
 Für Float-Vergleiche bei Rundung gilt eine Toleranz von $10^{-9}$ (siehe `ceil_ct`/`floor_ct` in `verify.py`).

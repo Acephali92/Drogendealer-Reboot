@@ -30,6 +30,7 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 | ADR-021 | Technische Enum-Werte englisch, deutsche Namen nur zur Anzeige | Akzeptiert | 2026-11-09 |
 | ADR-022 | Team aus fünf Agenten; Spielregeln geteilt nach Systemen | Akzeptiert | 2026-11-09 |
 | ADR-023 | Polizeikontrolle beschlagnahmt alles Mitgeführte; Geldwäsche als Progressionssystem | Akzeptiert | 2026-11-12 |
+| ADR-024 | Parameteränderungen samt Schema in einem PR; CI nur einmal pro Änderung | Akzeptiert | 2026-11-17 |
 
 ---
 
@@ -224,9 +225,19 @@ Status-Werte: `Vorgeschlagen` · `Akzeptiert` · `Abgelehnt` · `Ersetzt durch A
 - **Nachtrag 2026-11-12 (Produktentscheidungen zu T-120, vom Product Owner beantwortet):**
   1. **Keine Zusatzstrafe:** Bei einer Kontrolle gibt es nur die Beschlagnahme. Die bisherige Strafe (20 % des Ladungswerts, Rest als Schuld) entfällt.
   2. **Kein Geld-Versteck:** Im Lager bzw. in Immobilien ist nur Ware sicher. Schwarzgeld ist nur mitgeführt (gefährdet) oder gewaschen auf dem Bankkonto (sicher).
-  3. **Notkredit nur als letzter Ausweg („Kredithai“):** Präzisiert vom Product Owner gegenüber Agent 2: Der Notkredit beträgt **100.000 €** und gibt es erst, wenn **alle Waffen und alle Fahrzeuge bis auf eines** verkauft sind; ein Fahrzeug darf der Spieler also behalten. Tilgung und Zinsen legen Agent 2 und Agent 5 in T-120 fest (Startidee Agent 5: Tilgung mit 50 % der Verkaufserlöse, höchstens ein Kredit pro Woche). Voraussetzung: Waffen und Fahrzeuge lassen sich zurückverkaufen (Rückkaufpreis legt Agent 5 fest, Exploit-Prüfung E-08).
+  3. **Notkredit nur als letzter Ausweg („Kredithai“):** Endgültig entschieden vom Product Owner am 2026-11-17 auf Basis der Simulation (`docs/balancing/SIMULATION_RESULTS.md` §4): **1.000 €**, nur wenn **alle Waffen und alle Fahrzeuge bis auf eines** verkauft sind **und** das Restvermögen unter **200 €** liegt; ohne Aufschlag. Die vorherige Festlegung auf 100.000 € ist aufgehoben. Begründung: Der Kredit wird als Schwarzgeld ausgezahlt; 100.000 € gingen bei der nächsten Kontrolle mit verloren, die Schuld bliebe. In der Simulation lagen dann 52 % der Durchschnittsspieler unter Startkapital, mit 1.000 € in echter Not nur 6–8 %. Voraussetzung: Rückverkauf von Waffen (50 %) und Fahrzeugen (60 %) des Neupreises (E-08).
   4. **Kontrollen nur auf Reisen.** Überfälle durch Spieler und NPC-Banden folgen ihren eigenen, gedeckelten Regeln.
 - **Konsequenzen:** `money-laundering.md`, die Kontrollregeln und `parameters.toml` werden überarbeitet (T-120); die Simulation bekommt ein neues Szenario mit Totalbeschlagnahme und Wäsche-Progression. Agent 3 trennt im Datenmodell Bargeld (schwarz) und Bankkonto (weiß) und journalisiert jede Wäsche und jede Beschlagnahme (ADR-010). Agent 4 zeigt beide Geldarten und das Kontrollrisiko deutlich an.
+
+## ADR-024 – Parameteränderungen samt Schema in einem PR; CI nur einmal pro Änderung
+- **Status:** Akzeptiert · **Datum:** 2026-11-17 · **Anlass:** Prozessprüfung durch Agent 1, vom Product Owner beauftragt
+- **Kontext:** Dreimal (#17, #27 und jetzt T-120) hat Game Design neue Schlüssel in `parameters.toml` eingeführt, die das strikte Backend-Schema (T-101) ablehnte. Jedes Mal brauchte es 2–3 PRs, Wartezeit und Abstimmungsnachrichten; einmal war `main` dadurch kaputt (#17). Außerdem liefen alle CI-Workflows doppelt, einmal per `push` auf dem Arbeits-Branch und einmal per `pull_request`: 73 von 100 Läufen waren `push`, 22 Commits liefen zweimal.
+- **Entscheidung:**
+  1. **Ein PR pro Parameteränderung:** Wer neue Schlüssel in `docs/game-design/parameters.toml` einführt oder entfernt (Agent 2, Agent 5), passt im **selben PR** `backend/src/domain/parameters/schema.ts` mit an. Das ist eine gezielte Ausnahme vom Ordner-Eigentum (ADR-009), nur für diese eine Datei und nur für deklarative Änderungen (Felder, Typen, Wertebereiche). Logik in `validate.ts` und anderen Backend-Dateien bleibt bei Agent 3.
+  2. Ändern sich dadurch Referenzwerte, erzeugt derselbe PR `backend/test/golden/golden-vectors.json` mit `python3 -I backend/scripts/export-golden-vectors.py` neu, nie von Hand.
+  3. **Merge-Bedingung:** Backend-, Sim- und Game-Design-CI des PRs sind grün. Agent 3 bekommt den PR vorab zur Durchsicht des Schema-Teils, Agent 1 merged.
+  4. **CI:** `push` löst Workflows nur noch auf `main` aus; Arbeits-Branches werden über den `pull_request`-Lauf geprüft, der das zusammengeführte Ergebnis mit `main` testet. Alle Workflows haben ein Zeitlimit und brechen veraltete Läufe desselben Branches ab.
+- **Konsequenzen:** Etwa halb so viele CI-Läufe; keine Reihenfolge-Abhängigkeit mehr zwischen Game Design und Backend bei neuen Parametern. Wer CI auf einem Arbeits-Branch ohne PR braucht, öffnet einen Entwurfs-PR (Draft). Empfohlen, vom Product Owner einzurichten: Branch-Schutz für `main` mit Pflicht-Checks, damit ein roter PR nicht gemergt werden kann.
 
 ---
 
