@@ -14,6 +14,7 @@
 | 4 | **Eine Ware und eine Kurzroute dominieren.** 5 der 8 umsatzstärksten Märkte handeln Kokain. Statisch: Route-Dominanz-Index 27,6, nur 13 % der Routen sind mit Startkapital profitabel. | `base`, statische Analyse | Befund B-2 (nächstes Experiment) |
 | 5 | **Die Marktstabilität ist gut.** P/P* liegt im Tagesmittel bei 0,98–1,05 (Regel) bzw. 0,91–1,08 (mit Eigendynamik), knappe Markt-Ticks bei 6–8 %. | alle | – |
 | 6 | **NPC-Rückbau (R-4):** Die Kennzahlen sind bei ≈ 120–130 Spielern erfüllt, k sinkt erstmals bei 117–134 Spielern (3 von 4 Läufen). Engpass ist die Marktaktivität. | `s8-handover` | Prognose für den Betreiber |
+| 8 | **ADR-023 (Totalbeschlagnahme):** Ohne Wäsche liegen 74 % der Durchschnittsspieler unter dem Startkapital. Mit Wäsche, Kredithai 1.000 € (ab < 200 € Restvermögen), Finanzen-XP ×10 und W0 Ø 0,85 sind es **6 %**. Der Kredithai mit 100.000 € ist eine Schuldenfalle (52 %). | §4 | B-8…B-10 |
 | 7 | **0 Invariantenverletzungen** in allen Läufen: Geldbilanz je Tick exakt, keine negativen Bestände, deterministisch. | alle | – |
 
 ## 0. Änderungen am Modell
@@ -741,3 +742,177 @@ Erster Rückgang von k je Seed: kein Rückgang; Tag 145 bei 128 Spielern; Tag 13
 | Die Kurzroute Rotterdam → Amsterdam verliert ihre Dominanz | `city.amsterdam.police` 0,3 → 0,45 | `npc-conf` |
 | Kombination B-1 + B-3 + Eigendynamik bleibt im Korridor | `wealthSink` an | `npc-conf` + `ext` |
 | Späte Einsteiger (S6) holen im Einkommen pro Stunde auf | Zustrom an Tag 30/180/365 | empfohlene Konfiguration |
+
+## 4. ADR-023: Totalbeschlagnahme, Waschstufen, Kredithai (T-120)
+
+> Läufe vom 2026-11-17. Parameter: `parameters.toml` aus Agent 2s T-120-Branch (`claude/friendly-albattani-acgx44-t120`, Commit `72102ab`): Schlüssel `[laundering.tiers.*]`, `[loan_shark]`, kein `travel.fine_rate`. Regeln: F-TRV-06 neu, F-ML-07…10. Nicht simuliert: W2 (Betriebe), Waffen (gelten als verkauft).
+> **Leitkennzahl:** Anteil der Spieler je Profil, deren Nettovermögen nach 90 Tagen unter dem Startkapital (2.000 €) liegt, gemessen über **alle** Spieler des Profils (beobachtete und Hintergrund-Bots, n = 36–312). Ziel laut ADR-023: Durchschnittsspieler B ≤ 10 %.
+
+### 4.1 Übersicht [gemessen]
+
+| Szenario | Änderung (je eine ggü. Vorgänger) | A | **B** | C | D | E | B mit Kredit | Geldmenge Tag 90 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `base-short` | alte Regel (nur Ware weg, keine Strafe – T-120-Parameter) | 1 % | **15 %** | 29 % | 50 % | 11 % | 0 % | 3.57 Mio. € |
+| `adr023-nowash` | ADR-023, ohne Wäsche, ohne Kredit | 86 % | **74 %** | 56 % | 54 % | 40 % | 0 % | 1.38 Mio. € |
+| `adr023` | + Waschstufen (Startwerte Agent 2) | 8 % | **21 %** | 34 % | 75 % | 18 % | 0 % | 1.29 Mio. € |
+| `adr023-loan100k` | + Kredit 100.000 €, Schwelle 2.000 € (ADR-Wert) | 46 % | **52 %** | 76 % | 100 % | 65 % | 91 % | 1.59 Mio. € |
+| `adr023-loanwhite` | wie loan100k, Auszahlung aufs Konto [Design] | 8 % | **37 %** | 72 % | 100 % | 39 % | 93 % | 1.47 Mio. € |
+| `adr023-loan10k` | adr023 + Kredit 10.000 € | 42 % | **26 %** | 15 % | 73 % | 14 % | 94 % | 1.37 Mio. € |
+| `adr023-loan1k` | adr023 + Kredit 1.000 € | 32 % | **18 %** | 15 % | 81 % | 6 % | 95 % | 1.17 Mio. € |
+| `adr023-loan1k-200` | wie loan1k, Schwelle 200 € | 15 % | **8 %** | 15 % | 90 % | 6 % | 45 % | 1.27 Mio. € |
+| `adr023-xp10` | adr023 + Finanzen-XP ×10 | 14 % | **22 %** | 33 % | 77 % | 31 % | 0 % | 1.66 Mio. € |
+| `adr023-w0-085` | adr023 + W0-Kurs Ø 0,85 | 1 % | **18 %** | 32 % | 56 % | 28 % | 0 % | 1.59 Mio. € |
+| `adr023-w0narrow` | adr023 + W0-Spanne 0,55–0,85 | 8 % | **25 %** | 40 % | 81 % | 22 % | 0 % | 1.35 Mio. € |
+| `adr023-rec` | **Empfehlung:** loan1k-200 + XP ×10 | 16 % | **9 %** | 10 % | 75 % | 4 % | 40 % | 1.63 Mio. € |
+| `adr023-rec-w0` | **Empfehlung + W0 Ø 0,85** | 2 % | **6 %** | 7 % | 65 % | 8 % | 32 % | 1.95 Mio. € |
+| `adr023-rec-npc` | Empfehlung + NPC-Händler k = 1 | 80 % | **20 %** | 31 % | 100 % | 6 % | 61 % | 0.71 Mio. € |
+| `adr023-rec-365` | Empfehlung, 365 Tage (Stand Tag 365) | 9 % | **10 %** | 12 % | 75 % | 4 % | 49 % | 7.17 Mio. € |
+
+### 4.2 Auswertung
+
+1. **Ohne Wäsche ist ADR-023 nicht spielbar.** 74 % der Durchschnittsspieler enden unter dem Startkapital, mit der alten Regel waren es 15 %. Grund: Eine Kontrolle nimmt jetzt auch das ganze Bargeld.
+2. **Die Wäsche ist der Ausweg.** Allein mit den Startwerten von Agent 2 sinkt der Anteil auf 21 %. Das reicht noch nicht für das Ziel ≤ 10 %.
+3. **Der Kredithai mit 100.000 € ist eine Schuldenfalle.**
+   - 91 % der Durchschnittsspieler nehmen ihn, weil die Schwelle von 2.000 € dem Startkapital entspricht.
+   - Er wird als Schwarzgeld ausgezahlt und bei der nächsten Kontrolle mit beschlagnahmt. Die Schuld bleibt.
+   - 52 % (B), 76 % (C) und 100 % (D) enden unter dem Startkapital, oft mit negativem Nettovermögen.
+   - Auszahlung aufs Konto mildert das (B 37 %), beseitigt es aber nicht. Höhere Rückzahlung (`repay_factor` 1,2) oder „nur nach Beschlagnahme“ verschlechtern es ebenfalls (Lauf vom 2026-11-15).
+4. **Ein kleiner Kredit mit niedriger Schwelle ist der beste Notanker.** 1.000 € ab einem Restvermögen unter 200 € ergibt B 8 %. Nur Spieler in echter Not nehmen ihn (A 9 %, B 45 %).
+5. **Finanzen-XP ×10 ändert die Sackgassen nicht, macht die Progression aber erst erlebbar.** Mit dem heutigen Wert (1 XP je 1.000 € gewaschen) erreicht in 90 Tagen **niemand** W1. Mit ×10 erreichen es Durchschnittsspieler an Tag ≈ 30.
+6. **Die W0-Spanne wirkt nur auf die Streuung.** Ein höherer Mittelwert (Ø 0,85) hilft vorsichtigen Spielern (A 8 % → 0 %).
+7. **Empfohlene Konfiguration** (`adr023-rec-w0`): **B 6 %, A 2 %, C 7 %, E 8 %**. Das Ziel ist erreicht.
+8. **Mit NPC-Händlern (k = 1) reicht das nicht.** A liegt bei 80 % und B bei 20 %. Die dünneren Margen und die Totalbeschlagnahme zusammen treffen vor allem vorsichtige Spieler. → Offener Punkt B-11.
+9. **Langzeit (365 Tage):**
+   - Durchschnittsspieler erreichen W1 an Tag ≈ 31, W3 an Tag ≈ 186 und W4 an Tag ≈ 310. Optimierte Spieler erreichen W4 an Tag ≈ 217.
+   - Die „Papers“ treffen nie: Der Mindestbetrag von 1 Mio. € je W4-Vorgang wird praktisch nicht erreicht, weil die Spieler über die günstigere W3 waschen.
+   - Die Waschgebühren sind die größte Geldsenke (11,6 Mio. € in 365 Tagen).
+
+### 4.3 Details der empfohlenen Konfiguration
+
+#### `adr023-rec-w0` – wie adr023-rec, W0-Kurs 0,70–1,00 (Ø 0,85)
+
+- **Hypothese:** Ein günstigerer Einstiegskurs senkt Verluste vorsichtiger Spieler zusätzlich.
+- **Setup:** 30 Hintergrundspieler + je 1 beobachteter Bot A–E, 90 Tage, 12 Seeds. Erweiterungen: Wirtschaft aus, NPC-Händler F-NPC-01 aus, Kundenbindung/Polizeidruck aus, Sicherheitsnetz aus, Beschlagnahme bei Kontrolle 100 % der Ladung, Organisationskosten F-PRG-01 aus, **ADR-023** (Totalbeschlagnahme Ware + Bargeld): Wäsche an, Kredithai an.
+- **Geänderter Parameter:** `loan_shark.amount` = 100000, `loan_shark.max_assets` = 20000, `professions.finanzen_xp_per_eur` = 0.01, `laundering.tiers.gambling.rate_min` = 0.7
+- **Parameter:** `parameters.toml aus T-120 (Agent 2, 72102ab)` (SHA-256 `4592e8a30313…`), Vorschläge `sim/proposals.toml` (`dd7fbf2aee4d…`). Invariantenverletzungen: **0**.
+
+**Nettovermögen [gemessen]** (Median, in Klammern P10–P90, Euro)
+
+| Profil | Tag 1 | Tag 7 | Tag 30 | Tag 90 |
+|---|---:|---:|---:|---:|
+| A Vorsichtig | 2.029 (1.844–2.120) | 2.587 (1.812–2.990) | 4.289 (2.482–5.999) | 10.251 (7.177–12.446) |
+| B Durchschnitt | 3.411 (1.525–4.906) | 10.351 (1.526–23.459) | 73.943 (19.659–100.702) | 121.889 (46.507–221.200) |
+| C Aggressiv | 3.724 (3.034–6.050) | 9.895 (1.598–29.632) | 41.179 (27.070–235.706) | 194.634 (27.796–354.669) |
+| D Ineffizient | 1.782 (1.624–3.285) | 1.206 (-23–4.645) | -119 (-735–7.918) | -119 (-735–7.918) |
+| E Optimiert | 5.879 (2.527–8.459) | 29.174 (14.939–68.712) | 131.080 (38.681–236.867) | 378.148 (90.248–498.666) |
+
+**Meilensteine [gemessen]** (Anteil der Seeds, die ihn erreichen · Median-Tag)
+
+| Profil | Kleinwagen | Transporter | LKW | NW ≥ 50 000 € | NW ≥ 500 000 € | NW ≥ 5 Mio. € | Finanzen L2 (W1) | Finanzen L10 (W3) | Finanzen L15 (W4) |
+|---|---|---|---|---|---|---|---|---|---|
+| A | – | – | – | – | – | – | – | – | – |
+| B | 100 % · Tag 8.3 | 100 % · Tag 20.3 | 33 % · Tag 65.5 | 100 % · Tag 20 | – | – | 100 % · Tag 29.9 | – | – |
+| C | 100 % · Tag 2.7 | 100 % · Tag 13.9 | 100 % · Tag 36 | 100 % · Tag 21 | – | – | 100 % · Tag 54.9 | – | – |
+| D | 25 % · Tag 15.2 | – | – | – | – | – | – | – | – |
+| E | 100 % · Tag 1.6 | 100 % · Tag 5.6 | 100 % · Tag 23.2 | 100 % · Tag 10.5 | 17 % · Tag 81.5 | – | 92 % · Tag 23.5 | – | – |
+
+**Verhalten und Risiko [gemessen]** (Mittel je beobachtetem Bot)
+
+| Profil | Fahrten/Tag | Kontrollquote je Fahrt | Ø Marge je Handel | Einnahmen Verkauf € | Einkauf € | Reisekosten € | Strafen, Bestechung, Tilgung, Organisation, Beschlagnahme, Wäsche € | Sackgassen-Tage | Neustarts | Ende < Startkapital |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 1.99 | 1.5 % | 42 % | 78.833 | 57.953 | 8.920 | 4.062 | 0 | 0 | 0 % |
+| B | 2.58 | 3.3 % | 35 % | 1.706.189 | 1.448.440 | 22.939 | 114.783 | 0 | 0 | 0 % |
+| C | 3.08 | 3.4 % | 35 % | 2.377.957 | 2.004.648 | 38.448 | 112.175 | 0 | 1.25 | 0 % |
+| D | 0.37 | 6.3 % | 16 % | 30.703 | 27.192 | 2.149 | 2.685 | 69.4 | 0 | 75 % |
+| E | 3.03 | 3.2 % | 39 % | 2.907.316 | 2.345.631 | 50.937 | 170.578 | 0 | 0 | 0 % |
+
+**Wäsche, Beschlagnahme, Kredithai [gemessen]** (Mittel je beobachtetem Bot; Weißgeld-Anteil = Median Konto ÷ Bruttovermögen am Ende)
+
+| Profil | gewaschen € | Waschgebühren € | beschlagnahmtes Bargeld € | beschlagnahmte Ware (P_base) € | Kredite | Anteil mit Kredit | offene Kreditschuld Ende € | Weißgeld-Anteil | Finanzen-Level (Median) | Papers |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 26.651 | 4.062 | 0 | 2.266 | 0 | 0 % | 0 | 93 % | 1 | 0 |
+| B | 417.556 | 81.599 | 22.420 | 154.907 | 0.67 | 25 % | 0 | 37 % | 6 | 0 |
+| C | 256.683 | 48.175 | 39.432 | 205.543 | 4.17 | 83 % | 0 | 26 % | 4.5 | 0 |
+| D | 5.093 | 735 | 585 | 1.988 | 1.33 | 100 % | 270 | 44 % | 0 | 0 |
+| E | 625.441 | 122.359 | 33.373 | 218.005 | 1 | 67 % | 0 | 71 % | 7.5 | 0 |
+
+**Alle Spieler je Profil [gemessen]** (beobachtete + Hintergrund-Bots, Stand letzter Tag; Leitkennzahl für den Sackgassen-Nachweis)
+
+| Profil | n | unter Startkapital | Ø Sackgassen-Tage | mit Beschlagnahme | mit Kredit | Ø Kredite | NW Median € |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| A Vorsichtig | 156 | **2 %** | 0.6 | 94 % | 1 % | 0.02 | 9.464 |
+| B Durchschnitt | 108 | **6 %** | 4.1 | 100 % | 32 % | 0.49 | 110.915 |
+| C Aggressiv | 72 | **7 %** | 4.8 | 100 % | 90 % | 4 | 168.482 |
+| D Ineffizient | 48 | **65 %** | 64.6 | 94 % | 100 % | 1.31 | -84 |
+| E Optimiert | 36 | **8 %** | 5.4 | 100 % | 67 % | 1.06 | 348.684 |
+
+**Markt und Geldmenge [gemessen]**
+
+- Preisniveau P/P* (Tagesmittel über alle Märkte): Ø 1.011, Spanne 0.985–1.04. Anteil knapper Markt-Ticks: 7.0 %. Marktereignisse je Lauf: 1099.
+- Handelsvolumen: 733.359 € pro Tag. Geldmenge am Ende (Median): 1.952.528 €, Wachstum in den letzten 30 Tagen: 49.1 %. Senken/Quellen (SFR): 0.95.
+- Ungleichheit am Ende (alle Spieler): Gini 0.663, reichster Spieler ÷ Median 36.3.
+- Umsatzstärkste Märkte: `muenchen/kokain` 175.441 €/Tag (P/P* 0.779, knapp 30 %); `hamburg/kokain` 105.359 €/Tag (P/P* 1.134, knapp 0 %); `frankfurt/kokain` 65.521 €/Tag (P/P* 0.928, knapp 3 %); `rotterdam/kokain` 53.141 €/Tag (P/P* 1.218, knapp 0 %); `amsterdam/gras` 41.068 €/Tag (P/P* 1.13, knapp 0 %).
+
+#### `adr023-rec-365` – wie adr023-rec über 365 Tage
+
+- **Hypothese:** Langfristig erreichen aktive Spieler W3 (L10), und die Wäsche-Progression bleibt erlebbar; Papers (W4) bleiben selten.
+- **Setup:** 30 Hintergrundspieler + je 1 beobachteter Bot A–E, 365 Tage, 8 Seeds. Erweiterungen: Wirtschaft aus, NPC-Händler F-NPC-01 aus, Kundenbindung/Polizeidruck aus, Sicherheitsnetz aus, Beschlagnahme bei Kontrolle 100 % der Ladung, Organisationskosten F-PRG-01 aus, **ADR-023** (Totalbeschlagnahme Ware + Bargeld): Wäsche an, Kredithai an.
+- **Geänderter Parameter:** `loan_shark.amount` = 100000, `loan_shark.max_assets` = 20000, `professions.finanzen_xp_per_eur` = 0.01
+- **Parameter:** `parameters.toml aus T-120 (Agent 2, 72102ab)` (SHA-256 `4592e8a30313…`), Vorschläge `sim/proposals.toml` (`dd7fbf2aee4d…`). Invariantenverletzungen: **0**.
+
+**Nettovermögen [gemessen]** (Median, in Klammern P10–P90, Euro)
+
+| Profil | Tag 1 | Tag 7 | Tag 30 | Tag 90 | Tag 180 | Tag 365 |
+|---|---:|---:|---:|---:|---:|---:|
+| A Vorsichtig | 1.830 (1.446–1.977) | 1.960 (1.720–2.765) | 3.042 (1.651–3.664) | 5.531 (1.822–7.885) | 10.536 (7.144–14.218) | 24.389 (17.675–40.536) |
+| B Durchschnitt | 3.275 (1.492–6.634) | 14.384 (211–28.732) | 35.352 (7.680–139.336) | 102.521 (28.837–235.004) | 173.132 (18.040–360.851) | 363.725 (89.221–617.859) |
+| C Aggressiv | 5.058 (2.825–7.143) | 20.117 (7.150–32.266) | 42.152 (25.874–78.818) | 176.831 (29.905–266.738) | 230.870 (88.386–432.518) | 571.720 (427.604–921.988) |
+| D Ineffizient | 1.777 (1.340–2.358) | 2.677 (-239–3.984) | 1.532 (-250–7.965) | 3.912 (-289–8.044) | 3.912 (-289–7.929) | 3.912 (-289–7.929) |
+| E Optimiert | 6.728 (4.065–7.398) | 25.574 (15.927–29.911) | 93.158 (70.058–194.432) | 365.367 (235.992–423.090) | 641.997 (402.652–730.139) | 1.120.641 (984.699–1.216.797) |
+
+**Meilensteine [gemessen]** (Anteil der Seeds, die ihn erreichen · Median-Tag)
+
+| Profil | Kleinwagen | Transporter | LKW | NW ≥ 50 000 € | NW ≥ 500 000 € | NW ≥ 5 Mio. € | Finanzen L2 (W1) | Finanzen L10 (W3) | Finanzen L15 (W4) |
+|---|---|---|---|---|---|---|---|---|---|
+| A | 25 % · Tag 331.3 | – | – | – | – | – | 100 % · Tag 164.2 | – | – |
+| B | 88 % · Tag 6.7 | 88 % · Tag 11.6 | 75 % · Tag 117.5 | 88 % · Tag 11 | 38 % · Tag 293 | – | 88 % · Tag 30.7 | 88 % · Tag 185.7 | 75 % · Tag 310.2 |
+| C | 100 % · Tag 2 | 100 % · Tag 10 | 100 % · Tag 53.9 | 100 % · Tag 16 | 88 % · Tag 282 | – | 100 % · Tag 47 | 100 % · Tag 211.9 | 38 % · Tag 356.7 |
+| D | 50 % · Tag 20.1 | – | – | – | – | – | – | – | – |
+| E | 100 % · Tag 1.9 | 100 % · Tag 7.5 | 100 % · Tag 28.1 | 100 % · Tag 11 | 100 % · Tag 122.5 | – | 100 % · Tag 24 | 100 % · Tag 106.5 | 88 % · Tag 217.1 |
+
+**Verhalten und Risiko [gemessen]** (Mittel je beobachtetem Bot)
+
+| Profil | Fahrten/Tag | Kontrollquote je Fahrt | Ø Marge je Handel | Einnahmen Verkauf € | Einkauf € | Reisekosten € | Strafen, Bestechung, Tilgung, Organisation, Beschlagnahme, Wäsche € | Sackgassen-Tage | Neustarts | Ende < Startkapital |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 1.97 | 1.7 % | 41 % | 336.690 | 246.927 | 37.239 | 29.727 | 0 | 0 | 0 % |
+| B | 2.05 | 2.8 % | 31 % | 8.119.729 | 6.858.038 | 151.705 | 739.506 | 40.9 | 0.13 | 13 % |
+| C | 2.77 | 3.1 % | 27 % | 12.196.985 | 10.412.444 | 227.415 | 829.178 | 0 | 3.38 | 0 % |
+| D | 0.15 | 3.9 % | 19 % | 71.525 | 61.559 | 3.528 | 6.048 | 325.8 | 0 | 50 % |
+| E | 2.77 | 2.4 % | 33 % | 12.856.072 | 10.293.607 | 273.674 | 1.182.187 | 0 | 0.13 | 0 % |
+
+**Wäsche, Beschlagnahme, Kredithai [gemessen]** (Mittel je beobachtetem Bot; Weißgeld-Anteil = Median Konto ÷ Bruttovermögen am Ende)
+
+| Profil | gewaschen € | Waschgebühren € | beschlagnahmtes Bargeld € | beschlagnahmte Ware (P_base) € | Kredite | Anteil mit Kredit | offene Kreditschuld Ende € | Weißgeld-Anteil | Finanzen-Level (Median) | Papers |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 110.886 | 29.602 | 0 | 9.681 | 0.13 | 13 % | 0 | 95 % | 3 | 0 |
+| B | 2.304.584 | 615.637 | 85.035 | 503.115 | 0.88 | 63 % | 37 | 72 % | 16 | 0 |
+| C | 2.054.992 | 531.979 | 192.369 | 762.845 | 7.75 | 100 % | 0 | 79 % | 14 | 0 |
+| D | 12.662 | 3.748 | 654 | 1.611 | 1.63 | 100 % | 179 | 25 % | 0.5 | 0 |
+| E | 3.808.986 | 1.045.992 | 96.750 | 581.206 | 1.38 | 88 % | 0 | 90 % | 19.5 | 0 |
+
+**Alle Spieler je Profil [gemessen]** (beobachtete + Hintergrund-Bots, Stand letzter Tag; Leitkennzahl für den Sackgassen-Nachweis)
+
+| Profil | n | unter Startkapital | Ø Sackgassen-Tage | mit Beschlagnahme | mit Kredit | Ø Kredite | NW Median € |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| A Vorsichtig | 104 | **9 %** | 26.8 | 100 % | 12 % | 0.13 | 21.764 |
+| B Durchschnitt | 72 | **10 %** | 30.7 | 100 % | 49 % | 1.01 | 283.783 |
+| C Aggressiv | 48 | **13 %** | 38.2 | 100 % | 96 % | 5.48 | 567.349 |
+| D Ineffizient | 32 | **75 %** | 328.4 | 100 % | 100 % | 1.5 | -248 |
+| E Optimiert | 24 | **4 %** | 11.2 | 100 % | 88 % | 1.88 | 1.066.267 |
+
+**Markt und Geldmenge [gemessen]**
+
+- Preisniveau P/P* (Tagesmittel über alle Märkte): Ø 1.012, Spanne 0.975–1.051. Anteil knapper Markt-Ticks: 7.0 %. Marktereignisse je Lauf: 4422.
+- Handelsvolumen: 885.511 € pro Tag. Geldmenge am Ende (Median): 7.173.537 €, Wachstum in den letzten 30 Tagen: 11.2 %. Senken/Quellen (SFR): 0.959.
+- Ungleichheit am Ende (alle Spieler): Gini 0.661, reichster Spieler ÷ Median 33.7.
+- Umsatzstärkste Märkte: `muenchen/kokain` 200.830 €/Tag (P/P* 0.762, knapp 26 %); `hamburg/kokain` 101.630 €/Tag (P/P* 1.132, knapp 0 %); `frankfurt/kokain` 82.714 €/Tag (P/P* 0.93, knapp 4 %); `amsterdam/gras` 60.130 €/Tag (P/P* 1.187, knapp 0 %); `rotterdam/kokain` 56.525 €/Tag (P/P* 1.232, knapp 0 %).
