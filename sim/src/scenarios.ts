@@ -128,6 +128,27 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     overrides: { 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000 },
     hypothesis: 'Mit niedriger Schwelle wird der kleine Kredit nur noch in echter Not genommen, ohne dass Sackgassen zunehmen.',
   },
+  // Empfohlene Konfiguration (Agent 5): Kredit 1 000 €, Schwelle 200 €, Finanzen-XP ×10
+  'adr023-rec': {
+    scenario: sc('adr023-rec', 'Empfehlung: adr023 + Kredit 1 000 € (Schwelle 200 €) + Finanzen-XP ×10', 90, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000, 'professions.finanzen_xp_per_eur': 0.01 },
+    hypothesis: 'Die Kombination hält Durchschnittsspieler (B) bei ≤ 10 % unter Startkapital und macht die Wäsche-Progression (W1) innerhalb weniger Wochen erreichbar.',
+  },
+  'adr023-rec-w0': {
+    scenario: sc('adr023-rec-w0', 'wie adr023-rec, W0-Kurs 0,70–1,00 (Ø 0,85)', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { ...{ 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000, 'professions.finanzen_xp_per_eur': 0.01 }, 'laundering.tiers.gambling.rate_min': 0.7 },
+    hypothesis: 'Ein günstigerer Einstiegskurs senkt Verluste vorsichtiger Spieler zusätzlich.',
+  },
+  'adr023-rec-npc': {
+    scenario: sc('adr023-rec-npc', 'wie adr023-rec + NPC-Händler F-NPC-01, k = 1', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000, 'professions.finanzen_xp_per_eur': 0.01 },
+    hypothesis: 'Auch mit NPC-Händlern (Startzustand kleiner Server) bleiben Durchschnittsspieler aus Sackgassen heraus.',
+  },
+  'adr023-rec-365': {
+    scenario: sc('adr023-rec-365', 'wie adr023-rec über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000, 'professions.finanzen_xp_per_eur': 0.01 },
+    hypothesis: 'Langfristig erreichen aktive Spieler W3 (L10), und die Wäsche-Progression bleibt erlebbar; Papers (W4) bleiben selten.',
+  },
   'adr023-w0-085': {
     scenario: sc('adr023-w0-085', 'wie adr023, W0-Kurs 0,70–1,00 (Ø 0,85) statt 0,40–1,00 (Ø 0,70)', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true }),
     overrides: { 'laundering.tiers.gambling.rate_min': 0.7 },
