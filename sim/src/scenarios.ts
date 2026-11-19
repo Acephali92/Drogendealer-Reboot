@@ -175,6 +175,11 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3 },
     hypothesis: 'Mit höherer Mindestmarge lassen NPCs die kleinen, risikoarmen Routen (A) unberührt und gleichen nur die großen Spreizungen aus; die Top-Route bleibt gedämpft.',
   },
+  'b11-theta-365': {
+    scenario: sc('b11-theta-365', 'B-11: wie b11-theta über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3 },
+    hypothesis: 'Die höhere Mindestmarge hält auch langfristig: A und B bleiben ≤ 10 % unter Startkapital, E wächst nicht schneller als in adr023-rec-365.',
+  },
   'adr023-rec-365': {
     scenario: sc('adr023-rec-365', 'wie adr023-rec über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
     overrides: { 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000, 'professions.finanzen_xp_per_eur': 0.01 },
