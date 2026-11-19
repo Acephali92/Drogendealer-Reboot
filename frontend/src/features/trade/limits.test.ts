@@ -1,20 +1,20 @@
 import { tradeLimit } from './limits';
 
-describe('tradeLimit', () => {
-  const base = { cash: '100000', unitPrice: '1000', supply: 500, owned: 7, freeG: 50_000, unitWeightG: 1 };
+describe('tradeLimit (Laderaum in Volumeneinheiten)', () => {
+  const base = { cash: '100000', unitPrice: '1000', supply: 500.7, owned: 7, free: 60, unitVolume: 0.5 };
   it('begrenzt Kauf durch Bargeld', () => {
     expect(tradeLimit('BUY', base)).toEqual({ max: 100, reason: 'limitCash' });
   });
-  it('begrenzt Kauf durch Laderaum', () => {
-    expect(tradeLimit('BUY', { ...base, freeG: 40 })).toEqual({ max: 40, reason: 'limitCargo' });
+  it('begrenzt Kauf durch Laderaum (VE)', () => {
+    expect(tradeLimit('BUY', { ...base, free: 20, unitVolume: 2 })).toEqual({
+      max: 10,
+      reason: 'limitCargo',
+    });
   });
-  it('begrenzt Kauf durch Angebot', () => {
-    expect(tradeLimit('BUY', { ...base, supply: 3 })).toEqual({ max: 3, reason: 'limitSupply' });
+  it('begrenzt Kauf durch Bestand (abgerundet)', () => {
+    expect(tradeLimit('BUY', { ...base, supply: 3.9 })).toEqual({ max: 3, reason: 'limitSupply' });
   });
-  it('ignoriert unbekannte Kapazität (prüft der Server)', () => {
-    expect(tradeLimit('BUY', { ...base, freeG: null })).toEqual({ max: 100, reason: 'limitCash' });
-  });
-  it('begrenzt Verkauf durch Bestand', () => {
+  it('begrenzt Verkauf durch Besitz', () => {
     expect(tradeLimit('SELL', base)).toEqual({ max: 7, reason: 'limitOwned' });
   });
 });

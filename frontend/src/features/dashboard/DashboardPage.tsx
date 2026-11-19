@@ -40,7 +40,7 @@ export function DashboardPage() {
 
   if (!player) return null;
   const deals = (market.data ?? [])
-    .map((m) => ({ m, d: percentDelta(m.buyPrice, m.commodity.basePrice) ?? 0 }))
+    .map((m) => ({ m, d: percentDelta(m.referencePrice, m.commodity.basePrice) ?? 0 }))
     .filter((x) => x.d < 0)
     .sort((a, b) => a.d - b.d)
     .slice(0, 4);
@@ -54,7 +54,7 @@ export function DashboardPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/70 to-transparent" />
         <div className="relative flex flex-col gap-5 p-6 sm:p-8 md:flex-row md:items-end md:justify-between">
           <div className="max-w-xl">
-            <p className="label text-brass/90">{shown?.country}</p>
+            <p className="label text-brass/90">{t('city.title')}</p>
             <h1 className="mt-1 text-3xl font-bold text-ink sm:text-4xl">
               {t('dashboard.greeting', { name: player.name })}
             </h1>
@@ -94,13 +94,14 @@ export function DashboardPage() {
           value={formatMoney(player.cash)}
           tone="neon"
           icon={<Wallet className="h-4 w-4" />}
+          hint={t('stats.cashHint')}
         />
         <StatTile
           label={t('stats.bank')}
           value={formatMoney(player.bank)}
           icon={<Landmark className="h-4 w-4" />}
           hint={
-            <Link to="/konto" className="text-brass hover:underline">
+            <Link to="/konto" className="text-brass hover:underline" title={t('stats.bankHint')}>
               {t('account.history')}
             </Link>
           }
@@ -127,8 +128,8 @@ export function DashboardPage() {
           }
         />
         <StatTile
-          label={t('stats.heat')}
-          value={`${player.heat}`}
+          label={t('stats.heatCity')}
+          value={`${Math.round(player.heat)}`}
           tone={player.heat >= 50 ? 'danger' : 'default'}
           icon={<Flame className="h-4 w-4" />}
           hint={t(`heat.${heatLevel(player.heat)}`)}
@@ -167,11 +168,11 @@ export function DashboardPage() {
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-ink">{m.commodity.name}</p>
                           <p className="text-xs text-ink-muted">
-                            {t('trade.available')}: <span className="num">{formatNumber(m.supply)}</span>
+                            {t('trade.stock')}: <span className="num">{formatNumber(m.stock)}</span>
                           </p>
                         </div>
                         <div className="text-right">
-                          <Money value={m.buyPrice} className="font-semibold text-ink" />
+                          <Money value={m.referencePrice} className="font-semibold text-ink" />
                           <p className="num text-xs text-neon">{d.toLocaleString('de-DE')} %</p>
                         </div>
                         <ArrowRight className="h-4 w-4 text-ink-faint" aria-hidden />
@@ -217,8 +218,15 @@ export function DashboardPage() {
                     <p className="num text-ink">{clan.data.memberCount}</p>
                   </div>
                   <div>
-                    <p className="label">{t('clans.bank')}</p>
-                    <Money value={clan.data.bank} className="text-ink" />
+                    <p className="label">{t('clans.treasury')}</p>
+                    <Money
+                      value={
+                        clan.data.treasury
+                          ? toCents(clan.data.treasury.cash) + toCents(clan.data.treasury.bank)
+                          : null
+                      }
+                      className="text-ink"
+                    />
                   </div>
                 </div>
               </Link>

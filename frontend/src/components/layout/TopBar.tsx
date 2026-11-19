@@ -7,7 +7,7 @@ import { Money } from '@/components/ui/Money';
 import { Countdown } from '@/components/ui/Countdown';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Avatar } from '@/components/ui/Avatar';
-import { formatWeight } from '@/lib/money';
+import { formatVolume } from '@/lib/money';
 import { cn } from '@/lib/cn';
 import { Logo } from './Logo';
 
@@ -58,14 +58,17 @@ export function TopBar() {
         {/* Kennzahlen */}
         {player && (
           <dl className="hidden flex-1 items-center justify-end gap-5 text-sm md:flex">
-            <div className="flex items-center gap-2" title={t('stats.cash')}>
+            <div className="flex items-center gap-2" title={`${t('stats.cash')} – ${t('stats.cashHint')}`}>
               <Wallet className="h-4 w-4 text-neon" aria-hidden />
               <dt className="sr-only">{t('stats.cash')}</dt>
               <dd>
                 <Money value={player.cash} className="font-semibold text-neon" />
               </dd>
             </div>
-            <div className="hidden items-center gap-2 xl:flex" title={t('stats.bank')}>
+            <div
+              className="hidden items-center gap-2 xl:flex"
+              title={`${t('stats.bank')} – ${t('stats.bankHint')}`}
+            >
               <Landmark className="h-4 w-4 text-ink-faint" aria-hidden />
               <dt className="sr-only">{t('stats.bank')}</dt>
               <dd>
@@ -78,14 +81,10 @@ export function TopBar() {
                 <dt className="sr-only">{t('stats.cargo')}</dt>
                 <dd className="w-full">
                   <div className="num flex justify-between text-[11px] text-ink-muted">
-                    <span>{cargo.free !== null ? formatWeight(cargo.free) : t('stats.backpack')}</span>
-                    {cargo.free !== null && <span className="text-ink-faint">frei</span>}
+                    <span>{formatVolume(cargo.free)}</span>
+                    <span className="text-ink-faint">frei</span>
                   </div>
-                  <ProgressBar
-                    value={cargo.capacity ? cargo.used / cargo.capacity : 0}
-                    tone="auto"
-                    size="xs"
-                  />
+                  <ProgressBar value={cargo.used / Math.max(1, cargo.capacity)} tone="auto" size="xs" />
                 </dd>
               </div>
             )}
@@ -99,10 +98,13 @@ export function TopBar() {
                 <ProgressBar value={player.health / player.maxHealth} tone="danger" size="xs" />
               </dd>
             </div>
-            <div className={cn('flex items-center gap-1.5', heatTone(player.heat))} title={t('stats.heat')}>
+            <div
+              className={cn('flex items-center gap-1.5', heatTone(player.heat))}
+              title={t('stats.heatCity')}
+            >
               <Flame className="h-4 w-4" aria-hidden />
               <dt className="sr-only">{t('stats.heat')}</dt>
-              <dd className="num font-semibold">{player.heat}</dd>
+              <dd className="num font-semibold">{Math.round(player.heat)}</dd>
             </div>
           </dl>
         )}
@@ -138,9 +140,7 @@ export function TopBar() {
           {cargo && (
             <span className="flex shrink-0 items-center gap-1.5 text-ink-muted">
               <Package className="h-3.5 w-3.5" aria-hidden />
-              <span className="num">
-                {cargo.free !== null ? `${formatWeight(cargo.free)} frei` : t('stats.backpack')}
-              </span>
+              <span className="num">{`${formatVolume(cargo.free)} frei`}</span>
             </span>
           )}
           <span className="flex shrink-0 items-center gap-1.5 text-ink-muted">
@@ -149,7 +149,7 @@ export function TopBar() {
           </span>
           <span className={cn('flex shrink-0 items-center gap-1', heatTone(player.heat))}>
             <Flame className="h-3.5 w-3.5" aria-hidden />
-            <span className="num">{player.heat}</span>
+            <span className="num">{Math.round(player.heat)}</span>
           </span>
         </div>
       )}

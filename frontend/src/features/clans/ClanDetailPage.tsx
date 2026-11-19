@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Modal } from '@/components/ui/Modal';
 import { ErrorState, Skeleton } from '@/components/ui/Feedback';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, toCents } from '@/lib/money';
 import { formatDateTime } from '@/lib/time';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
@@ -77,9 +77,13 @@ export function ClanDetailPage() {
         <StatTile label={t('clans.members')} value={c.memberCount} />
         <StatTile label={t('clans.leader')} value={godfather?.name ?? t('clans.noGodfather')} tone="brass" />
         <StatTile
-          label={t('clans.bank')}
-          value={c.bank !== null ? formatMoney(c.bank) : '—'}
-          hint={c.bank === null ? t('clans.bankHidden') : undefined}
+          label={t('clans.treasury')}
+          value={c.treasury ? formatMoney(toCents(c.treasury.cash) + toCents(c.treasury.bank)) : '—'}
+          hint={
+            c.treasury
+              ? `${t('clans.treasuryCash')} ${formatMoney(c.treasury.cash)} · ${t('clans.treasuryBank')} ${formatMoney(c.treasury.bank)}`
+              : t('clans.bankHidden')
+          }
           tone="neon"
         />
         <StatTile label={t('clans.founded')} value={formatDateTime(c.createdAt).split(',')[0]} />
