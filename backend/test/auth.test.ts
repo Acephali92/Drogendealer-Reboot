@@ -129,20 +129,36 @@ describe('GET /api/v1/players/me', () => {
     expect(res.json().error.code).toBe('INVALID_ACCESS_TOKEN');
   });
 
-  it('returns the player profile with money as strings', async () => {
+  it('returns the player profile with the start capital booked (money as strings)', async () => {
     const { accessToken, user } = (await register(app)).json();
     const res = await me(accessToken);
     expect(res.statusCode).toBe(200);
+    const { player: startValues } = app.gameParams;
     expect(res.json().player).toMatchObject({
       id: user.playerId,
       name: 'TonyM',
-      cash: '0',
-      bank: '0',
-      health: 100,
+      cash: startValues.start_cash_black.toString(),
+      bank: startValues.start_cash_white.toString(),
+      health: startValues.hp_max,
+      heat: 0,
       level: 1,
       status: 'IDLE',
       currentCity: null,
     });
+
+    // The start capital is a journal entry (ADR-010): Σ journal = projection from the start.
+    const entries = await app.prisma.moneyTransaction.findMany({ where: { playerId: user.playerId } });
+    expect(entries).toEqual(
+      startValues.start_cash_black > 0n
+        ? [
+            expect.objectContaining({
+              account: 'CASH',
+              reason: 'START_CAPITAL',
+              amount: startValues.start_cash_black,
+            }),
+          ]
+        : [],
+    );
   });
 });
 

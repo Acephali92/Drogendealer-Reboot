@@ -1,19 +1,23 @@
 /**
- * Test-only data factories. These are NOT game content – real cities, commodities and
- * balancing values come from the game designer.
+ * Test-only data factories. Catalog rows use real technical keys from parameters.toml
+ * (e.g. "berlin", "gras"); their values and fictional display names come from the parameters
+ * (data model v2). Catalog rows are upserted because syncCatalog creates them at startup and
+ * truncateAll removes them between tests.
  */
 import type { FastifyInstance } from 'fastify';
-import type { ClanRole } from '@prisma/client';
+import type { ClanRole, EquipmentSlot } from '@prisma/client';
 import { register } from './helpers.js';
 
 let seq = 0;
 const next = () => ++seq;
 
+export const TEST_PASSWORD = 'password-123';
+
 export async function createUser(app: FastifyInstance, name = `player_${next()}`) {
   const res = await register(app, {
     email: `${name}@example.com`,
     username: name,
-    password: 'password-123',
+    password: TEST_PASSWORD,
     ageConfirmed: true,
   });
   if (res.statusCode !== 201) throw new Error(`register failed: ${res.body}`);
@@ -21,50 +25,78 @@ export async function createUser(app: FastifyInstance, name = `player_${next()}`
   return { token: body.accessToken, userId: body.user.id, playerId: body.user.playerId, name };
 }
 
-export function createCity(
-  app: FastifyInstance,
-  data: { slug: string; name: string; policeStrength?: number },
-) {
-  return app.prisma.city.create({ data: { country: 'Testland', techLevel: 2, population: 1000, ...data } });
+const upsertSlug = <T>(find: () => Promise<T | null>, create: () => Promise<T>) =>
+  find().then((row) => row ?? create());
+
+/** Location by key from [city.*] or [space_location.*]. */
+export function createCity(app: FastifyInstance, slug: string) {
+  return upsertSlug(
+    () => app.prisma.city.findUnique({ where: { slug } }),
+    () => app.prisma.city.create({ data: { slug } }),
+  );
 }
 
-export function connectCities(
-  app: FastifyInstance,
-  fromCityId: string,
-  toCityId: string,
-  distanceKm: number,
-) {
-  return app.prisma.cityConnection.create({ data: { fromCityId, toCityId, distanceKm } });
+/** Good by key from [goods.*]. */
+export function createCommodity(app: FastifyInstance, slug: string) {
+  return upsertSlug(
+    () => app.prisma.commodity.findUnique({ where: { slug } }),
+    () => app.prisma.commodity.create({ data: { slug } }),
+  );
 }
 
-export function createCommodity(app: FastifyInstance, slug: string, unitWeightG = 1) {
-  return app.prisma.commodity.create({
-    data: { slug, name: slug.toUpperCase(), unitWeightG, basePrice: 100n, minPrice: 10n, maxPrice: 1000n },
-  });
+/** Vehicle type by key from [vehicles.*]. */
+export function createVehicleType(app: FastifyInstance, slug: string) {
+  return upsertSlug(
+    () => app.prisma.vehicleType.findUnique({ where: { slug } }),
+    () => app.prisma.vehicleType.create({ data: { slug } }),
+  );
 }
 
-export function setPrice(
+/** Equipment type by key from [weapons.*] (WEAPON) or [armor.*] (ARMOR). */
+export function createEquipmentType(app: FastifyInstance, slug: string, slot: EquipmentSlot) {
+  return upsertSlug(
+    () => app.prisma.equipmentType.findUnique({ where: { slug } }),
+    () => app.prisma.equipmentType.create({ data: { slug, slot } }),
+  );
+}
+
+/** Market state of a good in a city. */
+export function setMarket(app: FastifyInstance, cityId: string, commodityId: string, stock = 500) {
+  return app.prisma.marketState.create({ data: { cityId, commodityId, stock } });
+}
+
+/** Adds a lot to a player's inventory together with its movement journal entry. */
+export async function addLot(
   app: FastifyInstance,
-  cityId: string,
+  playerId: string,
   commodityId: string,
-  buyPrice: bigint,
-  sellPrice: bigint,
+  quantity: number,
+  costBasis = 0n,
 ) {
-  return app.prisma.marketPrice.create({ data: { cityId, commodityId, buyPrice, sellPrice, supply: 50 } });
-}
-
-export function createVehicleType(app: FastifyInstance, slug: string, capacityG: number, price = 1000n) {
-  return app.prisma.vehicleType.create({ data: { slug, name: slug, price, capacityG, speedKmh: 80 } });
+  const before = await app.prisma.inventoryLot.aggregate({
+    where: { playerId, commodityId },
+    _sum: { quantity: true },
+  });
+  await app.prisma.inventoryLot.create({ data: { playerId, commodityId, quantity, costBasis } });
+  await app.prisma.inventoryMovement.create({
+    data: {
+      playerId,
+      commodityId,
+      delta: quantity,
+      quantityAfter: (before._sum.quantity ?? 0) + quantity,
+      reason: 'ADMIN',
+    },
+  });
 }
 
 export async function createClan(
   app: FastifyInstance,
   tag: string,
   members: { playerId: string; role: ClanRole }[],
-  bank = 0n,
+  treasuryCash = 0n,
 ) {
   return app.prisma.clan.create({
-    data: { name: `Clan ${tag}`, tag, bank, members: { create: members } },
+    data: { name: `Clan ${tag}`, tag, treasuryCash, members: { create: members } },
   });
 }
 

@@ -1,11 +1,20 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createTestApp, truncateAll } from './helpers.js';
-import { auth, createCity, createCommodity, createUser, createVehicleType, setPrice } from './fixtures.js';
+import {
+  addLot,
+  auth,
+  createCity,
+  createCommodity,
+  createEquipmentType,
+  createUser,
+  createVehicleType,
+  setMarket,
+} from './fixtures.js';
 
 /**
  * T-114 (ADR-020): catalog entries carry `image` from parameters.toml, matched by DB slug =
- * parameter key. Fixture slugs below are real keys from parameters.toml so they have images.
+ * parameter key. Since data model v2 every catalog row is a key from parameters.toml.
  */
 let app: FastifyInstance;
 let token: string;
@@ -25,49 +34,27 @@ beforeEach(async () => {
 const get = (url: string, withToken = true) =>
   app.inject({ method: 'GET', url: `/api/v1${url}`, headers: withToken ? auth(token) : {} });
 
-const expectedImage = (category: 'goods' | 'vehicles' | 'weapons' | 'armor', key: string) => {
-  const section = app.gameParams[category] as Record<string, { image?: string }>;
-  return section[key]?.image ?? null;
-};
-
 describe('image paths in API responses', () => {
   it('adds image to commodities in market, overview and inventory', async () => {
-    const city = await createCity(app, { slug: 'nebelstadt', name: 'Nebelstadt' });
+    const city = await createCity(app, 'berlin');
     const gras = await createCommodity(app, 'gras');
-    const unknown = await createCommodity(app, 'unbekannt');
-    await setPrice(app, city.id, gras.id, 100n, 90n);
-    await setPrice(app, city.id, unknown.id, 100n, 90n);
-    await app.prisma.inventoryItem.create({ data: { playerId, commodityId: gras.id, quantity: 1 } });
+    await setMarket(app, city.id, gras.id);
+    await addLot(app, playerId, gras.id, 1);
 
-    expect(expectedImage('goods', 'gras')).toBe('goods/gras.webp');
-
-    const market = (await get('/cities/nebelstadt/market')).json();
-    const bySlug = Object.fromEntries(
-      market.prices.map((p: { commodity: { slug: string; image: string | null } }) => [
-        p.commodity.slug,
-        p.commodity.image,
-      ]),
-    );
-    expect(bySlug).toEqual({ gras: 'goods/gras.webp', unbekannt: null });
-
+    const market = (await get('/cities/berlin/market')).json();
+    expect(market.markets[0].commodity.image).toBe('goods/gras.webp');
     const overview = (await get('/market/overview')).json();
-    expect(
-      overview.commodities.find((c: { commodity: { slug: string } }) => c.commodity.slug === 'gras').commodity
-        .image,
-    ).toBe('goods/gras.webp');
-
-    const inventory = (await get('/inventory')).json();
-    expect(inventory.items[0].commodity.image).toBe('goods/gras.webp');
+    expect(overview.commodities[0].commodity.image).toBe('goods/gras.webp');
+    expect((await get('/inventory')).json().items[0].commodity.image).toBe('goods/gras.webp');
   });
 
   it('adds image to vehicle types, own vehicles and the current travel', async () => {
-    const kleinwagen = await createVehicleType(app, 'kleinwagen', 300_000);
-    await createVehicleType(app, 'raumgleiter', 1_000);
+    const kleinwagen = await createVehicleType(app, 'kleinwagen');
     const vehicle = await app.prisma.vehicle.create({
       data: { playerId, vehicleTypeId: kleinwagen.id, isActive: true },
     });
-    const a = await createCity(app, { slug: 'a-stadt', name: 'A' });
-    const b = await createCity(app, { slug: 'b-stadt', name: 'B' });
+    const a = await createCity(app, 'berlin');
+    const b = await createCity(app, 'hamburg');
     await app.prisma.travel.create({
       data: {
         playerId,
@@ -78,13 +65,7 @@ describe('image paths in API responses', () => {
       },
     });
 
-    const types = (await get('/vehicle-types')).json().vehicleTypes;
-    expect(
-      Object.fromEntries(types.map((t: { slug: string; image: string | null }) => [t.slug, t.image])),
-    ).toEqual({
-      kleinwagen: 'vehicles/kleinwagen.webp',
-      raumgleiter: null,
-    });
+    expect((await get('/vehicle-types')).json().vehicleTypes[0].image).toBe('vehicles/kleinwagen.webp');
     expect((await get('/vehicles')).json().vehicles[0].vehicleType.image).toBe('vehicles/kleinwagen.webp');
     expect((await get('/travel/current')).json().travel.vehicle.vehicleType.image).toBe(
       'vehicles/kleinwagen.webp',
@@ -92,11 +73,8 @@ describe('image paths in API responses', () => {
   });
 
   it('looks up equipment images by slot (weapons vs. armor)', async () => {
-    const make = (slug: string, slot: 'WEAPON' | 'ARMOR') =>
-      app.prisma.equipmentType.create({ data: { slug, name: slug, slot, price: 100n } });
-    const messer = await make('messer', 'WEAPON');
-    await make('weste', 'ARMOR');
-    await make('lederjacke', 'WEAPON'); // armor key with weapon slot → no match
+    const messer = await createEquipmentType(app, 'messer', 'WEAPON');
+    await createEquipmentType(app, 'weste', 'ARMOR');
     await app.prisma.playerEquipment.create({
       data: { playerId, equipmentTypeId: messer.id, equipped: true },
     });
@@ -105,11 +83,9 @@ describe('image paths in API responses', () => {
     expect(
       Object.fromEntries(types.map((t: { slug: string; image: string | null }) => [t.slug, t.image])),
     ).toEqual({
-      messer: expectedImage('weapons', 'messer'),
-      weste: expectedImage('armor', 'weste'),
-      lederjacke: null,
+      messer: 'weapons/messer.webp',
+      weste: 'armor/weste.webp',
     });
-    expect(expectedImage('weapons', 'messer')).toBe('weapons/messer.webp');
     expect((await get('/equipment')).json().equipment[0].equipmentType.image).toBe('weapons/messer.webp');
   });
 });
