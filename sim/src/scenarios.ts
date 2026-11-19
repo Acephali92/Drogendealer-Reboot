@@ -200,6 +200,17 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3, 'npc.k_start': 0.5 },
     hypothesis: 'Wie b11-theta-k05, langfristig.',
   },
+  // ---------------------------------------------------------------- T-120 Endstand (Agent 2, PR #34)
+  // Ohne Overrides: parameters.toml des T-120-Branches enthält alle übernommenen Werte
+  // (P-5…P-12) und zusätzlich laundering.tiers.strawman.rate 0,88 (Entscheidung des Users).
+  't120-final': {
+    scenario: sc('t120-final', 'T-120-Endstand (PR #34) mit NPC-Händlern k = 1, ohne Overrides', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    hypothesis: 'Strohmann 0,88 statt 0,75 ändert die Sackgassen-Quote nicht nennenswert: A und B bleiben ≤ 10 % (Vergleich b11-theta45).',
+  },
+  't120-final-365': {
+    scenario: sc('t120-final-365', 'wie t120-final über 365 Tage', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    hypothesis: 'Wie t120-final, langfristig (Vergleich b11-theta45-365).',
+  },
   // ---------------------------------------------------------------- B-2: Kokain-Dominanz
   // Basis = b11-theta45 (ADR-023-Empfehlung + NPC-Händler k = 1, θ₀ = 0,45); je eine Änderung.
   'b2-coke-cons': {
