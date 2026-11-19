@@ -180,6 +180,16 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3 },
     hypothesis: 'Die höhere Mindestmarge hält auch langfristig: A und B bleiben ≤ 10 % unter Startkapital, E wächst nicht schneller als in adr023-rec-365.',
   },
+  'b11-npc-365': {
+    scenario: sc('b11-npc-365', 'B-11: wie b11-npc über 365 Tage (Vergleich zu b11-theta-365)', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0 },
+    hypothesis: 'Referenz für b11-theta-365: NPC-Händler mit θ₀ = 0,15 über ein Jahr.',
+  },
+  'adr023-rec-w0-365': {
+    scenario: sc('adr023-rec-w0-365', 'wie adr023-rec-w0 über 365 Tage (ohne NPC)', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { ...REC_W0 },
+    hypothesis: 'Referenz ohne NPC-Händler für b11-theta-365 (gleiche ADR-023-Konfiguration).',
+  },
   'adr023-rec-365': {
     scenario: sc('adr023-rec-365', 'wie adr023-rec über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
     overrides: { 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000, 'professions.finanzen_xp_per_eur': 0.01 },
