@@ -210,6 +210,8 @@ export interface MarketTickResult extends MarketTickState {
  * 2. An active event sets M_s, M_d for this tick and counts down; at 0 it ends after this tick.
  * 3. Noise x with Z(seed, t, "<city>/<good>", 1) (F-ECO-05), stock towards S_target(M_s) (F-ECO-04).
  * Pure and deterministic: the same inputs give the same state on every server (F-GLB-01/02).
+ * Not included: NPC trader flows (F-NPC-01), which run before F-ECO-04 (game design README §4);
+ * they follow with T-506.
  */
 export function marketTick(
   p: GameParameters,

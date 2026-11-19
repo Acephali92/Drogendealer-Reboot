@@ -126,6 +126,13 @@ describe('economy formulas against unrounded verify.py values (every market)', (
     for (const r of formulas.half_life) expect(close(halfLife(r.lambda), r.ticks)).toBe(true);
   });
 
+  it('keeps the [events] order of parameters.toml (F-ECO-09 depends on it, Python dicts keep it too)', () => {
+    // Order of the [events.<key>] tables in the file text (the golden JSON stores keys sorted).
+    const fileOrder = [...PARAMETERS_TOML.matchAll(/^\[events\.([a-z0-9_]+)\]/gm)].map((m) => m[1]);
+    expect(Object.keys(p.events)).toEqual(fileOrder);
+    expect(fileOrder).toEqual(['razzia', 'lieferung', 'party']);
+  });
+
   it('pickEvent (F-ECO-09) uses the [events] order as consecutive intervals', () => {
     for (const r of formulas.pick_event) expect(pickEvent(p, r.u)).toBe(r.event);
     expect(pickEvent(p, 0)).toBe(Object.keys(p.events)[0]);
