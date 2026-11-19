@@ -6,6 +6,7 @@ import {
   HeartPulse,
   Landmark,
   LineChart,
+  Rocket,
   Route,
   ShieldAlert,
   Wallet,
@@ -20,7 +21,7 @@ import { Money } from '@/components/ui/Money';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/Feedback';
-import { formatNumber, formatWeight } from '@/lib/money';
+import { formatNumber, formatPercent, formatVolume } from '@/lib/money';
 import { cn } from '@/lib/cn';
 import { TravelProgress } from './TravelProgress';
 
@@ -92,17 +93,16 @@ export function CityPage() {
             <h1 className="mt-2 inline-block rounded-lg border-2 border-black/60 bg-gradient-to-b from-[#ffd23f] to-[#f2b705] px-4 py-1 font-display text-3xl font-bold text-black shadow-[0_0_0_3px_#ffd23f55,0_10px_30px_-8px_#000] sm:text-4xl">
               {city.name}
             </h1>
-            <p className="mt-3 max-w-lg text-sm text-ink-muted">{city.description}</p>
           </div>
           <div className="flex gap-2">
-            {city.country && <Badge tone="neutral">{city.country}</Badge>}
-            {city.policeStrength !== null && (
-              <Badge
-                tone={city.policeStrength >= 60 ? 'danger' : city.policeStrength >= 40 ? 'warn' : 'neon'}
-              >
-                <ShieldAlert className="h-3 w-3" /> {city.policeStrength}
+            {city.spaceport && (
+              <Badge tone="info">
+                <Rocket className="h-3 w-3" /> {t('stats.spaceport')}
               </Badge>
             )}
+            <Badge tone={city.police >= 0.6 ? 'danger' : city.police >= 0.4 ? 'warn' : 'neon'}>
+              <ShieldAlert className="h-3 w-3" /> {formatPercent(city.police)}
+            </Badge>
           </div>
         </div>
       </section>
@@ -110,16 +110,24 @@ export function CityPage() {
       <div className="grid gap-6 lg:grid-cols-5">
         <Panel title={t('city.yourPosition')} className="lg:col-span-3">
           <dl className="divide-y divide-line/5">
-            {city.techLevel !== null && (
-              <Row label={t('stats.techLevel')}>
-                <span className="num">{city.techLevel}</span>
-              </Row>
-            )}
-            {city.population !== null && (
-              <Row label={t('stats.population')}>
-                <span className="num">{formatNumber(city.population)}</span>
-              </Row>
-            )}
+            <Row label={t('stats.population')}>
+              <span className="num">{formatNumber(city.population)}</span>
+            </Row>
+            <Row label={t('stats.police')}>
+              <span className="num">{formatPercent(city.police)}</span>
+            </Row>
+            <Row label={t('stats.cityWealth')}>
+              <span className="num">{city.wealth.toLocaleString('de-DE')}</span>
+            </Row>
+            <Row label={t('stats.fuelPrice')}>
+              <span>
+                <Money value={city.fuelPrice} cents />{' '}
+                <span className="text-xs text-ink-faint">{t('stats.perLiter')}</span>
+              </span>
+            </Row>
+            <Row label={t('stats.heatCity')}>
+              <span className="num">{Math.round(player.heat)}</span>
+            </Row>
             <Row label={t('stats.cash')}>
               <span className="inline-flex items-center gap-2">
                 <Wallet className="h-4 w-4 text-neon" aria-hidden />
@@ -145,7 +153,7 @@ export function CityPage() {
             {cargo && (
               <Row label={t('stats.freeCargo')}>
                 <span className="num">
-                  {cargo.free !== null ? formatWeight(cargo.free) : t('stats.noVehicle')}
+                  {cargo.free !== null ? formatVolume(cargo.free) : t('stats.noVehicle')}
                 </span>
               </Row>
             )}
@@ -168,7 +176,7 @@ export function CityPage() {
             title={t('city.toVehicles')}
             sub={
               active
-                ? `${active.vehicleType.name} · ${formatWeight(active.vehicleType.capacityG)}`
+                ? `${active.vehicleType.name} · ${formatVolume(active.vehicleType.capacity)}`
                 : t('vehicles.noVehicle')
             }
           />

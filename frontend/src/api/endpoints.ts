@@ -6,7 +6,7 @@
 import { api, del, download, get, post } from './client';
 import type * as C from './contract';
 import * as A from './adapters';
-import type { RankingType, TradeSide } from './types';
+import type { RankingType, TradeSide, TravelMode } from './types';
 
 export const authApi = {
   login: async (login: string, password: string) =>
@@ -95,9 +95,9 @@ export const equipmentApi = {
 };
 
 export const travelApi = {
-  /** (draft) */
-  start: async (toCityId: string) =>
-    A.toTravel((await post<{ travel: C.TravelDto }>('/travel', { toCityId })).travel)!,
+  /** (draft, T-119) */
+  start: async (toCityId: string, mode: TravelMode) =>
+    A.toTravel((await post<{ travel: C.TravelDto }>('/travel', { toCityId, mode })).travel)!,
   current: async () => A.toTravel((await get<{ travel: C.TravelDto | null }>('/travel/current')).travel),
 };
 

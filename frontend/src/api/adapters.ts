@@ -2,6 +2,7 @@
  * Übersetzt Backend-Rohformate (contract.ts) in UI-Modelle (types.ts).
  * Einzige Stelle, die bei Vertragsänderungen angepasst werden muss.
  */
+import i18n from '@/i18n';
 import type * as C from './contract';
 import type * as UI from './types';
 
@@ -20,12 +21,25 @@ export const toAuth = (r: C.AuthResponseDto): UI.AuthResponse => ({
 
 export const toCommodity = (c: C.CommodityDto): UI.Commodity => ({ ...c, image: c.image ?? null });
 export const toVehicleType = (v: C.VehicleTypeDto): UI.VehicleType => ({ ...v, image: v.image ?? null });
+
+/** Fehlt der Name in parameters.toml (T-117), neutraler Name je Slot – nie der Schlüssel (T-112). */
 export const toEquipmentType = (e: C.EquipmentTypeDto): UI.EquipmentType => ({
   ...e,
+  name: e.name?.trim() || i18n.t(e.slot === 'WEAPON' ? 'weapons.unnamedWeapon' : 'weapons.unnamedArmor'),
   image: e.image ?? null,
 });
 
-export const toCity = (c: C.CityDto): UI.City => ({ ...c });
+export const toCity = (c: C.CityDto): UI.City => ({
+  id: c.id,
+  slug: c.slug,
+  name: c.name,
+  realm: c.realm,
+  population: Math.round(c.pop * 1000),
+  wealth: c.wealth,
+  police: c.police,
+  fuelPrice: c.fuelPrice,
+  spaceport: c.spaceport,
+});
 
 export const toCityDetail = (c: C.CityDto & { connections: C.ConnectionDto[] }): UI.CityDetail => ({
   ...toCity(c),
@@ -33,17 +47,21 @@ export const toCityDetail = (c: C.CityDto & { connections: C.ConnectionDto[] }):
     toCityId: x.toCityId,
     toCity: x.toCity,
     distanceKm: x.distanceKm,
-    durationSeconds: x.durationSeconds ?? null,
-    cost: x.cost ?? null,
+    travelOptions: (x.travelOptions ?? []).map((o) => ({
+      mode: o.mode,
+      vehicleId: o.vehicleId ?? null,
+      durationSeconds: o.durationSeconds,
+      cost: o.cost,
+    })),
   })),
 });
 
 /* Trend: Vergleich mit dem zuletzt gesehenen Preis je Stadt und Ware (Backend liefert keinen Trend). */
 const lastSeen = new Map<string, { price: bigint; trend: UI.Trend }>();
 
-export function withTrend(cityId: string, commodityId: string, buyPrice: string): UI.Trend {
+export function withTrend(cityId: string, commodityId: string, price: string): UI.Trend {
   const key = `${cityId}:${commodityId}`;
-  const now = BigInt(buyPrice);
+  const now = BigInt(price);
   const prev = lastSeen.get(key);
   let trend: UI.Trend = prev?.trend ?? 'FLAT';
   if (prev && now !== prev.price) trend = now > prev.price ? 'UP' : 'DOWN';
@@ -52,26 +70,27 @@ export function withTrend(cityId: string, commodityId: string, buyPrice: string)
 }
 
 export const toMarket = (m: C.MarketDto): UI.MarketEntry[] =>
-  m.prices.map((p) => ({
-    commodity: toCommodity(p.commodity),
-    buyPrice: p.buyPrice,
-    sellPrice: p.sellPrice,
-    supply: p.supply,
-    updatedAt: p.updatedAt,
-    trend: withTrend(m.city.id, p.commodity.id, p.buyPrice),
+  m.markets.map((r) => ({
+    commodity: toCommodity(r.commodity),
+    stock: Math.floor(r.stock),
+    referencePrice: r.referencePrice,
+    activeEvent: r.activeEvent,
+    eventTicksLeft: r.eventTicksLeft,
+    updatedAt: r.updatedAt,
+    trend: withTrend(m.city.id, r.commodity.id, r.referencePrice),
   }));
 
 export const toOverview = (o: C.OverviewDto): UI.OverviewRow[] =>
   o.commodities.map((r) => ({
     commodity: toCommodity(r.commodity),
-    lowestBuy: r.lowestBuy,
-    highestSell: r.highestSell,
+    lowestPrice: r.lowestPrice,
+    highestPrice: r.highestPrice,
   }));
 
 export const toInventory = (i: C.InventoryDto): UI.Inventory => ({
   items: i.items.map((x) => ({ ...x, commodity: toCommodity(x.commodity) })),
-  capacityG: i.capacityG,
-  usedG: i.usedG,
+  capacity: i.capacity,
+  used: i.used,
 });
 
 export const toVehicle = (v: C.VehicleDto): UI.Vehicle => ({
@@ -107,7 +126,7 @@ export const toClanSummary = (c: C.ClanListItemDto): UI.ClanSummary => ({
 
 export const toClanDetail = (c: C.ClanDetailDto): UI.ClanDetail => ({
   ...toClanSummary(c),
-  bank: c.bank,
+  treasury: c.treasury,
   members: c.members,
 });
 
@@ -180,6 +199,7 @@ export const toTicker = (e: C.TickerEventDto): UI.TickerEvent => ({
 
 export const toTransaction = (t: C.MoneyTransactionDto): UI.MoneyTransaction => ({
   id: t.id,
+  account: t.account,
   amount: t.amount,
   balanceAfter: t.balanceAfter,
   reason: t.reason,

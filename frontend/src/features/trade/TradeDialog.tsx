@@ -9,7 +9,7 @@ import { NumberStepper } from '@/components/ui/NumberStepper';
 import { Tabs } from '@/components/ui/Tabs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { CommodityImage } from '@/components/ui/GameImages';
-import { formatNumber, formatWeight, multiplyMoney, toCents } from '@/lib/money';
+import { formatNumber, formatVolume, multiplyMoney, toCents } from '@/lib/money';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
 import { tradeLimit } from './limits';
@@ -20,7 +20,7 @@ interface Props {
   player: Player;
   owned: InventoryItem | undefined;
   cityId: string;
-  cargo: { used: number; capacity: number | null; free: number | null };
+  cargo: { used: number; capacity: number; free: number };
   onClose: () => void;
 }
 
@@ -37,22 +37,22 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
 
   if (!entry) return null;
   const c = entry.commodity;
-  const unit = side === 'BUY' ? entry.buyPrice : entry.sellPrice;
+  // Bis T-103 echte Orderpreise liefert, rechnet das UI mit dem Richtpreis als Schätzung.
+  const unit = entry.referencePrice;
   const ownedQty = owned?.quantity ?? 0;
   const { max, reason } = tradeLimit(side, {
     cash: player.cash,
     unitPrice: unit,
-    supply: entry.supply,
+    supply: entry.stock,
     owned: ownedQty,
-    freeG: cargo.free,
-    unitWeightG: c.unitWeightG,
+    free: cargo.free,
+    unitVolume: c.unitVolume,
   });
   const q = Math.min(qty, max);
   const total = multiplyMoney(unit, q);
-  const weight = q * c.unitWeightG;
-  const usedAfter = side === 'BUY' ? cargo.used + weight : cargo.used - weight;
-  const profit =
-    side === 'SELL' && owned ? (toCents(entry.sellPrice) - toCents(owned.avgBuyPrice)) * BigInt(q) : null;
+  const volume = q * c.unitVolume;
+  const usedAfter = side === 'BUY' ? cargo.used + volume : cargo.used - volume;
+  const profit = side === 'SELL' && owned ? (toCents(unit) - toCents(owned.avgBuyPrice)) * BigInt(q) : null;
 
   const submit = () =>
     trade.mutate(
@@ -90,18 +90,18 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
 
         <dl className="grid grid-cols-2 gap-3 rounded-xl bg-bg/60 p-3 text-sm ring-1 ring-line/10">
           <div>
-            <dt className="label">{side === 'BUY' ? t('trade.buyPrice') : t('trade.sellPrice')}</dt>
+            <dt className="label">{t('trade.referencePrice')}</dt>
             <dd>
               <Money value={unit} className="text-lg font-semibold text-ink" />
               <span className="ml-1 text-xs text-ink-faint">
-                {t('trade.perUnit', { unit: formatWeight(c.unitWeightG) })}
+                {t('trade.perUnitVolume', { v: formatVolume(c.unitVolume) })}
               </span>
             </dd>
           </div>
           <div>
-            <dt className="label">{side === 'BUY' ? t('trade.available') : t('trade.owned')}</dt>
+            <dt className="label">{side === 'BUY' ? t('trade.stock') : t('trade.owned')}</dt>
             <dd className="num text-lg font-semibold text-ink">
-              {formatNumber(side === 'BUY' ? entry.supply : ownedQty)}
+              {formatNumber(side === 'BUY' ? entry.stock : ownedQty)}
             </dd>
           </div>
         </dl>
@@ -119,7 +119,7 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
 
         <div className="space-y-2 rounded-xl bg-surface-2 p-4 ring-1 ring-line/10">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-ink-muted">{t('trade.total')}</span>
+            <span className="text-sm text-ink-muted">{t('trade.estimate')}</span>
             <Money
               value={total}
               className={side === 'BUY' ? 'text-xl font-bold text-ink' : 'text-xl font-bold text-neon'}
@@ -135,15 +135,10 @@ export function TradeDialog({ entry, initialSide, player, owned, cityId, cargo, 
             <div className="mb-1 flex justify-between text-xs text-ink-faint">
               <span>{t('stats.cargo')}</span>
               <span className="num">
-                {formatWeight(usedAfter)}
-                {cargo.capacity !== null
-                  ? ` / ${formatWeight(cargo.capacity)}`
-                  : ` · ${t('stats.noVehicle')}`}
+                {formatVolume(usedAfter)} / {formatVolume(cargo.capacity)}
               </span>
             </div>
-            {cargo.capacity !== null && (
-              <ProgressBar value={usedAfter / Math.max(1, cargo.capacity)} tone="auto" />
-            )}
+            <ProgressBar value={usedAfter / Math.max(1, cargo.capacity)} tone="auto" />
           </div>
         </div>
 

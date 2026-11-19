@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Lightbulb, MapPin, Shield } from 'lucide-react';
+import { Lightbulb, Shield, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCities, useSetStartCity } from '@/api/queries';
 import { CityArt } from '@/components/ui/CityArt';
@@ -7,7 +7,7 @@ import { Skeleton, ErrorState } from '@/components/ui/Feedback';
 import { Logo } from '@/components/layout/Logo';
 import { toast } from '@/stores/toast';
 import { errorMessage } from '@/lib/errors';
-import { formatNumber } from '@/lib/money';
+import { formatNumber, formatPercent } from '@/lib/money';
 
 export function StartCityPage() {
   const { t } = useTranslation();
@@ -55,15 +55,14 @@ export function StartCityPage() {
             <div className="absolute inset-x-0 bottom-0 p-3">
               <p className="font-display text-lg font-bold text-ink">{c.name}</p>
               <p className="flex items-center gap-3 text-xs text-ink-muted">
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" aria-hidden />
-                  {c.country}
-                </span>
                 <span className="flex items-center gap-1" title={t('stats.police')}>
                   <Shield className="h-3 w-3" aria-hidden />
-                  {c.policeStrength}
+                  {formatPercent(c.police)}
                 </span>
-                <span className="hidden sm:inline">{formatNumber(c.population)}</span>
+                <span className="flex items-center gap-1" title={t('stats.population')}>
+                  <Users className="h-3 w-3" aria-hidden />
+                  {formatNumber(c.population)}
+                </span>
               </p>
             </div>
             <span className="absolute right-3 top-3 rounded-md bg-black/50 px-2 py-1 text-xs font-semibold text-brass opacity-0 backdrop-blur transition group-hover:opacity-100 group-focus-visible:opacity-100">
