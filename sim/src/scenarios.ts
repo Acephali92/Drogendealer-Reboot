@@ -180,6 +180,26 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3 },
     hypothesis: 'Die höhere Mindestmarge hält auch langfristig: A und B bleiben ≤ 10 % unter Startkapital, E wächst nicht schneller als in adr023-rec-365.',
   },
+  'b11-theta45': {
+    scenario: sc('b11-theta45', 'B-11: wie b11-theta, trader_threshold_base 0,30 → 0,45', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45 },
+    hypothesis: 'Eine noch höhere Mindestmarge lässt auch die mittleren Routen von B unberührt; B sinkt auf ≤ 10 %, die Top-Route bleibt deutlich gedämpft.',
+  },
+  'b11-theta45-365': {
+    scenario: sc('b11-theta45-365', 'B-11: wie b11-theta45 über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45 },
+    hypothesis: 'Wie b11-theta45, langfristig.',
+  },
+  'b11-theta-k05': {
+    scenario: sc('b11-theta-k05', 'B-11: wie b11-theta, k_start 1,0 → 0,5', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 0.5 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3, 'npc.k_start': 0.5 },
+    hypothesis: 'θ₀ = 0,30 schützt A; halbe Intensität zusätzlich entlastet B.',
+  },
+  'b11-theta-k05-365': {
+    scenario: sc('b11-theta-k05-365', 'B-11: wie b11-theta-k05 über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 0.5 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3, 'npc.k_start': 0.5 },
+    hypothesis: 'Wie b11-theta-k05, langfristig.',
+  },
   'b11-npc-365': {
     scenario: sc('b11-npc-365', 'B-11: wie b11-npc über 365 Tage (Vergleich zu b11-theta-365)', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
     overrides: { ...REC_W0 },

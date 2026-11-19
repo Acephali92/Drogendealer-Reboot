@@ -16,6 +16,8 @@ const variants: Array<[string, Params, number]> = [
   ['k = 0,5 (b11-k05)', base, 0.5],
   ['η = 0,25 (b11-eta025)', withOverride(base, 'npc.trader_intensity', 0.25), 1],
   ['θ₀ = 0,30 (b11-theta)', withOverride(base, 'npc.trader_threshold_base', 0.3), 1],
+  ['θ₀ = 0,45 (b11-theta45)', withOverride(base, 'npc.trader_threshold_base', 0.45), 1],
+  ['θ₀ = 0,30, k = 0,5 (b11-theta-k05)', withOverride(base, 'npc.trader_threshold_base', 0.3), 0.5],
 ];
 const goods = [...new Set(markets(base, 'earth').map(([, g]) => g))];
 const cities = [...new Set(markets(base, 'earth').map(([c]) => c))];
