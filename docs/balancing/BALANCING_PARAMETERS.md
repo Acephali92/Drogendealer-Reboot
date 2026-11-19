@@ -171,8 +171,15 @@ Jeder Vorschlag betrifft genau einen Parameter und ist durch einen Simulationsla
 
 | # | Parameter | Vorschlag | Beleg [gemessen] | Systemeigentümer | Status |
 |---|---|---|---|---|---|
-| P-1 | `travel.confiscation_share` (neu) | 0,5 (bisher implizit 1,0). Strafe nur auf den beschlagnahmten Teil. | `h-confiscation`, `npc-conf`: 0 % Sackgassen bei A, B, C, E | Agent 2 | vorgeschlagen |
+| ~~P-1~~ | ~~`travel.confiscation_share`~~ | – | – | – | **abgelehnt (ADR-023)** |
 | P-2 | `progression.org_cost_rate_per_day` / `org_cost_threshold_ct` (neu, F-PRG-01) | 0,005 / 50 000 000 ct | `h-wealth-sink`: Geldmenge −30 %, reichster Spieler ÷ Median 17,4 | Agent 5 | vorgeschlagen |
 | P-3 | `economy_ext.*` (neu, F-ECO-10…14) | Werte in `sim/proposals.toml` | `ext`: P/P* 0,91–1,08, also im Korridor | Agent 5 | vorgeschlagen, nach P-1 |
 | P-4 | `goods.kokain.consumption` | 0,004 → 0,003 | **noch nicht simuliert** [Hypothese] | Agent 5 | Experiment geplant |
+| P-5 | `loan_shark.amount` | 10 000 000 → **100 000** ct (1.000 €) | `adr023-loan100k` vs. `adr023-loan1k-200`: B 52 % → 8 % unter Startkapital | Agent 2 | ✅ **entschieden** (ADR-023, PR #35). Eintrag in `parameters.toml` im T-120-PR |
+| P-6 | `loan_shark.max_assets` | 200 000 → **20 000** ct (200 €) | Kredit nur in Not (B 95 % → 45 % mit Kredit) | Agent 2 | ✅ **entschieden** (ADR-023, PR #35) |
+| P-7 | `loan_shark.repay_factor` | **1,0** beibehalten | 1,2 verschlechtert Sackgassen | Agent 2 | ✅ **entschieden** (ohne Aufschlag) |
+| P-8 | `professions.finanzen_xp_per_eur` | 0,001 → **0,01** | W1 Tag ≈ 30 statt nie, W3/W4 im ersten Jahr erreichbar | Agent 5 / Agent 2 | vorgeschlagen |
+| P-9 | `laundering.tiers.gambling.rate_min` | 0,40 → **0,70** (Ø 0,85) | A 16 % → 2 %, B 9 % → 6 % | Agent 2 | vorgeschlagen |
+| P-10 | `laundering.tiers.gambling.daily_cap_*`, `shell.min_amount`, `foundation.min_amount` | Startwerte beibehalten | kein Engpass gemessen. W4-Papers greifen nie (B-12). | Agent 2 | Startwerte bestätigt |
+| P-11 | `combat.weapon_resale_rate` (neu) | **0,5** | E-08: Rückverkauf < Kaufpreis, Waffen kein Wertspeicher. Nicht simuliert. Neuer Schlüssel → Schema laut ADR-024 | Agent 2 | ✅ **entschieden** (ADR-023, PR #35: Waffen 50 %, Fahrzeuge 60 %) |
 

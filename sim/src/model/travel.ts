@@ -101,14 +101,21 @@ export function controlProbability(
   return { n, policeAvg, hv, g, pSeg, pTotal: 1 - (1 - pSeg) ** n };
 }
 
-/** F-TRV-06: Strafe, Bestechungskosten und Bestechungschance. */
-export function bust(p: Params, cargo: Record<string, number>, police: number, lSchmuggel: number) {
+/**
+ * F-TRV-06: Bestechungskosten und -chance. Vor ADR-023 zusätzlich Strafe (`travel.fine_rate`);
+ * mit ADR-023 (T-120) gibt es keine Strafe mehr, dafür wird mitgeführtes Bargeld beschlagnahmt.
+ */
+export function bust(p: Params, cargo: Record<string, number>, police: number, lSchmuggel: number, cashBlack = 0) {
   let V = 0;
   for (const [g, q] of Object.entries(cargo)) V += q * p.goods[g]!.base_price;
+  const bribeCost = ceilCt(p.travel.bribe_cost_rate * V * (1 + police));
   return {
     cargoBaseValue: V,
-    fine: ceilCt(p.travel.fine_rate * V),
-    bribeCost: ceilCt(p.travel.bribe_cost_rate * V * (1 + police)),
+    fine: p.travel.fine_rate === undefined ? 0 : ceilCt(p.travel.fine_rate * V),
+    confiscatedCash: cashBlack,
+    bribePossible: cashBlack >= bribeCost,
+    cashAfterBribeSuccess: cashBlack >= bribeCost ? cashBlack - bribeCost : null,
+    bribeCost,
     bribeChance: clamp(
       p.travel.bribe_base_success - p.travel.bribe_police_penalty * police + (p.professions.schmuggel_bribe_bonus as number) * lSchmuggel,
       p.travel.bribe_success_min,

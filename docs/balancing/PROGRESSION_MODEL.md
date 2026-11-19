@@ -74,6 +74,33 @@ Die laufenden Kosten sind **klein im Verhältnis zum Umsatz**. Sie bremsen das W
 
 Profil D (ineffizient) bleibt auch dann in der Hälfte der Läufe unter dem Startkapital. Das ist gewollt: Schlechte Entscheidungen sollen Folgen haben. Eine Sackgasse entsteht für D durch eigene Fehlkäufe, nicht durch Zufall.
 
+## 6a. Rückschläge unter ADR-023 und Wäsche-Progression
+
+**Neue Regel (ADR-023, Product Owner):** Eine Kontrolle nimmt die ganze Ware **und** das gesamte mitgeführte Schwarzgeld, ohne Strafe. Sicher ist nur gewaschenes Geld auf dem Konto. Damit gilt §6 (Teilbeschlagnahme) nicht mehr. Der Ausweg ist die Wäsche:
+
+| Stufe | Ab Level Finanzen | Kurs | Grenze | Erreicht [gemessen, empfohlene Konfiguration, B] |
+|---|---|---|---|---|
+| W0 Spielhölle „Zum Goldenen Zufall“ | 0 | zufällig 0,70–1,00 (Empfehlung, bisher 0,40–1,00) | 2.000 € + 1.000 € je Level pro Tag | ab Start |
+| W1 „Cousin Kalle“ | 2 | 0,75 | 10.000 €/Tag | Tag ≈ 30 |
+| W2 eigene Betriebe | – | 0,80–0,90 | Waschkapazität | nicht simuliert |
+| W3 „Briefkasten-GmbH“ | 10 | 0,92 | ab 100.000 € je Vorgang, 1 Mio. €/Tag | Tag ≈ 186 |
+| W4 „Stiftung Sonnenschein“ | 15 | 0,95 | ab 1 Mio. € je Vorgang | Tag ≈ 310 |
+
+Für diese Zeitpunkte nötig: `professions.finanzen_xp_per_eur` = 0,01 statt 0,001 (B-9). Mit dem bisherigen Wert erreicht niemand W1 in 90 Tagen.
+
+**Notanker Kredithai (F-ML-10):** Vom Product Owner entschieden (ADR-023, PR #35, auf Basis dieser Simulation): **1.000 €**, nur ab einem Restvermögen (Schwarz + Weiß) unter **200 €**, Tilgung 50 % der Verkaufserlöse, ohne Aufschlag (B-8). Damit nehmen nur Spieler in echter Not den Kredit. 1.000 € reichen für einen Neustart mit Rucksack und Bahn (Startroute ≈ 780 €, INV-04). Der ADR-Wert von 100.000 € wird dagegen als Schwarzgeld ausgezahlt, bei der nächsten Kontrolle beschlagnahmt und hinterlässt eine Schuld, also eine Sackgasse.
+
+**Nachweis [gemessen]**, Anteil unter Startkapital nach 90 Tagen, alle Spieler je Profil:
+
+| Konfiguration | A | B | C | D | E |
+|---|---:|---:|---:|---:|---:|
+| ADR-023 ohne Wäsche | 86 % | 74 % | 56 % | 54 % | 40 % |
+| ADR-023 + Wäsche (Startwerte) | 8 % | 21 % | 34 % | 75 % | 18 % |
+| ADR-023 + Kredit 100.000 € (ADR-Wert) | 46 % | 52 % | 76 % | 100 % | 65 % |
+| **Empfehlung** (Kredit 1.000 €/200 €, XP ×10, W0 Ø 0,85) | **2 %** | **6 %** | **7 %** | 65 % | **8 %** |
+
+Profil D (ineffizient) bleibt bewusst schlecht, denn schlechte Entscheidungen sollen Folgen haben. Ungelöst ist der Fall mit NPC-Händlern bei k = 1 (B-11).
+
 ## 7. Langfristige Ziele und vermögensabhängige Senken
 
 R-2 (keine Resets) und Befund B-3 (ungebremste Geldmenge) machen Senken, die mit dem Vermögen wachsen, zur **Pflicht** (ADR-016, T-505). Die folgenden Vorschläge sind **[Design]**. Jeder Vorschlag hat genau einen Hauptparameter.

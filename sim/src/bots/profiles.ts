@@ -28,6 +28,8 @@ export interface BotProfile {
   lookahead: boolean;
   /** Bewertet Fahrzeugkäufe nach Amortisation statt nach Budgetregel. */
   paybackPurchase: boolean;
+  /** ADR-023: Anteil des Restbargelds, der vor einer Handelsfahrt gewaschen wird. */
+  washShare: number;
 }
 
 export const PROFILES: Record<ProfileId, BotProfile> = {
@@ -44,6 +46,7 @@ export const PROFILES: Record<ProfileId, BotProfile> = {
     errorRate: 0.05,
     lookahead: false,
     paybackPurchase: false,
+    washShare: 1.0,
   },
   B: {
     id: 'B',
@@ -58,6 +61,7 @@ export const PROFILES: Record<ProfileId, BotProfile> = {
     errorRate: 0.1,
     lookahead: false,
     paybackPurchase: false,
+    washShare: 0.6,
   },
   C: {
     id: 'C',
@@ -72,6 +76,7 @@ export const PROFILES: Record<ProfileId, BotProfile> = {
     errorRate: 0.1,
     lookahead: false,
     paybackPurchase: false,
+    washShare: 0.2,
   },
   D: {
     id: 'D',
@@ -86,6 +91,7 @@ export const PROFILES: Record<ProfileId, BotProfile> = {
     errorRate: 0.3,
     lookahead: false,
     paybackPurchase: false,
+    washShare: 0.3,
   },
   E: {
     id: 'E',
@@ -100,6 +106,7 @@ export const PROFILES: Record<ProfileId, BotProfile> = {
     errorRate: 0,
     lookahead: true,
     paybackPurchase: true,
+    washShare: 0.7,
   },
 };
 
