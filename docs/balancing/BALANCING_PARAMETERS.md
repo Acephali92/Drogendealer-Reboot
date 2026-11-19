@@ -182,4 +182,5 @@ Jeder Vorschlag betrifft genau einen Parameter und ist durch einen Simulationsla
 | P-9 | `laundering.tiers.gambling.rate_min` | 0,40 → **0,70** (Ø 0,85) | A 16 % → 2 %, B 9 % → 6 % | Agent 2 | vorgeschlagen |
 | P-10 | `laundering.tiers.gambling.daily_cap_*`, `shell.min_amount`, `foundation.min_amount` | Startwerte beibehalten | kein Engpass gemessen. W4-Papers greifen nie (B-12). | Agent 2 | Startwerte bestätigt |
 | P-11 | `combat.weapon_resale_rate` (neu) | **0,5** | E-08: Rückverkauf < Kaufpreis, Waffen kein Wertspeicher. Nicht simuliert. Neuer Schlüssel → Schema laut ADR-024 | Agent 2 | ✅ **entschieden** (ADR-023, PR #35: Waffen 50 %, Fahrzeuge 60 %) |
+| P-12 | `npc.trader_threshold_base` | 0,15 → **0,45** | B-11: mit NPC-Händlern (k = 1) A 38 % → 4 %, B 20 % → 7 % unter Startkapital (90 Tage), 365 Tage A 4 %, B 8 %. Top-Route 1,98 → 2,26 (ohne NPC 3,05). Bestehender Schlüssel, kein Schema-Update (ADR-024). Golden Vector EX-NPC-01 neu erzeugen. | Agent 2 (Datei) / Agent 5 (fachlich) | vorgeschlagen |
 

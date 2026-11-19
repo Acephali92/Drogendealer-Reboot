@@ -99,7 +99,12 @@ Für diese Zeitpunkte nötig: `professions.finanzen_xp_per_eur` = 0,01 statt 0,0
 | ADR-023 + Kredit 100.000 € (ADR-Wert) | 46 % | 52 % | 76 % | 100 % | 65 % |
 | **Empfehlung** (Kredit 1.000 €/200 €, XP ×10, W0 Ø 0,85) | **2 %** | **6 %** | **7 %** | 65 % | **8 %** |
 
-Profil D (ineffizient) bleibt bewusst schlecht, denn schlechte Entscheidungen sollen Folgen haben. Ungelöst ist der Fall mit NPC-Händlern bei k = 1 (B-11).
+Profil D (ineffizient) bleibt bewusst schlecht, denn schlechte Entscheidungen sollen Folgen haben. Mit NPC-Händlern bei k = 1 gilt das nur mit `npc.trader_threshold_base` = 0,45 (B-11): A 4 %, B 7 % nach 90 Tagen (SIMULATION_RESULTS §5).
+
+| mit NPC-Händlern k = 1 | A | B | C | D | E |
+|---|---:|---:|---:|---:|---:|
+| θ₀ = 0,15 (heute) | 38 % | 20 % | 24 % | 90 % | 4 % |
+| **θ₀ = 0,45 (Empfehlung B-11)** | **4 %** | **7 %** | **12 %** | 79 % | **1 %** |
 
 ## 7. Langfristige Ziele und vermögensabhängige Senken
 

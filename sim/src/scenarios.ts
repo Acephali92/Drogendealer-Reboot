@@ -14,6 +14,14 @@ export interface Experiment {
   hypothesis: string;
 }
 
+/** Empfohlene ADR-023-Konfiguration (adr023-rec-w0) als Override-Basis für Folgeexperimente. */
+const REC_W0: Record<string, number> = {
+  'loan_shark.amount': 100_000,
+  'loan_shark.max_assets': 20_000,
+  'professions.finanzen_xp_per_eur': 0.01,
+  'laundering.tiers.gambling.rate_min': 0.7,
+};
+
 function sc(id: string, title: string, days: number, seeds: number, background: number, options = BASE_OPTIONS): Scenario {
   return { id, title, days, seeds, background, tracked: [...TRACKED], options, checkpoints: [1, 7, 30, 90, 180, 365].filter((d) => d <= days) };
 }
@@ -143,6 +151,64 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     scenario: sc('adr023-rec-npc', 'wie adr023-rec + NPC-Händler F-NPC-01, k = 1', 90, 12, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
     overrides: { 'loan_shark.amount': 100_000, 'loan_shark.max_assets': 20_000, 'professions.finanzen_xp_per_eur': 0.01 },
     hypothesis: 'Auch mit NPC-Händlern (Startzustand kleiner Server) bleiben Durchschnittsspieler aus Sackgassen heraus.',
+  },
+  // ---------------------------------------------------------------- B-11: NPC-Händler unter ADR-023
+  // Basis adr023-rec-w0 (empfohlene Konfiguration); b11-npc schaltet NPC-Händler (k = 1) zu,
+  // die übrigen ändern gegenüber b11-npc genau einen npc.*-Wert.
+  'b11-npc': {
+    scenario: sc('b11-npc', 'B-11: adr023-rec-w0 + NPC-Händler F-NPC-01, k = 1', 90, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0 },
+    hypothesis: 'Befund B-11 reproduzieren: NPC-Händler bei k = 1 treiben vorsichtige Spieler (A) unter das Startkapital.',
+  },
+  'b11-k05': {
+    scenario: sc('b11-k05', 'B-11: wie b11-npc, k_start 1,0 → 0,5', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 0.5 }),
+    overrides: { ...REC_W0, 'npc.k_start': 0.5 },
+    hypothesis: 'Halbe NPC-Intensität zum Serverstart lässt A und B wieder ≤ 10 % unter Startkapital, dämpft aber die Top-Route weniger.',
+  },
+  'b11-eta025': {
+    scenario: sc('b11-eta025', 'B-11: wie b11-npc, trader_intensity 0,5 → 0,25', 90, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_intensity': 0.25 },
+    hypothesis: 'Wirkt wie k = 0,5 (η und k gehen in F-NPC-01 nur als Produkt ein); Kontrolle für die Modellannahme.',
+  },
+  'b11-theta': {
+    scenario: sc('b11-theta', 'B-11: wie b11-npc, trader_threshold_base 0,15 → 0,30', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3 },
+    hypothesis: 'Mit höherer Mindestmarge lassen NPCs die kleinen, risikoarmen Routen (A) unberührt und gleichen nur die großen Spreizungen aus; die Top-Route bleibt gedämpft.',
+  },
+  'b11-theta-365': {
+    scenario: sc('b11-theta-365', 'B-11: wie b11-theta über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3 },
+    hypothesis: 'Die höhere Mindestmarge hält auch langfristig: A und B bleiben ≤ 10 % unter Startkapital, E wächst nicht schneller als in adr023-rec-365.',
+  },
+  'b11-theta45': {
+    scenario: sc('b11-theta45', 'B-11: wie b11-theta, trader_threshold_base 0,30 → 0,45', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45 },
+    hypothesis: 'Eine noch höhere Mindestmarge lässt auch die mittleren Routen von B unberührt; B sinkt auf ≤ 10 %, die Top-Route bleibt deutlich gedämpft.',
+  },
+  'b11-theta45-365': {
+    scenario: sc('b11-theta45-365', 'B-11: wie b11-theta45 über 365 Tage', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45 },
+    hypothesis: 'Wie b11-theta45, langfristig.',
+  },
+  'b11-theta-k05': {
+    scenario: sc('b11-theta-k05', 'B-11: wie b11-theta, k_start 1,0 → 0,5', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 0.5 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3, 'npc.k_start': 0.5 },
+    hypothesis: 'θ₀ = 0,30 schützt A; halbe Intensität zusätzlich entlastet B.',
+  },
+  'b11-theta-k05-365': {
+    scenario: sc('b11-theta-k05-365', 'B-11: wie b11-theta-k05 über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 0.5 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3, 'npc.k_start': 0.5 },
+    hypothesis: 'Wie b11-theta-k05, langfristig.',
+  },
+  'b11-npc-365': {
+    scenario: sc('b11-npc-365', 'B-11: wie b11-npc über 365 Tage (Vergleich zu b11-theta-365)', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0 },
+    hypothesis: 'Referenz für b11-theta-365: NPC-Händler mit θ₀ = 0,15 über ein Jahr.',
+  },
+  'adr023-rec-w0-365': {
+    scenario: sc('adr023-rec-w0-365', 'wie adr023-rec-w0 über 365 Tage (ohne NPC)', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    overrides: { ...REC_W0 },
+    hypothesis: 'Referenz ohne NPC-Händler für b11-theta-365 (gleiche ADR-023-Konfiguration).',
   },
   'adr023-rec-365': {
     scenario: sc('adr023-rec-365', 'wie adr023-rec über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),

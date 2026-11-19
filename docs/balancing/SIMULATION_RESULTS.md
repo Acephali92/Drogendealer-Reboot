@@ -15,6 +15,7 @@
 | 5 | **Die Marktstabilität ist gut.** P/P* liegt im Tagesmittel bei 0,98–1,05 (Regel) bzw. 0,91–1,08 (mit Eigendynamik), knappe Markt-Ticks bei 6–8 %. | alle | – |
 | 6 | **NPC-Rückbau (R-4):** Die Kennzahlen sind bei ≈ 120–130 Spielern erfüllt, k sinkt erstmals bei 117–134 Spielern (3 von 4 Läufen). Engpass ist die Marktaktivität. | `s8-handover` | Prognose für den Betreiber |
 | 8 | **ADR-023 (Totalbeschlagnahme):** Ohne Wäsche liegen 74 % der Durchschnittsspieler unter dem Startkapital. Mit Wäsche, Kredithai 1.000 € (ab < 200 € Restvermögen), Finanzen-XP ×10 und W0 Ø 0,85 sind es **6 %**. Der Kredithai mit 100.000 € ist eine Schuldenfalle (52 %). | §4 | B-8…B-10 |
+| 9 | **NPC-Händler unter ADR-023 (B-11):** Bei k = 1 liegen 38 % (A) und 20 % (B) unter dem Startkapital. Mit `npc.trader_threshold_base` 0,15 → 0,45 sind es 4 %/7 % nach 90 und 4 %/8 % nach 365 Tagen, die Top-Route bleibt gedämpft (2,26 statt 3,05). | §5 | B-11 |
 | 7 | **0 Invariantenverletzungen** in allen Läufen: Geldbilanz je Tick exakt, keine negativen Bestände, deterministisch. | alle | – |
 
 ## 0. Änderungen am Modell
@@ -765,7 +766,7 @@ Erster Rückgang von k je Seed: kein Rückgang; Tag 145 bei 128 Spielern; Tag 13
 | `adr023-w0narrow` | adr023 + W0-Spanne 0,55–0,85 | 8 % | **25 %** | 40 % | 81 % | 22 % | 0 % | 1.35 Mio. € |
 | `adr023-rec` | **Empfehlung:** loan1k-200 + XP ×10 | 16 % | **9 %** | 10 % | 75 % | 4 % | 40 % | 1.63 Mio. € |
 | `adr023-rec-w0` | **Empfehlung + W0 Ø 0,85** | 2 % | **6 %** | 7 % | 65 % | 8 % | 32 % | 1.95 Mio. € |
-| `adr023-rec-npc` | Empfehlung + NPC-Händler k = 1 | 80 % | **20 %** | 31 % | 100 % | 6 % | 61 % | 0.71 Mio. € |
+| `adr023-rec-npc` | Empfehlung + NPC-Händler k = 1 (12 Seeds, ohne W0; Nachfolger in §5) | 80 % | **20 %** | 31 % | 100 % | 6 % | 61 % | 0.71 Mio. € |
 | `adr023-rec-365` | Empfehlung, 365 Tage (Stand Tag 365) | 9 % | **10 %** | 12 % | 75 % | 4 % | 49 % | 7.17 Mio. € |
 
 ### 4.2 Auswertung
@@ -781,7 +782,7 @@ Erster Rückgang von k je Seed: kein Rückgang; Tag 145 bei 128 Spielern; Tag 13
 5. **Finanzen-XP ×10 ändert die Sackgassen nicht, macht die Progression aber erst erlebbar.** Mit dem heutigen Wert (1 XP je 1.000 € gewaschen) erreicht in 90 Tagen **niemand** W1. Mit ×10 erreichen es Durchschnittsspieler an Tag ≈ 30.
 6. **Die W0-Spanne wirkt nur auf die Streuung.** Ein höherer Mittelwert (Ø 0,85) hilft vorsichtigen Spielern (A 8 % → 0 %).
 7. **Empfohlene Konfiguration** (`adr023-rec-w0`): **B 6 %, A 2 %, C 7 %, E 8 %**. Das Ziel ist erreicht.
-8. **Mit NPC-Händlern (k = 1) reicht das nicht.** A liegt bei 80 % und B bei 20 %. Die dünneren Margen und die Totalbeschlagnahme zusammen treffen vor allem vorsichtige Spieler. → Offener Punkt B-11.
+8. **Mit NPC-Händlern (k = 1) reicht das nicht.** A liegt bei 80 % und B bei 20 %. Die dünneren Margen und die Totalbeschlagnahme zusammen treffen vor allem vorsichtige Spieler. → B-11, gelöst in §5 mit `npc.trader_threshold_base` = 0,45.
 9. **Langzeit (365 Tage):**
    - Durchschnittsspieler erreichen W1 an Tag ≈ 31, W3 an Tag ≈ 186 und W4 an Tag ≈ 310. Optimierte Spieler erreichen W4 an Tag ≈ 217.
    - Die „Papers“ treffen nie: Der Mindestbetrag von 1 Mio. € je W4-Vorgang wird praktisch nicht erreicht, weil die Spieler über die günstigere W3 waschen.
@@ -916,3 +917,186 @@ Erster Rückgang von k je Seed: kein Rückgang; Tag 145 bei 128 Spielern; Tag 13
 - Handelsvolumen: 885.511 € pro Tag. Geldmenge am Ende (Median): 7.173.537 €, Wachstum in den letzten 30 Tagen: 11.2 %. Senken/Quellen (SFR): 0.959.
 - Ungleichheit am Ende (alle Spieler): Gini 0.661, reichster Spieler ÷ Median 33.7.
 - Umsatzstärkste Märkte: `muenchen/kokain` 200.830 €/Tag (P/P* 0.762, knapp 26 %); `hamburg/kokain` 101.630 €/Tag (P/P* 1.132, knapp 0 %); `frankfurt/kokain` 82.714 €/Tag (P/P* 0.93, knapp 4 %); `amsterdam/gras` 60.130 €/Tag (P/P* 1.187, knapp 0 %); `rotterdam/kokain` 56.525 €/Tag (P/P* 1.232, knapp 0 %).
+
+## 5. B-11: NPC-Händler unter ADR-023
+
+> Läufe vom 2026-11-19. Gleiche Parameter wie §4 (T-120, `72102ab`) plus empfohlene ADR-023-Konfiguration (`adr023-rec-w0`: Kredit 1.000 €/200 €, Finanzen-XP ×10, W0 Ø 0,85). Leitkennzahl wie §4: Anteil **aller** Spieler eines Profils unter dem Startkapital. Ziel: **A und B ≤ 10 %**, und die NPC-Händler dämpfen die Top-Route weiterhin deutlich (Preisverhältnis Kokain München ÷ Rotterdam im NPC-Gleichgewicht, ohne NPC 3,05).
+
+### 5.1 Statische Analyse: NPC-Gleichgewicht je Variante [gemessen]
+
+`npx tsx src/b11-static.ts` (F-NPC-01 + F-ECO-04 über 3.000 Ticks, je Ware nur Städte mit Markt). Routenmargen nach Spread, für Waren mit Heat ≤ 1 (das Sortiment von Profil A).
+
+| Variante | Top-Route P_Mü/P_Rot | Routen mit Marge ≥ 20 % | ≥ 40 % | beste Marge | Ø Top-5-Marge |
+|---|---:|---:|---:|---:|---:|
+| ohne NPC (k = 0) | 3,05 | 12,2 % | 7,7 % | 115 % | 87 % |
+| k = 1, θ₀ = 0,15 (heute) | 1,98 | 11,0 % | 2,7 % | 74 % | 57 % |
+| k = 0,5 | 2,25 | 11,3 % | 4,2 % | 87 % | 66 % |
+| η = 0,25 | 2,25 | 11,3 % | 4,2 % | 87 % | 66 % |
+| θ₀ = 0,30 | 2,14 | 11,0 % | 5,1 % | 83 % | 66 % |
+| **θ₀ = 0,45** | **2,26** | 11,0 % | **6,8 %** | 91 % | 74 % |
+| θ₀ = 0,30, k = 0,5 | 2,38 | 11,3 % | 6,0 % | 93 % | 72 % |
+
+**Ursache [gemessen]:** Mit θ₀ = 0,15 gleichen die NPC-Händler gerade die mittleren Margen (40–80 %) aus, von denen vorsichtige und durchschnittliche Spieler leben. Routen mit ≥ 40 % Marge fallen von 7,7 % auf 2,7 %. Die mittlere Marge je Handel sinkt bei A von 42 % auf 24 %, bei B von 35 % auf 26 % (`adr023-rec-w0` vs. `b11-npc`). Zusammen mit der Totalbeschlagnahme (ADR-023) reicht der Gewinn dann nicht mehr, um Waschgebühren und Reisekosten zu tragen. k und η gehen in F-NPC-01 nur als Produkt ein, deshalb sind ihre Gleichgewichte identisch.
+
+### 5.2 Übersicht [gemessen]
+
+Je eine Änderung gegenüber der Zeile, auf die „wie …“ verweist. n = Spieler je Profil (A/B).
+
+| Szenario | Änderung | Tage × Seeds | n (A/B) | A | **B** | C | D | E | Geldmenge Ende |
+|---|---|---|---|---:|---:|---:|---:|---:|---:|
+| `adr023-rec-w0` | Empfehlung ADR-023, **ohne NPC** | 90 × 12 | 156/108 | 2 % | **6 %** | 7 % | 65 % | 8 % | 1,95 Mio. € |
+| `b11-npc` | + NPC-Händler k = 1 (θ₀ = 0,15) | 90 × 24 | 312/216 | 38 % | **20 %** | 24 % | 90 % | 4 % | 0,87 Mio. € |
+| `b11-k05` | wie b11-npc, k = 0,5 | 90 × 48 | 624/432 | 17 % | **12 %** | 18 % | 81 % | 5 % | 1,20 Mio. € |
+| `b11-eta025` | wie b11-npc, η 0,5 → 0,25 | 90 × 24 | 312/216 | 21 % | **12 %** | 19 % | 87 % | 1 % | 1,33 Mio. € |
+| `b11-theta` | wie b11-npc, θ₀ 0,15 → 0,30 | 90 × 48 | 624/432 | 8 % | **11 %** | 15 % | 83 % | 4 % | 1,28 Mio. € |
+| **`b11-theta45`** | **wie b11-theta, θ₀ 0,30 → 0,45** | 90 × 48 | 624/432 | **4 %** | **7 %** | 12 % | 79 % | 1 % | 1,51 Mio. € |
+| `b11-theta-k05` | wie b11-theta, k = 0,5 | 90 × 48 | 624/432 | 6 % | **7 %** | 10 % | 82 % | 1 % | 1,56 Mio. € |
+| `adr023-rec-w0-365` | Empfehlung ADR-023, ohne NPC, 365 Tage | 365 × 24 | 312/216 | 1 % | **3 %** | 6 % | 67 % | 1 % | 9,74 Mio. € |
+| `b11-npc-365` | wie b11-npc, 365 Tage | 365 × 8 | 104/72 | 34 % | **14 %** | 40 % | 94 % | 4 % | 4,28 Mio. € |
+| `b11-theta-365` | wie b11-theta, 365 Tage | 365 × 8 | 104/72 | 7 % | **19 %** | 25 % | 78 % | 0 % | 6,82 Mio. € |
+| **`b11-theta45-365`** | **wie b11-theta45, 365 Tage** | 365 × 24 | 312/216 | **4 %** | **8 %** | 12 % | 81 % | 8 % | 7,95 Mio. € |
+| `b11-theta-k05-365` | wie b11-theta-k05, 365 Tage | 365 × 8 | 104/72 | 7 % | **8 %** | 13 % | 78 % | 0 % | 7,59 Mio. € |
+
+Invariantenverletzungen in allen Läufen: **0**.
+
+### 5.3 Auswertung
+
+1. **Der Befund ist kleiner als zuerst gemeldet, aber echt.** Mit der vollständigen Empfehlung (inkl. W0 Ø 0,85) und 24 Seeds liegen mit NPC-Händlern 38 % der vorsichtigen und 20 % der Durchschnittsspieler unter dem Startkapital (ohne NPC 2 % bzw. 6 %). Die früheren 80 % (A) aus `adr023-rec-npc` stammten aus 12 Seeds ohne W0-Änderung.
+2. **Streuung zwischen Seeds [gemessen]:** `b11-k05` und `b11-eta025` sind im Modell gleich (5.1), laufen aber auf anderen Seeds. Sie unterscheiden sich bei A um 4 Prozentpunkte (17 % / 21 %), bei B gar nicht. Läufe mit 8 Seeds über 365 Tage (n(B) = 72) schwanken stärker: `b11-theta45-365` ergab mit 8 Seeds B 13 %, mit 24 Seeds 8 %. Für Empfehlungen zählen deshalb nur die Läufe mit 24–48 Seeds.
+3. **Weniger NPC-Intensität (k oder η halbieren) hilft A nur halb** (38 % → 17–21 %). Bei fast gleicher Dämpfung der Top-Route (2,25 gegenüber 2,26) wirkt θ₀ = 0,45 deutlich stärker (A 4 %).
+4. **Eine höhere Mindestmarge θ₀ wirkt gezielt.** Die NPC-Händler gleichen weiter die großen Spreizungen aus und lassen die mittleren Margen den Spielern. θ₀ = 0,30 schützt A (8 %), reicht für B aber nicht (11 % nach 90 Tagen). **θ₀ = 0,45 erreicht das Ziel nach 90 und nach 365 Tagen** (A 4 %/4 %, B 7 %/8 %) und hält die Top-Route bei 2,26 (ohne NPC 3,05).
+5. **θ₀ = 0,30 + k = 0,5 wirkt gleich gut**, ändert aber zwei Werte und widerspricht R-4: Die NPC-Präsenz soll erst zurückgehen, wenn genug Spieler regelmäßig online sind. Ein halbes k zum Serverstart nimmt das vorweg.
+6. **Wachstum:** Mit θ₀ = 0,45 erreichen Durchschnittsspieler 50.000 € Nettovermögen an Tag ≈ 38 (ohne NPC Tag ≈ 20), W1 an Tag ≈ 37 (ohne NPC ≈ 30). Die NPCs bremsen das Wachstum also weiterhin spürbar, wie in H-NPC-1 vorgesehen. Die Geldmenge nach 365 Tagen liegt 18 % unter dem Lauf ohne NPC.
+7. **Profil D** bleibt bei 79–83 % (gewollt, schlechte Entscheidungen haben Folgen).
+
+**Empfehlung (B-11):** `npc.trader_threshold_base` 0,15 → **0,45**. Eine Wertänderung an einem bestehenden Schlüssel, kein Schema-Update (ADR-024). Der Golden Vector EX-NPC-01 (θ, Gleichgewichtspreise) muss in `verify.py` neu erzeugt werden.
+
+### 5.4 Details der Empfehlung
+
+#### b11-theta45 – B-11: wie b11-theta, trader_threshold_base 0,30 → 0,45
+
+- **Hypothese:** Eine noch höhere Mindestmarge lässt auch die mittleren Routen von B unberührt; B sinkt auf ≤ 10 %, die Top-Route bleibt deutlich gedämpft.
+- **Setup:** 30 Hintergrundspieler + je 1 beobachteter Bot A–E, 90 Tage, 48 Seeds. Erweiterungen: Wirtschaft aus, NPC-Händler F-NPC-01 an (k = 1), Kundenbindung/Polizeidruck aus, Sicherheitsnetz aus, Beschlagnahme bei Kontrolle 100 % der Ladung, Organisationskosten F-PRG-01 aus, **ADR-023** (Totalbeschlagnahme Ware + Bargeld): Wäsche an, Kredithai an.
+- **Geänderter Parameter:** `loan_shark.amount` = 100000, `loan_shark.max_assets` = 20000, `professions.finanzen_xp_per_eur` = 0.01, `laundering.tiers.gambling.rate_min` = 0.7, `npc.trader_threshold_base` = 0.45
+- **Parameter:** `parameters.toml aus T-120 (Agent 2, 72102ab)` (SHA-256 `4592e8a30313…`), Vorschläge `sim/proposals.toml` (`dd7fbf2aee4d…`). Invariantenverletzungen: **0**.
+
+**Nettovermögen [gemessen]** (Median, in Klammern P10–P90, Euro)
+
+| Profil | Tag 1 | Tag 7 | Tag 30 | Tag 90 |
+|---|---:|---:|---:|---:|
+| A Vorsichtig | 2.004 (1.551–2.187) | 2.413 (1.411–3.049) | 3.683 (1.257–5.563) | 7.087 (4.201–10.925) |
+| B Durchschnitt | 2.741 (1.767–3.543) | 9.995 (996–16.111) | 29.733 (10.197–80.495) | 104.195 (29.261–183.010) |
+| C Aggressiv | 3.530 (472–5.718) | 11.504 (-68–26.925) | 31.237 (-68–140.431) | 86.732 (-68–317.767) |
+| D Ineffizient | 1.964 (1.423–2.652) | 1.262 (-184–5.339) | -68 (-464–8.071) | -138 (-464–7.866) |
+| E Optimiert | 3.482 (168–5.217) | 18.008 (7.982–43.551) | 90.538 (32.273–180.176) | 309.776 (90.297–472.615) |
+
+**Meilensteine [gemessen]** (Anteil der Seeds, die ihn erreichen · Median-Tag)
+
+| Profil | Kleinwagen | Transporter | LKW | NW ≥ 50 000 € | NW ≥ 500 000 € | NW ≥ 5 Mio. € | Finanzen L2 (W1) | Finanzen L10 (W3) | Finanzen L15 (W4) |
+|---|---|---|---|---|---|---|---|---|---|
+| A | – | – | – | – | – | – | – | – | – |
+| B | 94 % · Tag 10.9 | 94 % · Tag 30.3 | 13 % · Tag 77 | 94 % · Tag 31 | – | – | 94 % · Tag 35.5 | – | – |
+| C | 88 % · Tag 3.7 | 85 % · Tag 15.2 | 71 % · Tag 47.8 | 85 % · Tag 27 | – | – | 81 % · Tag 57.3 | – | – |
+| D | 27 % · Tag 10.5 | 2 % · Tag 36.8 | – | – | – | – | 4 % · Tag 54.7 | – | – |
+| E | 98 % · Tag 3.3 | 98 % · Tag 9.4 | 96 % · Tag 31.1 | 98 % · Tag 15 | 10 % · Tag 78 | – | 96 % · Tag 24.5 | 2 % · Tag 86.7 | – |
+
+**Verhalten und Risiko [gemessen]** (Mittel je beobachtetem Bot)
+
+| Profil | Fahrten/Tag | Kontrollquote je Fahrt | Ø Marge je Handel | Einnahmen Verkauf € | Einkauf € | Reisekosten € | Strafen, Bestechung, Tilgung, Organisation, Beschlagnahme, Wäsche € | Sackgassen-Tage | Neustarts | Ende < Startkapital |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 1.98 | 1.6 % | 35 % | 72.582 | 55.724 | 8.609 | 3.421 | 0 | 0 | 4 % |
+| B | 2.55 | 3.3 % | 31 % | 1.356.126 | 1.154.268 | 18.854 | 86.905 | 4.5 | 0.02 | 6 % |
+| C | 2.77 | 3.0 % | 31 % | 1.789.512 | 1.529.532 | 31.098 | 75.953 | 10.6 | 1.52 | 15 % |
+| D | 0.47 | 4.6 % | 15 % | 58.324 | 52.876 | 2.765 | 3.491 | 64.4 | 0 | 73 % |
+| E | 3.31 | 3.1 % | 34 % | 2.894.563 | 2.369.875 | 49.631 | 178.317 | 1.3 | 0.06 | 2 % |
+
+**Wäsche, Beschlagnahme, Kredithai [gemessen]** (Mittel je beobachtetem Bot; Weißgeld-Anteil = Median Konto ÷ Bruttovermögen am Ende)
+
+| Profil | gewaschen € | Waschgebühren € | beschlagnahmtes Bargeld € | beschlagnahmte Ware (P_base) € | Kredite | Anteil mit Kredit | offene Kreditschuld Ende € | Weißgeld-Anteil | Finanzen-Level (Median) | Papers |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 22.950 | 3.379 | 0 | 2.392 | 0.04 | 4 % | 0 | 86 % | 1 | 0 |
+| B | 317.071 | 61.693 | 16.295 | 116.879 | 0.54 | 35 % | 11 | 42 % | 5 | 0 |
+| C | 184.891 | 34.175 | 26.165 | 145.722 | 3.69 | 94 % | 71 | 15 % | 4 | 0 |
+| D | 9.979 | 1.557 | 747 | 2.938 | 1.27 | 98 % | 269 | 55 % | 0 | 0 |
+| E | 619.096 | 121.957 | 35.920 | 194.947 | 1.31 | 71 % | 0 | 62 % | 8 | 0 |
+
+**Alle Spieler je Profil [gemessen]** (beobachtete + Hintergrund-Bots, Stand letzter Tag; Leitkennzahl für den Sackgassen-Nachweis)
+
+| Profil | n | unter Startkapital | Ø Sackgassen-Tage | mit Beschlagnahme | mit Kredit | Ø Kredite | NW Median € |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| A Vorsichtig | 624 | **4 %** | 0.9 | 95 % | 3 % | 0.04 | 8.111 |
+| B Durchschnitt | 432 | **7 %** | 5.1 | 100 % | 42 % | 0.73 | 97.934 |
+| C Aggressiv | 288 | **12 %** | 7.8 | 100 % | 94 % | 4.29 | 90.282 |
+| D Ineffizient | 192 | **79 %** | 67.1 | 100 % | 99 % | 1.32 | -169 |
+| E Optimiert | 144 | **1 %** | 0.4 | 100 % | 67 % | 1.27 | 270.021 |
+
+**Markt und Geldmenge [gemessen]**
+
+- Preisniveau P/P* (Tagesmittel über alle Märkte): Ø 1.009, Spanne 0.979–1.044. Anteil knapper Markt-Ticks: 6.5 %. Marktereignisse je Lauf: 1071.
+- Handelsvolumen: 656.885 € pro Tag. Geldmenge am Ende (Median): 1.506.664 €, Wachstum in den letzten 30 Tagen: 63.2 %. Senken/Quellen (SFR): 0.955.
+- Ungleichheit am Ende (alle Spieler): Gini 0.663, reichster Spieler ÷ Median 34.4.
+- Umsatzstärkste Märkte: `muenchen/kokain` 149.761 €/Tag (P/P* 0.758, knapp 14 %); `hamburg/kokain` 99.924 €/Tag (P/P* 1.137, knapp 0 %); `frankfurt/kokain` 60.469 €/Tag (P/P* 0.912, knapp 2 %); `rotterdam/kokain` 47.000 €/Tag (P/P* 1.239, knapp 0 %); `amsterdam/gras` 35.233 €/Tag (P/P* 1.142, knapp 0 %).
+
+#### b11-theta45-365 – B-11: wie b11-theta45 über 365 Tage
+
+- **Hypothese:** Wie b11-theta45, langfristig.
+- **Setup:** 30 Hintergrundspieler + je 1 beobachteter Bot A–E, 365 Tage, 24 Seeds. Erweiterungen: Wirtschaft aus, NPC-Händler F-NPC-01 an (k = 1), Kundenbindung/Polizeidruck aus, Sicherheitsnetz aus, Beschlagnahme bei Kontrolle 100 % der Ladung, Organisationskosten F-PRG-01 aus, **ADR-023** (Totalbeschlagnahme Ware + Bargeld): Wäsche an, Kredithai an.
+- **Geänderter Parameter:** `loan_shark.amount` = 100000, `loan_shark.max_assets` = 20000, `professions.finanzen_xp_per_eur` = 0.01, `laundering.tiers.gambling.rate_min` = 0.7, `npc.trader_threshold_base` = 0.45
+- **Parameter:** `parameters.toml aus T-120 (Agent 2, 72102ab)` (SHA-256 `4592e8a30313…`), Vorschläge `sim/proposals.toml` (`dd7fbf2aee4d…`). Invariantenverletzungen: **0**.
+
+**Nettovermögen [gemessen]** (Median, in Klammern P10–P90, Euro)
+
+| Profil | Tag 1 | Tag 7 | Tag 30 | Tag 90 | Tag 180 | Tag 365 |
+|---|---:|---:|---:|---:|---:|---:|
+| A Vorsichtig | 2.013 (1.752–2.258) | 2.607 (1.499–3.253) | 3.672 (1.714–5.637) | 8.132 (4.443–10.795) | 14.052 (8.474–18.984) | 25.362 (18.404–66.034) |
+| B Durchschnitt | 2.757 (210–4.167) | 6.907 (417–16.753) | 21.532 (-263–74.923) | 45.878 (-263–145.948) | 122.565 (-263–322.444) | 310.921 (-263–496.395) |
+| C Aggressiv | 3.000 (46–3.931) | 8.775 (40–24.761) | 26.676 (-238–76.910) | 90.386 (-238–267.049) | 295.177 (-238–463.401) | 563.104 (-238–732.404) |
+| D Ineffizient | 1.964 (801–2.573) | 2.312 (131–4.985) | -46 (-276–8.373) | -161 (-380–7.872) | -161 (-380–7.857) | -161 (-380–7.857) |
+| E Optimiert | 3.639 (223–7.012) | 20.898 (2.150–46.594) | 127.770 (50.764–212.402) | 369.667 (120.009–517.457) | 738.835 (298.423–907.129) | 1.306.036 (975.269–1.486.359) |
+
+**Meilensteine [gemessen]** (Anteil der Seeds, die ihn erreichen · Median-Tag)
+
+| Profil | Kleinwagen | Transporter | LKW | NW ≥ 50 000 € | NW ≥ 500 000 € | NW ≥ 5 Mio. € | Finanzen L2 (W1) | Finanzen L10 (W3) | Finanzen L15 (W4) |
+|---|---|---|---|---|---|---|---|---|---|
+| A | 38 % · Tag 316.6 | 4 % · Tag 328.9 | – | 21 % · Tag 310 | – | – | 96 % · Tag 166.3 | – | – |
+| B | 83 % · Tag 11.3 | 83 % · Tag 38.1 | 83 % · Tag 187.3 | 83 % · Tag 38 | 13 % · Tag 339 | – | 83 % · Tag 36.8 | 83 % · Tag 194.7 | 54 % · Tag 336.8 |
+| C | 88 % · Tag 3.6 | 83 % · Tag 14.2 | 83 % · Tag 60.9 | 83 % · Tag 20.5 | 63 % · Tag 250 | – | 79 % · Tag 57.3 | 67 % · Tag 222.2 | – |
+| D | 29 % · Tag 12.7 | – | – | – | – | – | 4 % · Tag 108 | – | – |
+| E | 96 % · Tag 2.8 | 96 % · Tag 8.4 | 96 % · Tag 26.4 | 96 % · Tag 12 | 92 % · Tag 116.5 | – | 96 % · Tag 23 | 92 % · Tag 112 | 92 % · Tag 223.2 |
+
+**Verhalten und Risiko [gemessen]** (Mittel je beobachtetem Bot)
+
+| Profil | Fahrten/Tag | Kontrollquote je Fahrt | Ø Marge je Handel | Einnahmen Verkauf € | Einkauf € | Reisekosten € | Strafen, Bestechung, Tilgung, Organisation, Beschlagnahme, Wäsche € | Sackgassen-Tage | Neustarts | Ende < Startkapital |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 1.86 | 1.7 % | 34 % | 359.502 | 276.780 | 34.446 | 17.913 | 13.6 | 0 | 4 % |
+| B | 2.02 | 3.4 % | 25 % | 7.093.797 | 6.251.008 | 132.334 | 438.436 | 53.8 | 0.17 | 17 % |
+| C | 2.21 | 3.1 % | 26 % | 8.827.776 | 7.738.355 | 172.662 | 445.669 | 50.4 | 2.63 | 17 % |
+| D | 0.13 | 4.9 % | 16 % | 60.297 | 54.198 | 2.982 | 4.309 | 330.7 | 0 | 71 % |
+| E | 2.76 | 2.3 % | 30 % | 12.307.526 | 10.096.085 | 266.424 | 752.096 | 11 | 0.08 | 4 % |
+
+**Wäsche, Beschlagnahme, Kredithai [gemessen]** (Mittel je beobachtetem Bot; Weißgeld-Anteil = Median Konto ÷ Bruttovermögen am Ende)
+
+| Profil | gewaschen € | Waschgebühren € | beschlagnahmtes Bargeld € | beschlagnahmte Ware (P_base) € | Kredite | Anteil mit Kredit | offene Kreditschuld Ende € | Weißgeld-Anteil | Finanzen-Level (Median) | Papers |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 116.532 | 17.894 | 0 | 12.123 | 0.04 | 4 % | 23 | 95 % | 2 | 0 |
+| B | 1.992.328 | 353.721 | 60.608 | 543.508 | 1 | 50 % | 88 | 69 % | 15 | 0 |
+| C | 1.399.813 | 236.006 | 125.921 | 557.339 | 5.88 | 100 % | 56 | 77 % | 13 | 0 |
+| D | 9.555 | 1.433 | 1.192 | 2.903 | 1.54 | 100 % | 269 | 42 % | 0 | 0 |
+| E | 3.586.987 | 637.814 | 77.574 | 578.679 | 1.5 | 63 % | 22 | 92 % | 19 | 0 |
+
+**Alle Spieler je Profil [gemessen]** (beobachtete + Hintergrund-Bots, Stand letzter Tag; Leitkennzahl für den Sackgassen-Nachweis)
+
+| Profil | n | unter Startkapital | Ø Sackgassen-Tage | mit Beschlagnahme | mit Kredit | Ø Kredite | NW Median € |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| A Vorsichtig | 312 | **4 %** | 11.3 | 100 % | 4 % | 0.07 | 35.110 |
+| B Durchschnitt | 216 | **8 %** | 26.6 | 100 % | 40 % | 0.65 | 329.177 |
+| C Aggressiv | 144 | **12 %** | 35.8 | 100 % | 97 % | 5.99 | 525.826 |
+| D Ineffizient | 96 | **81 %** | 333 | 97 % | 100 % | 1.65 | -148 |
+| E Optimiert | 72 | **8 %** | 22.3 | 100 % | 69 % | 1.6 | 1.183.087 |
+
+**Markt und Geldmenge [gemessen]**
+
+- Preisniveau P/P* (Tagesmittel über alle Märkte): Ø 1.01, Spanne 0.971–1.045. Anteil knapper Markt-Ticks: 6.4 %. Marktereignisse je Lauf: 4392.
+- Handelsvolumen: 861.430 € pro Tag. Geldmenge am Ende (Median): 7.946.949 €, Wachstum in den letzten 30 Tagen: 8.8 %. Senken/Quellen (SFR): 0.955.
+- Ungleichheit am Ende (alle Spieler): Gini 0.642, reichster Spieler ÷ Median 21.4.
+- Umsatzstärkste Märkte: `muenchen/kokain` 181.000 €/Tag (P/P* 0.741, knapp 12 %); `hamburg/kokain` 99.406 €/Tag (P/P* 1.139, knapp 0 %); `frankfurt/kokain` 74.082 €/Tag (P/P* 0.915, knapp 2 %); `amsterdam/gras` 61.849 €/Tag (P/P* 1.209, knapp 0 %); `muenchen/gras` 49.200 €/Tag (P/P* 0.875, knapp 3 %).
