@@ -228,6 +228,16 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'city.rotterdam.supply.kokain': 2.0 },
     hypothesis: 'Ein kleineres Kokain-Angebot im Erzeugerhafen senkt die Marge der Top-Route (statisch 1.470 → 998 €/h), ohne die Sackgassen-Quote von A und B zu erhöhen.',
   },
+  'b2-coke-cons2': {
+    scenario: sc('b2-coke-cons2', 'B-2: wie b11-theta45, goods.kokain.consumption 0,004 → 0,002', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'goods.kokain.consumption': 0.002 },
+    hypothesis: 'b2-coke-cons wirkte über die Markttiefe (kleinere Bestände, mehr Preis-Slippage für große Ladungen): Halbierter Konsum senkt den Kokain-Anteil deutlich unter 50 %.',
+  },
+  'b2-coke-vol': {
+    scenario: sc('b2-coke-vol', 'B-2: wie b11-theta45, goods.kokain.volume 1 → 2', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'goods.kokain.volume': 2 },
+    hypothesis: 'Doppeltes Volumen halbiert die Kokain-Menge je Fahrzeugladung; Einsteiger (budgetbegrenzt) trifft das kaum. Der Kokain-Anteil sinkt, ohne A/B zu verschlechtern.',
+  },
   'b11-npc-365': {
     scenario: sc('b11-npc-365', 'B-11: wie b11-npc über 365 Tage (Vergleich zu b11-theta-365)', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
     overrides: { ...REC_W0 },
