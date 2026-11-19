@@ -1325,7 +1325,7 @@ EXPECTED: dict[str, dict] = {
     'EX-SPC-03': {'T': 158, 'n': 7, 'danger': 0.55, 'g': 1.8734, 'p_seg': 0.0309, 'p_encounter': 0.1973, 'K_ship': 104.0, 'K_pirates': 66.0, 'p_win': 0.6642, 'p_loss': 0.0663},
     'EX-SPC-04': {'ceres': 26998.3, 'orbit': 97804.31, 'mars': 91471.33, 'frankfurt': 126264.83},
     'EX-SPC-05': {'S_ceres': 518.4, 'S_frankfurt': 332.64, 'cost': 7469143, 'revenue': 23984549, 'fuel': 1315000, 'fee': 500000, 'T': 161, 'profit': 14700406},
-    'EX-NPC-01': {'S_rot_k0': 936.0, 'S_mue_k0': 691.2, 'P_rot_k0': 5059.64, 'P_mue_k0': 15413.63, 'ratio_k0': 3.0464, 'S_rot_k1': 663.3, 'S_mue_k1': 1161.9, 'P_rot_k1': 6010.53, 'P_mue_k1': 11888.32, 'ratio_k1': 1.9779, 'm_start': 1.7563, 'theta': 0.314, 'f_start': 1.0, 'q_start': 3.25},
+    'EX-NPC-01': {'S_rot_k0': 936.0, 'S_mue_k0': 691.2, 'P_rot_k0': 5059.64, 'P_mue_k0': 15413.63, 'ratio_k0': 3.0464, 'S_rot_k1': 747.3, 'S_mue_k1': 1003.2, 'P_rot_k1': 5662.62, 'P_mue_k1': 12794.23, 'ratio_k1': 2.2594, 'm_start': 1.7563, 'theta': 0.614, 'f_start': 1.0, 'q_start': 3.25},
     'EX-NPC-02': {'K_1': 40.0, 'cash_1': 50000, 'K_2': 72.0, 'cash_2': 100000, 'K_3': 129.6, 'cash_3': 200000, 'K_4': 233.28, 'cash_4': 400000, 'K_5': 419.9, 'cash_5': 800000, 'p_win_t2': 0.5708, 'gain_t2': 85000, 'per_city_day': 4},
     'EX-NPC-03': {'p_tick': 0.0007, 'p_day': 0.0959, 'p_tick_k05': 0.00035, 'p_low_cash': 0.0, 'K_gang': 39.261, 'p_gang_wins': 0.4171, 'cash_lost': 500000},
     'EX-NPC-04': {'day13': 1.0, 'day14': 0.9, 'day21': 0.8, 'day35': 0.6, 'day42': 0.7, 'day49': 0.8},

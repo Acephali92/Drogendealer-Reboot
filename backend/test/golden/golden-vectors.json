@@ -189,19 +189,19 @@
     },
     "EX-NPC-01": {
       "P_mue_k0": 15413.63,
-      "P_mue_k1": 11888.32,
+      "P_mue_k1": 12794.23,
       "P_rot_k0": 5059.64,
-      "P_rot_k1": 6010.53,
+      "P_rot_k1": 5662.62,
       "S_mue_k0": 691.2,
-      "S_mue_k1": 1161.9,
+      "S_mue_k1": 1003.2,
       "S_rot_k0": 936.0,
-      "S_rot_k1": 663.3,
+      "S_rot_k1": 747.3,
       "f_start": 1.0,
       "m_start": 1.7563,
       "q_start": 3.25,
       "ratio_k0": 3.0464,
-      "ratio_k1": 1.9779,
-      "theta": 0.314
+      "ratio_k1": 2.2594,
+      "theta": 0.614
     },
     "EX-NPC-02": {
       "K_1": 40.0,
@@ -1091,7 +1091,7 @@
       "k_min": 0.0,
       "k_start": 1.0,
       "trader_intensity": 0.5,
-      "trader_threshold_base": 0.15,
+      "trader_threshold_base": 0.45,
       "trader_threshold_per_km": 0.0002,
       "trader_threshold_scale": 0.5
     },
@@ -1974,7 +1974,7 @@
     }
   ],
   "sources": {
-    "parameters.toml": "8724cef7374af98b04ffb854079ca70ad4d0f97d19177e4d7a430fab489fa766",
-    "verify.py": "18b7a82e7a84ad1019b0d9b1bbc3fe23471687a21ee473718cd20d05461903db"
+    "parameters.toml": "d0bc4917a710699dad9bffbd4b90da7a18e7090838862bebcc5bae2a0230ff4f",
+    "verify.py": "5346bbf659149e5af59874be95405d3f19b3933d09d4fa8b07596f038fce06e5"
   }
 }

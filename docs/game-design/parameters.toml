@@ -835,7 +835,7 @@ k_min = 0.0
 k_max = 1.0
 # NPC-Händler (F-NPC-01)
 trader_intensity = 0.5            # η: Anteil von min(A_a, D_b), den NPCs pro Tick verschieben
-trader_threshold_base = 0.15      # θ_0: Mindestmarge
+trader_threshold_base = 0.45      # θ_0: Mindestmarge (P-12, Agent 5: schont mittlere Margen)
 trader_threshold_per_km = 0.0002  # θ_km: Zuschlag je km (Reisekosten/Risiko)
 trader_threshold_scale = 0.5      # volle NPC-Aktivität bei Marge θ + 0,5
 # NPC-Kuriere als Ziele (F-NPC-02)
