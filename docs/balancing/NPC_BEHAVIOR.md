@@ -40,7 +40,7 @@ Die Preise werden ohne Rauschen berechnet. Alle Flüsse eines Ticks entstehen au
 | Parameter | Wert | Grenzen | Bedeutung |
 |---|---:|---|---|
 | `npc.trader_intensity` η | 0,5 | [0; 2] | Anteil von min(A_a, D_b) pro Tick bei voller Marge |
-| `npc.trader_threshold_base` θ₀ | 0,15 | – | Mindestmarge |
+| `npc.trader_threshold_base` θ₀ | 0,15 (Vorschlag 0,45, B-11) | – | Mindestmarge |
 | `npc.trader_threshold_per_km` θ_km | 0,0002 | – | Aufschlag je km (Reise und Risiko) |
 | `npc.trader_threshold_scale` θ_s | 0,5 | – | volle Aktivität ab θ + 0,5 |
 
@@ -93,6 +93,7 @@ Sind alle Ziele 14 Tage am Stück erfüllt, sinkt k um 0,1. Danach sinkt k alle 
 | H-NPC-1: F-NPC-01 verringert die Preisspreizung und bremst das Wachstum aller Händlerprofile. Die Startroute bleibt profitabel. | NW und Meilensteine A–E, Marge | `npc`, `npc-half` |
 | H-NPC-2: Die Wirkung ist monoton in k. | NW E bei k = 0 / 0,5 / 1 | `base-short`, `npc-half`, `npc` |
 | H-NPC-3: Kundenbindung bestraft das Leerkaufen, Polizeidruck verteilt den Handel. | knappe Markt-Ticks, Volumen der Top-Märkte, Kontrollquote | `npc-ext` |
+| H-NPC-4 (B-11): Unter ADR-023 verarmen vorsichtige Spieler bei k = 1, weil NPCs die mittleren Margen ausgleichen. Eine höhere Mindestmarge θ₀ behebt das, ohne die Dämpfung der Top-Route aufzugeben. | Anteil unter Startkapital A/B, Preisverhältnis Top-Route | **bestätigt** [gemessen]: θ₀ 0,15 → 0,45: A 38 % → 4 %, B 20 % → 7 %; Top-Route 1,98 → 2,26 (ohne NPC 3,05). `b11-*`, [SIMULATION_RESULTS §5](SIMULATION_RESULTS.md#5-b-11-npc-händler-unter-adr-023) |
 
 ## 6. Komplexität
 
