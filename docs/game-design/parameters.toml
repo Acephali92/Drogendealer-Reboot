@@ -599,7 +599,6 @@ penalty_fine_rate = 0.5
 closure_ticks = 144
 heat_on_detection = 40.0
 
-
 # Waschstufen (ADR-023, F-ML-07/08). rate = Anteil, der auf dem Bankkonto ankommt.
 # Freischaltung über das Level im Feld Finanzen; W2 (eigene Betriebe) nutzt businesses.<id>.wash_fee.
 [laundering.tiers.gambling]
@@ -647,7 +646,8 @@ max_assets = 20_000               # nur wenn Schwarz- + Weißgeld unter 200 €
 max_vehicles = 1                  # alle Fahrzeuge bis auf eins verkauft
 max_weapons = 0                   # alle Waffen verkauft
 repayment_rate = 0.5              # Anteil jedes Verkaufserlöses zur Tilgung
-repay_factor = 1.0                # Rückzahlung = amount · repay_factor (Aufschlag: Kalibrierung Agent 5)
+repay_factor = 1.0                # Rückzahlung = amount · repay_factor (ohne Aufschlag, ADR-023)
+
 # -----------------------------------------------------------------------------
 # Immobilien / Betriebe
 # -----------------------------------------------------------------------------
@@ -901,6 +901,12 @@ ships = "ships/_fallback.svg"
 "laundering.risk_base" = [0.0, 0.01]
 "real_estate.upgrade_cost_factor" = [0.05, 1.0]
 "space.piracy_base" = [0.0, 0.2]
+"laundering.tiers.strawman.rate" = [0.75, 0.95]
+"laundering.tiers.gambling.rate_min" = [0.5, 0.9]
+"laundering.tiers.foundation.papers_probability_per_day" = [0.0, 0.01]
+"loan_shark.amount" = [50_000, 500_000]
+"loan_shark.repay_factor" = [1.0, 1.5]
+"combat.weapon_resale_rate" = [0.2, 0.8]
 "npc.trader_intensity" = [0.0, 2.0]
 "npc.handover_step" = [0.01, 0.5]
 "npc.gang_attack_base" = [0.0, 0.005]

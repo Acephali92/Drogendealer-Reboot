@@ -231,21 +231,23 @@ def max_order(S: float) -> int:
     return math.floor(min(P["trade"]["max_trade_share"] * S, S - ECO["min_stock"]))
 
 
-def buy_cost(cid: str, g: str, S: float, q: int, L_handel: int = 0, x: float = 0.0) -> tuple[int, float]:
+def buy_cost(cid: str, g: str, S: float, q: int, L_handel: int = 0, x: float = 0.0,
+             ev_d: float = 1.0) -> tuple[int, float]:
     """F-TRD-01: C = ⌈(1 + s/2) · ∫_{S−q}^{S} P(σ) dσ⌉; neuer Bestand S − q."""
     if not 0 < q <= max_order(S):
         raise ValueError("Ordergröße unzulässig")
     lo, hi = price_bounds(g)
-    integral = price_integral(price_K(cid, g, x), S - q, S, lo, hi)
+    integral = price_integral(price_K(cid, g, x, ev_d), S - q, S, lo, hi)
     return ceil_ct((1 + spread(L_handel) / 2) * integral), S - q
 
 
-def sell_revenue(cid: str, g: str, S: float, q: int, L_handel: int = 0, x: float = 0.0) -> tuple[int, float]:
+def sell_revenue(cid: str, g: str, S: float, q: int, L_handel: int = 0, x: float = 0.0,
+                 ev_d: float = 1.0) -> tuple[int, float]:
     """F-TRD-02: R = ⌊(1 − s/2) · ∫_{S}^{S+q} P(σ) dσ⌋; neuer Bestand S + q."""
     if q <= 0:
         raise ValueError("Ordergröße unzulässig")
     lo, hi = price_bounds(g)
-    integral = price_integral(price_K(cid, g, x), S, S + q, lo, hi)
+    integral = price_integral(price_K(cid, g, x, ev_d), S, S + q, lo, hi)
     return floor_ct((1 - spread(L_handel) / 2) * integral), S + q
 
 

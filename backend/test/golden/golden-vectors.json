@@ -418,6 +418,10 @@
         0.0,
         0.5
       ],
+      "combat.weapon_resale_rate": [
+        0.2,
+        0.8
+      ],
       "economy.elasticity": [
         0.2,
         1.0
@@ -449,6 +453,26 @@
       "laundering.risk_base": [
         0.0,
         0.01
+      ],
+      "laundering.tiers.foundation.papers_probability_per_day": [
+        0.0,
+        0.01
+      ],
+      "laundering.tiers.gambling.rate_min": [
+        0.5,
+        0.9
+      ],
+      "laundering.tiers.strawman.rate": [
+        0.75,
+        0.95
+      ],
+      "loan_shark.amount": [
+        50000,
+        500000
+      ],
+      "loan_shark.repay_factor": [
+        1.0,
+        1.5
       ],
       "npc.gang_attack_base": [
         0.0,
@@ -1974,7 +1998,7 @@
     }
   ],
   "sources": {
-    "parameters.toml": "d0bc4917a710699dad9bffbd4b90da7a18e7090838862bebcc5bae2a0230ff4f",
-    "verify.py": "5346bbf659149e5af59874be95405d3f19b3933d09d4fa8b07596f038fce06e5"
+    "parameters.toml": "419bc2ed397c419a1cc77877a3319043bdf62d5d360f7b7bbf62538f0656ada9",
+    "verify.py": "199c64b258d8dec9a5938edae622dc306470af6cd77b4e703e7683ae1b41c77a"
   }
 }
