@@ -397,7 +397,7 @@ schmuggel_xp_per_cargo_heat = 1.0 # + 1 XP je Ladungsheat-Punkt (hv)
 gewalt_xp_win = 50
 gewalt_xp_loss = 10
 produktion_xp_per_unit = 0.1
-finanzen_xp_per_eur = 0.001       # 1 XP je 1 000 € gewaschen
+finanzen_xp_per_eur = 0.01        # 1 XP je 100 € gewaschen (Kalibrierung Agent 5, T-120)
 # Boni pro Level (rate) und Obergrenze (cap)
 handel_spread_reduction = 0.03
 handel_spread_reduction_cap = 0.6
@@ -490,6 +490,7 @@ networth_history_ticks = 1_008    # Angreifer: höchstes NW der letzten 7 Tage
 target_cooldown_ticks = 36
 attack_cooldown_ticks = 3
 heat_attack = 15.0
+weapon_resale_rate = 0.5          # Rückkaufpreis für Waffen (Anteil des Kaufpreises)
 
 [weapons.messer]
 name = "Buttermesser deluxe"
@@ -605,7 +606,7 @@ heat_on_detection = 40.0
 name = "Spielhölle Zum Goldenen Zufall"
 tier = 0
 min_level = 0
-rate_min = 0.40                   # Kurs je Vorgang gleichverteilt in [rate_min, rate_max]
+rate_min = 0.70                   # Kurs je Vorgang gleichverteilt in [rate_min, rate_max]
 rate_max = 1.00
 daily_cap_base = 200_000          # 2 000 € pro Tag
 daily_cap_per_level = 100_000     # + 1 000 € je Finanzen-Level
@@ -614,7 +615,7 @@ daily_cap_per_level = 100_000     # + 1 000 € je Finanzen-Level
 name = "Cousin Kalle"
 tier = 1
 min_level = 2
-rate = 0.75
+rate = 0.88
 daily_cap = 1_000_000             # 10 000 € pro Tag
 
 [laundering.tiers.shell]
@@ -641,8 +642,8 @@ papers_heat = 40.0
 # Kredithai (Notkredit für gestrandete Spieler, F-ML-10)
 [loan_shark]
 name = "Onkel Kredit-Klaus"
-amount = 10_000_000               # 100 000 €, ausgezahlt als Schwarzgeld
-max_assets = 200_000              # nur wenn Schwarz- + Weißgeld unter 2 000 €
+amount = 100_000                  # 1 000 €, ausgezahlt als Schwarzgeld
+max_assets = 20_000               # nur wenn Schwarz- + Weißgeld unter 200 €
 max_vehicles = 1                  # alle Fahrzeuge bis auf eins verkauft
 max_weapons = 0                   # alle Waffen verkauft
 repayment_rate = 0.5              # Anteil jedes Verkaufserlöses zur Tilgung

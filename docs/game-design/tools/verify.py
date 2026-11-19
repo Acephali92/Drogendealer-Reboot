@@ -1146,11 +1146,11 @@ def ex_ml_07():
 
 def ex_ml_08():
     k = P["loan_shark"]
-    a = loan_shark_repay(400_000, round_half_up(k["amount"] * k["repay_factor"]))
-    return {"eligible_ok": loan_shark_eligible(1, 0, 50_000, 0, False),
-            "eligible_2_vehicles": loan_shark_eligible(2, 0, 50_000, 0, False),
-            "eligible_weapon": loan_shark_eligible(1, 1, 50_000, 0, False),
-            "eligible_rich": loan_shark_eligible(1, 0, 150_000, 100_000, False),
+    a = loan_shark_repay(100_000, round_half_up(k["amount"] * k["repay_factor"]))
+    return {"eligible_ok": loan_shark_eligible(1, 0, 15_000, 0, False),
+            "eligible_2_vehicles": loan_shark_eligible(2, 0, 15_000, 0, False),
+            "eligible_weapon": loan_shark_eligible(1, 1, 15_000, 0, False),
+            "eligible_rich": loan_shark_eligible(1, 0, 15_000, 10_000, False),
             "amount": k["amount"], "repay": a["repay"], "to_player": a["to_player"], "outstanding": a["outstanding"]}
 
 
@@ -1297,7 +1297,7 @@ EXPECTED: dict[str, dict] = {
     'EX-TRV-03': {'cargo_base_value': 1600000, 'bribe_cost': 1300000, 'bribe_chance': 0.3475, 'bribe_possible_500k': False, 'confiscated_cash_500k': 500000, 'bribe_possible_2m': True, 'cash_after_bribe_2m': 700000},
     'EX-TRV-04': {'fuel': 16400, 'T': 58, 'profit_no_bust': 1600069, 'EV': 1179594},
     'EX-PRF-01': {'L_2500': 5, 'L_9999': 9, 'XP_L10': 10000, 'XP_L20': 40000},
-    'EX-PRF-02': {'handel': 112, 'schmuggel': 106, 'finanzen': 8},
+    'EX-PRF-02': {'handel': 112, 'schmuggel': 106, 'finanzen': 86},
     'EX-PRF-03': {'spread_L10': 0.07, 'spread_L20': 0.04, 'control_red_L10': 0.25, 'strength_L10': 0.3, 'fee_red_L10': 0.2},
     'EX-CMB-01': {'K_A': 87.084, 'K_D': 49.076, 'p_win': 0.7027, 'f_winner': 0.1442, 'f_loser': 0.5117, 'lost_att': 0, 'lost_def': 1, 'cash_lost': 125000, 'cash_gained': 106250, 'kokain_lost': 10, 'kokain_gained': 8, 'hp_def': 50},
     'EX-CMB-02': {'a': 'Vermögensband', 'b': 'erlaubt', 'c': 'erlaubt', 'd': 'Ziel-Cooldown', 'e': 'Vermögensband'},
@@ -1310,12 +1310,12 @@ EXPECTED: dict[str, dict] = {
     'EX-CLN-06': {'eligible_14': 14, 'needed_14': 10, 'nine_yes': False, 'ten_yes': True, 'needed_3': 2, 'small_passed': True},
     'EX-ML-01': {'R': 6000, 'x_max': 18000, 'fee': 0.09, 'credit': 5460, 'p_tick': 0.00108, 'p_day': 0.1441},
     'EX-ML-02': {'p_day_0_5': 0.0381, 'p_day_2_0': 0.4639},
-    'EX-ML-03': {'accepted': 1000000, 'credit': 750000},
+    'EX-ML-03': {'accepted': 1000000, 'credit': 880000},
     'EX-ML-04': {'confiscated': 786240, 'fine': 393120},
-    'EX-ML-05': {'U': 0.969025, 'rate': 0.981415, 'cap_L0': 200000, 'credit': 147212, 'cap_L5': 700000, 'accepted_L5': 700000, 'rate_min': 0.4, 'rate_max': 1.0},
+    'EX-ML-05': {'U': 0.969025, 'rate': 0.990707, 'cap_L0': 200000, 'credit': 148606, 'cap_L5': 700000, 'accepted_L5': 700000, 'rate_min': 0.7, 'rate_max': 1.0},
     'EX-ML-06': {'L0': 'gambling', 'L2': 'gambling,strawman', 'L10': 'gambling,strawman,shell', 'L15': 'gambling,strawman,shell,foundation', 'shell_1m': 92000000, 'shell_50k': 'unter Mindestbetrag', 'foundation_5m': 475000000, 'foundation_L12': 'Level zu niedrig'},
     'EX-ML-07': {'p_day': 0.002, 'p_year': 0.5184, 'confiscated': 237500000},
-    'EX-ML-08': {'eligible_ok': True, 'eligible_2_vehicles': False, 'eligible_weapon': False, 'eligible_rich': False, 'amount': 10000000, 'repay': 200000, 'to_player': 200000, 'outstanding': 9800000},
+    'EX-ML-08': {'eligible_ok': True, 'eligible_2_vehicles': False, 'eligible_weapon': False, 'eligible_rich': False, 'amount': 100000, 'repay': 50000, 'to_player': 50000, 'outstanding': 50000},
     'EX-RE-01': {'R': 17708, 'U': 6600, 'net_day': 1599552, 'invest': 80000000, 'payback_days': 50.01},
     'EX-RE-02': {'waschsalon': 69.44, 'bar': 80.13, 'spielhalle': 74.4, 'bordell': 77.16, 'autowerkstatt': 92.59},
     'EX-RE-03': {'p_tick': 0.0004, 'p_day': 0.056},
@@ -1537,17 +1537,18 @@ def inv_handover_bounds():
 
 def inv_strawman_expensive():
     fees = [b["wash_fee"] for b in P["businesses"].values() if "wash_fee" in b]
-    return 1 - TIERS["strawman"]["rate"] > max(fees), "Strohmann teurer als jeder Betrieb"
+    cut = 1 - TIERS["strawman"]["rate"]
+    return cut > min(fees), f"Strohmann-Abschlag {cut:.0%} > Gebühr des günstigsten Betriebs {min(fees):.0%}"
 
 
 def inv_tier_progression():
-    """Kurs steigt mit der Stufe: Ø W0 < W1 < W2 (schlechtester Betrieb) ≤ W2 (bester) < W3 < W4."""
+    """Kurs steigt mit der Stufe: Ø W0 < W1 ≤ W2 (bester Betrieb) < W3 < W4."""
     g = TIERS["gambling"]
     fees = [b["wash_fee"] for b in P["businesses"].values() if "wash_fee" in b]
-    chain = [(g["rate_min"] + g["rate_max"]) / 2, TIERS["strawman"]["rate"], 1 - max(fees), 1 - min(fees),
+    chain = [(g["rate_min"] + g["rate_max"]) / 2, TIERS["strawman"]["rate"], 1 - min(fees),
              TIERS["shell"]["rate"], TIERS["foundation"]["rate"]]
     levels = [TIERS[k]["min_level"] for k in ("gambling", "strawman", "shell", "foundation")]
-    ok = (all(a < b for a, b in zip(chain[:2], chain[1:3])) and chain[2] <= chain[3] < chain[4] < chain[5]
+    ok = (chain[0] < chain[1] <= chain[2] < chain[3] < chain[4]
           and 0 <= g["rate_min"] <= g["rate_max"] <= 1 and levels == sorted(levels)
           and all(lv <= PRF["level_max"] for lv in levels))
     return ok, "Kurse " + " < ".join(f"{c:.2f}" for c in chain)

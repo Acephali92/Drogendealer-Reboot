@@ -146,7 +146,7 @@
     },
     "EX-ML-03": {
       "accepted": 1000000,
-      "credit": 750000
+      "credit": 880000
     },
     "EX-ML-04": {
       "confiscated": 786240,
@@ -157,10 +157,10 @@
       "accepted_L5": 700000,
       "cap_L0": 200000,
       "cap_L5": 700000,
-      "credit": 147212,
-      "rate": 0.981415,
+      "credit": 148606,
+      "rate": 0.990707,
       "rate_max": 1.0,
-      "rate_min": 0.4
+      "rate_min": 0.7
     },
     "EX-ML-06": {
       "L0": "gambling",
@@ -178,14 +178,14 @@
       "p_year": 0.5184
     },
     "EX-ML-08": {
-      "amount": 10000000,
+      "amount": 100000,
       "eligible_2_vehicles": false,
       "eligible_ok": true,
       "eligible_rich": false,
       "eligible_weapon": false,
-      "outstanding": 9800000,
-      "repay": 200000,
-      "to_player": 200000
+      "outstanding": 50000,
+      "repay": 50000,
+      "to_player": 50000
     },
     "EX-NPC-01": {
       "P_mue_k0": 15413.63,
@@ -242,7 +242,7 @@
       "XP_L20": 40000
     },
     "EX-PRF-02": {
-      "finanzen": 8,
+      "finanzen": 86,
       "handel": 112,
       "schmuggel": 106
     },
@@ -759,6 +759,7 @@
       "newbie_protection_ticks": 1008,
       "target_cooldown_ticks": 36,
       "weapon_defense_weight": 0.5,
+      "weapon_resale_rate": 0.5,
       "win_chance_max": 0.95,
       "win_chance_min": 0.05
     },
@@ -1030,7 +1031,7 @@
           "min_level": 0,
           "name": "Spielhölle Zum Goldenen Zufall",
           "rate_max": 1.0,
-          "rate_min": 0.4,
+          "rate_min": 0.7,
           "tier": 0
         },
         "shell": {
@@ -1045,14 +1046,14 @@
           "daily_cap": 1000000,
           "min_level": 2,
           "name": "Cousin Kalle",
-          "rate": 0.75,
+          "rate": 0.88,
           "tier": 1
         }
       }
     },
     "loan_shark": {
-      "amount": 10000000,
-      "max_assets": 200000,
+      "amount": 100000,
+      "max_assets": 20000,
       "max_vehicles": 1,
       "max_weapons": 0,
       "name": "Onkel Kredit-Klaus",
@@ -1112,7 +1113,7 @@
       "finanzen_fee_reduction_cap": 0.4,
       "finanzen_risk_reduction": 0.02,
       "finanzen_risk_reduction_cap": 0.4,
-      "finanzen_xp_per_eur": 0.001,
+      "finanzen_xp_per_eur": 0.01,
       "gewalt_strength_bonus": 0.03,
       "gewalt_strength_bonus_cap": 0.6,
       "gewalt_xp_loss": 10,
@@ -1973,7 +1974,7 @@
     }
   ],
   "sources": {
-    "parameters.toml": "39dd368991a036a07881ea21a0aceb587fe3fb4a0ae3b7f9a419de53e8dddb55",
-    "verify.py": "e8f44d9d788b00de913e7bc1bfd5a6138fa78d956cabe4b4e22ec97c14462435"
+    "parameters.toml": "8724cef7374af98b04ffb854079ca70ad4d0f97d19177e4d7a430fab489fa766",
+    "verify.py": "18b7a82e7a84ad1019b0d9b1bbc3fe23471687a21ee473718cd20d05461903db"
   }
 }

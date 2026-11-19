@@ -277,6 +277,7 @@ const combat = z
     target_cooldown_ticks: nonNegInt,
     attack_cooldown_ticks: nonNegInt,
     heat_attack: nonNegReal,
+    weapon_resale_rate: unit,
   })
   .strict();
 

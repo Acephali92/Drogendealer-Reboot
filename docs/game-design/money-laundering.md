@@ -9,8 +9,8 @@ sondern die **Progression** des Spiels:
 
 | Stufe | Methode (Anzeigename) | ab | Kurs auf das Konto | Besonderheit |
 |---|---|---|---:|---|
-| W0 | Glücksspiel „Spielhölle Zum Goldenen Zufall“ | Start | 0,40–1,00 (Ø 0,70) | stark schwankend, kleines Tageslimit |
-| W1 | Strohmann „Cousin Kalle“ | Finanzen L2 | 0,75 | fest, 10 000 € pro Tag |
+| W0 | Glücksspiel „Spielhölle Zum Goldenen Zufall“ | Start | 0,70–1,00 (Ø 0,85) | stark schwankend, kleines Tageslimit |
+| W1 | Strohmann „Cousin Kalle“ | Finanzen L2 | 0,88 | fest, 10 000 € pro Tag |
 | W2 | eigene Betriebe (Waschsalon … Bordell) | Kauf des Betriebs | 0,80–0,90 | Kapazität aus Umsatz, Entdeckungsrisiko |
 | W3 | Scheinfirma „Briefkasten-GmbH auf dem Steuerfrei-Atoll“ | Finanzen L10 | 0,92 | Mindestbetrag 100 000 € |
 | W4 | „Stiftung Sonnenschein (Insel Diskretistan)“ | Finanzen L15 | 0,95 | Mindestbetrag 1 Mio. €, Risiko „Diskretistan-Papers“ |
@@ -46,16 +46,16 @@ Geldwäsche.
 | – | `laundering.penalty_fine_rate` | 0,5 | Strafe relativ zur beschlagnahmten Summe |
 | – | `laundering.closure_ticks` | 144 | Betrieb geschlossen |
 | – | `laundering.heat_on_detection` | 40 | Heat in der Stadt |
-| $r_{min}, r_{max}$ | `laundering.tiers.gambling.rate_min` / `laundering.tiers.gambling.rate_max` | 0,40 / 1,00 | Kursspanne Glücksspiel (W0) |
+| $r_{min}, r_{max}$ | `laundering.tiers.gambling.rate_min` / `laundering.tiers.gambling.rate_max` | 0,70 / 1,00 | Kursspanne Glücksspiel (W0) |
 | $c_0, c_L$ | `laundering.tiers.gambling.daily_cap_base` / `laundering.tiers.gambling.daily_cap_per_level` | 2 000 € / 1 000 € | Tageslimit W0 = $c_0 + c_L \cdot L_{Finanzen}$ |
-| $r_S$ | `laundering.tiers.strawman.rate` | 0,75 | Kurs Strohmann (W1), ab `laundering.tiers.strawman.min_level` = 2 |
+| $r_S$ | `laundering.tiers.strawman.rate` | 0,88 | Kurs Strohmann (W1), ab `laundering.tiers.strawman.min_level` = 2 |
 | – | `laundering.tiers.strawman.daily_cap` | 10 000 € | Tageslimit W1 |
 | – | `laundering.tiers.shell.rate` / `laundering.tiers.shell.min_amount` / `laundering.tiers.shell.daily_cap` | 0,92 / 100 000 € / 1 Mio. € | Scheinfirma (W3), ab L10 |
 | – | `laundering.tiers.foundation.rate` / `laundering.tiers.foundation.min_amount` / `laundering.tiers.foundation.daily_cap` | 0,95 / 1 Mio. € / 10 Mio. € | Stiftung (W4), ab L15 |
 | $p_P$ | `laundering.tiers.foundation.papers_probability_per_day` | 0,002 | „Papers“-Enthüllung pro Tag |
 | – | `laundering.tiers.foundation.papers_confiscation_rate` / `laundering.tiers.foundation.papers_lookback_ticks` | 0,25 / 4 320 | Beschlagnahme der W4-Gutschriften der letzten 30 Tage |
-| – | `loan_shark.amount` | 100 000 € | Kredithai, Auszahlung als Schwarzgeld |
-| – | `loan_shark.max_vehicles` / `loan_shark.max_weapons` / `loan_shark.max_assets` | 1 / 0 / 2 000 € | Bedingungen Kredithai |
+| – | `loan_shark.amount` | 1 000 € | Kredithai, Auszahlung als Schwarzgeld |
+| – | `loan_shark.max_vehicles` / `loan_shark.max_weapons` / `loan_shark.max_assets` | 1 / 0 / 200 € | Bedingungen Kredithai |
 | – | `loan_shark.repayment_rate` / `loan_shark.repay_factor` | 0,5 / 1,0 | Tilgung aus Verkaufserlösen, Rückzahlungsfaktor |
 
 | Betrieb | Waschgebühr $f_{typ}$ | Legaler Umsatz $R$ (W = 1, Stufe 0) |
@@ -176,10 +176,11 @@ Ausweg für Spieler, die nach einer Beschlagnahme nichts mehr haben. Verfügbar,
 
 - höchstens `loan_shark.max_vehicles` = 1 Fahrzeug (alle anderen verkauft),
 - keine Waffe (alle verkauft),
-- Schwarz- + Weißgeld < `loan_shark.max_assets` = 2 000 €,
+- Schwarz- + Weißgeld < `loan_shark.max_assets` = 200 €,
 - kein offener Kredithai-Kredit.
 
-Auszahlung: 100 000 € als **Schwarzgeld** (also wieder beschlagnahmbar). Rückzahlung
+Auszahlung: 1 000 € als **Schwarzgeld** (also wieder beschlagnahmbar). Kalibriert per Simulation (Agent 5,
+ADR-023-Nachtrag): Ein großer Kredit (100 000 €) ging bei der nächsten Kontrolle verloren und hinterließ nur Schulden. Rückzahlung
 $K = \text{amount} \cdot \text{repay\_factor}$, getilgt automatisch aus jedem Verkaufserlös $E$:
 
 ```math
@@ -233,7 +234,7 @@ Doppeltes Tempo vervierfacht etwa das Risiko pro Tick ($\gamma = 2$).
 
 **EX-ML-03 – Strohmann „Cousin Kalle“**
 
-Ein Spieler will 15 000 € waschen: angenommen werden **1 000 000 ct** (Tageslimit), Gutschrift **750 000 ct**.
+Ein Spieler will 15 000 € waschen: angenommen werden **1 000 000 ct** (Tageslimit), Gutschrift **880 000 ct**.
 
 **EX-ML-04 – Entdeckung nach einem vollen Tag aus EX-ML-01**
 
@@ -242,12 +243,12 @@ Spielhalle 1 Tag geschlossen, Heat +40.
 
 **EX-ML-05 – Glücksspiel (W0)**
 
-Testvektor $U(\texttt{demo-server}, 1, \texttt{gamble/p1/1}, 0) =$ **0,969025** → Kurs $0{,}40 + 0{,}60 \cdot 0{,}969025 =$ **0,981415**.
+Testvektor $U(\texttt{demo-server}, 1, \texttt{gamble/p1/1}, 0) =$ **0,969025** → Kurs $0{,}70 + 0{,}30 \cdot 0{,}969025 =$ **0,990707**.
 
-- Finanzen L0, Tageslimit **200 000 ct**: Einsatz 1 500 € → Gutschrift $\lfloor 150\,000 \cdot 0{,}981415 \rfloor =$ **147 212 ct**
-  (Glück gehabt; im Mittel kämen 105 000 ct an).
+- Finanzen L0, Tageslimit **200 000 ct**: Einsatz 1 500 € → Gutschrift $\lfloor 150\,000 \cdot 0{,}990707 \rfloor =$ **148 606 ct**
+  (Glück gehabt; im Mittel kämen 127 500 ct an).
 - Finanzen L5: Tageslimit **700 000 ct**; von 10 000 € Einsatz werden **700 000 ct** angenommen.
-- Kursspanne immer zwischen **0,4** und **1,0**.
+- Kursspanne immer zwischen **0,7** und **1,0**.
 
 **EX-ML-06 – Freischaltung und Festkurs-Stufen**
 
@@ -273,21 +274,21 @@ $p = 0{,}002$ pro Tag → über ein Jahr $1 - 0{,}998^{365} =$ **0,5184**. Hat e
 
 | Lage | berechtigt |
 |---|---|
-| 1 Fahrzeug, keine Waffe, 500 € Bargeld | **True** |
+| 1 Fahrzeug, keine Waffe, 150 € Bargeld | **True** |
 | 2 Fahrzeuge | **False** |
 | 1 Waffe | **False** |
-| 1 500 € Bargeld + 1 000 € Konto (≥ 2 000 €) | **False** |
+| 150 € Bargeld + 100 € Konto (≥ 200 €) | **False** |
 
-Auszahlung **10 000 000 ct**. Erster Verkauf über 4 000 €: Tilgung **200 000 ct**, an den Spieler **200 000 ct**,
-Rest **9 800 000 ct**.
+Auszahlung **100 000 ct**. Erster Verkauf über 1 000 €: Tilgung **50 000 ct**, an den Spieler **50 000 ct**,
+Rest **50 000 ct**.
 
 ## 8. Balancing-Ziele & Exploit-Analyse
 
 | Ziel | Umsetzung / Prüfung |
 |---|---|
-| Waschen ist Progression | Kurs steigt streng mit der Stufe: 0,70 < 0,75 < 0,80 … 0,90 < 0,92 < 0,95 (INV-16) |
-| Strohmann ist nur Brücke | 25 % Abschlag > jede Betriebsgebühr (INV-09), Tageslimit |
-| Totalbeschlagnahme führt nicht in die Sackgasse | Konto bleibt sicher und darf für Einkauf genutzt werden; Kredithai als letzter Ausweg (INV-17); Simulationsnachweis durch Agent 5 (T-120) |
+| Waschen ist Progression | Kurs steigt streng mit der Stufe: Ø 0,85 < 0,88 ≤ 0,90 (bester Betrieb) < 0,92 < 0,95 (INV-16) |
+| Strohmann ist nur Brücke | 12 % Abschlag > Gebühr des günstigsten Betriebs (INV-09), Tageslimit 10 000 € |
+| Totalbeschlagnahme führt nicht in die Sackgasse | Konto bleibt sicher und darf für Einkauf genutzt werden; Kredithai als letzter Ausweg (INV-17); Simulationsnachweis Agent 5: 6 % der Durchschnittsspieler unter Startkapital nach 90 Tagen (Ziel ≤ 10 %, ohne Wäsche 74 %) |
 | Superreiche tragen ein eigenes Risiko | „Papers“ beschlagnahmen 25 % der W4-Wäsche der letzten 30 Tage |
 | Betriebe sind die einzige skalierbare Waschmethode | Kapazität an Umsatz gebunden |
 | Gieriges Waschen wird bestraft | quadratisches Risiko, Rückgriff auf 144 Ticks |

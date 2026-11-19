@@ -44,7 +44,7 @@ Tabelle), z. B. „Schmuggler (L12)“. Der Titel hat keine Spielwirkung.
 | – | `professions.schmuggel_xp_per_cargo_heat` | 1,0 | + 1 XP je Punkt Ladungsheat $hv$ |
 | – | `professions.gewalt_xp_win` / `professions.gewalt_xp_loss` | 50 / 10 | je Kampf |
 | – | `professions.produktion_xp_per_unit` | 0,1 | 1 XP je 10 produzierte Einheiten |
-| – | `professions.finanzen_xp_per_eur` | 0,001 | 1 XP je 1 000 € gewaschen |
+| – | `professions.finanzen_xp_per_eur` | 0,01 | 1 XP je 100 € gewaschen (kalibriert, T-120) |
 
 ### 3.1 Boni pro Level
 
@@ -102,7 +102,7 @@ Implementierung ganzzahlig: $L = \min(L_{max}, \operatorname{isqrt}(\lfloor XP /
 | Schmuggel | $\lfloor d \cdot 0{,}1 + hv \rfloor$ | Ankunft mit illegaler Ladung (nicht bei Beschlagnahme) |
 | Gewalt | 50 (Sieg) / 10 (Niederlage) | jeder Kampf |
 | Produktion | $\lfloor Q \cdot 0{,}1 \rfloor$ | Einsammeln der Produktion |
-| Finanzen | $\lfloor x_{€} \cdot 0{,}001 \rfloor$ | jede Waschgutschrift |
+| Finanzen | $\lfloor x_{€} \cdot 0{,}01 \rfloor$ | jede Waschgutschrift |
 
 **F-PRF-03 – Bonusfunktion**
 
@@ -148,7 +148,7 @@ Level werden bei jeder Nutzung aus XP berechnet (keine Speicherung, keine Inkons
 
 - Handel: Einkaufsvolumen 11 263,03 € → $\lfloor 112{,}63 \rfloor =$ **112** XP (der Verkauf bringt weitere XP)
 - Schmuggel: $\lfloor 820 \cdot 0{,}1 + 24 \rfloor =$ **106** XP
-- Finanzen: 8 640 € gewaschen (ein Tag Spielhalle, EX-ML-01) → **8** XP
+- Finanzen: 8 640 € gewaschen (ein Tag Spielhalle, EX-ML-01) → **86** XP
 
 **EX-PRF-03 – Boni auf Level 10 und 20**
 
