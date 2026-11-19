@@ -151,7 +151,8 @@ t_{1/2} = \frac{\ln 0{,}5}{\ln(1-\lambda)}
 **F-ECO-09 – Ereignisse**
 
 - Würfeln (nur wenn kein Ereignis aktiv): $U(\text{seed}, t, \texttt{<stadt>/<ware>}, 0)$; die Ereignisse
-  belegen in fester Reihenfolge (razzia, lieferung, party) aufeinanderfolgende Intervalle der Länge $p$.
+  belegen in der Reihenfolge der Abschnitte `[events.*]` in `parameters.toml` (derzeit razzia, lieferung,
+  party) aufeinanderfolgende Intervalle der Länge $p$. Implementierungen müssen diese Reihenfolge beim Einlesen erhalten.
 - Bei Eintritt: $S \leftarrow S \cdot \text{stock\_shock}$, Restdauer $r = \text{duration}$.
 - Solange aktiv: $M_s = \text{supply\_mult}$ in F-ECO-03, $M_d = \text{demand\_mult}$ in F-ECO-01.
 - Pro Tick $r \leftarrow r - 1$; bei $r = 0$ endet das Ereignis, $S$ kehrt per F-ECO-04 zurück.
