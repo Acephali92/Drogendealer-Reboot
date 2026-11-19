@@ -161,7 +161,7 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     hypothesis: 'Befund B-11 reproduzieren: NPC-Händler bei k = 1 treiben vorsichtige Spieler (A) unter das Startkapital.',
   },
   'b11-k05': {
-    scenario: sc('b11-k05', 'B-11: wie b11-npc, k_start 1,0 → 0,5', 90, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 0.5 }),
+    scenario: sc('b11-k05', 'B-11: wie b11-npc, k_start 1,0 → 0,5', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 0.5 }),
     overrides: { ...REC_W0, 'npc.k_start': 0.5 },
     hypothesis: 'Halbe NPC-Intensität zum Serverstart lässt A und B wieder ≤ 10 % unter Startkapital, dämpft aber die Top-Route weniger.',
   },
@@ -171,7 +171,7 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     hypothesis: 'Wirkt wie k = 0,5 (η und k gehen in F-NPC-01 nur als Produkt ein); Kontrolle für die Modellannahme.',
   },
   'b11-theta': {
-    scenario: sc('b11-theta', 'B-11: wie b11-npc, trader_threshold_base 0,15 → 0,30', 90, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    scenario: sc('b11-theta', 'B-11: wie b11-npc, trader_threshold_base 0,15 → 0,30', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3 },
     hypothesis: 'Mit höherer Mindestmarge lassen NPCs die kleinen, risikoarmen Routen (A) unberührt und gleichen nur die großen Spreizungen aus; die Top-Route bleibt gedämpft.',
   },
@@ -186,7 +186,7 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     hypothesis: 'Eine noch höhere Mindestmarge lässt auch die mittleren Routen von B unberührt; B sinkt auf ≤ 10 %, die Top-Route bleibt deutlich gedämpft.',
   },
   'b11-theta45-365': {
-    scenario: sc('b11-theta45-365', 'B-11: wie b11-theta45 über 365 Tage', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    scenario: sc('b11-theta45-365', 'B-11: wie b11-theta45 über 365 Tage', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45 },
     hypothesis: 'Wie b11-theta45, langfristig.',
   },
@@ -206,7 +206,7 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     hypothesis: 'Referenz für b11-theta-365: NPC-Händler mit θ₀ = 0,15 über ein Jahr.',
   },
   'adr023-rec-w0-365': {
-    scenario: sc('adr023-rec-w0-365', 'wie adr023-rec-w0 über 365 Tage (ohne NPC)', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
+    scenario: sc('adr023-rec-w0-365', 'wie adr023-rec-w0 über 365 Tage (ohne NPC)', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true }),
     overrides: { ...REC_W0 },
     hypothesis: 'Referenz ohne NPC-Händler für b11-theta-365 (gleiche ADR-023-Konfiguration).',
   },
