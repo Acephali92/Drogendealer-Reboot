@@ -1,5 +1,6 @@
 /**
- * Rohformate des Backend-Vertrags `docs/api/API-CONTRACT.md` (ADR-011, Owner: Agent 3).
+ * Rohformate des Backend-Vertrags `docs/api/API-CONTRACT.md` (ADR-011, Owner: Agent 3),
+ * Stand „Datenmodell v2“ (Breaking Changes, ADR-011 Nachtrag, PR #33).
  * Nur `api/adapters.ts` und die Mocks verwenden diese Typen direkt; die Oberfläche
  * arbeitet mit den UI-Modellen aus `api/types.ts`.
  *
@@ -13,14 +14,32 @@ export type ISO = string;
 
 export type ClanRoleDto = 'GODFATHER' | 'CONSIGLIERE' | 'CAPO' | 'SOLDIER' | 'ASSOCIATE';
 export type PlayerStatusDto = 'IDLE' | 'TRAVELING' | 'IN_COMBAT' | 'HOSPITAL' | 'JAIL';
+export type Realm = 'earth' | 'space';
+export type AccountDto = 'CASH' | 'BANK';
 export type TransactionReasonDto =
-  | 'TRADE'
-  | 'TRAVEL'
-  | 'VEHICLE'
-  | 'EQUIPMENT'
-  | 'COMBAT'
-  | 'CLAN'
-  | 'BANK'
+  | 'START_CAPITAL'
+  | 'TRADE_BUY'
+  | 'TRADE_SELL'
+  | 'TRAVEL_FUEL'
+  | 'TRAVEL_TICKET'
+  | 'BRIBE'
+  | 'CONFISCATION'
+  | 'VEHICLE_BUY'
+  | 'VEHICLE_SALE'
+  | 'EQUIPMENT_BUY'
+  | 'EQUIPMENT_SALE'
+  | 'CREW'
+  | 'LOOT_GAINED'
+  | 'LOOT_LOST'
+  | 'LAUNDERING'
+  | 'BUSINESS_INCOME'
+  | 'BUSINESS_UPKEEP'
+  | 'CLAN_DEPOSIT'
+  | 'CLAN_PAYOUT'
+  | 'CLAN_TAX'
+  | 'EMERGENCY_LOAN'
+  | 'LOAN_REPAYMENT'
+  | 'ACCOUNT_DELETION'
   | 'ADMIN';
 
 export interface Page {
@@ -29,7 +48,7 @@ export interface Page {
   offset: number;
 }
 
-/* Auth */
+/* Auth & System */
 export interface UserDto {
   id: string;
   email: string;
@@ -42,6 +61,10 @@ export interface AuthResponseDto {
   refreshToken: string;
   user: UserDto;
 }
+export interface ImagesDto {
+  fallback: Record<'goods' | 'vehicles' | 'weapons' | 'armor' | 'crew' | 'ships', string | null>;
+  allowedExtensions: string[];
+}
 
 /* Spieler */
 export interface CityRefDto {
@@ -52,7 +75,9 @@ export interface CityRefDto {
 export interface PlayerDto {
   id: string;
   name: string;
+  /** Bargeld (Schwarzgeld, mitgeführt) – ADR-023 */
   cash: Cents;
+  /** Bankkonto (gewaschen) – ADR-023 */
   bank: Cents;
   health: number;
   maxHealth: number;
@@ -60,6 +85,7 @@ export interface PlayerDto {
   experience: number;
   experienceForNextLevel: number | null;
   reputation: number;
+  /** Fahndungsdruck in der aktuellen Stadt (Float 0–100) */
   heat: number;
   status: PlayerStatusDto;
   statusUntil: ISO | null;
@@ -70,7 +96,9 @@ export interface PlayerDto {
 }
 export interface MoneyTransactionDto {
   id: string;
+  account: AccountDto;
   amount: Cents;
+  /** Saldo dieses Kontos nach der Buchung */
   balanceAfter: Cents;
   reason: TransactionReasonDto;
   refId: string | null;
@@ -86,72 +114,86 @@ export interface CityDto {
   id: string;
   slug: string;
   name: string;
-  description: string | null;
-  country: string | null;
-  techLevel: number | null;
-  policeStrength: number | null;
-  population: number | null;
+  realm: Realm;
+  /** Einwohner in Tausend */
+  pop: number;
+  wealth: number;
+  /** Polizeistärke 0–1 */
+  police: number;
+  /** ct pro Liter */
+  fuelPrice: Cents;
+  spaceport: boolean;
+}
+/** (draft, T-119) Reiseoption je Verkehrsmittel – Vorschlag Agent 3 */
+export interface TravelOptionDto {
+  mode: 'train' | 'vehicle';
+  vehicleId?: string;
+  durationSeconds: number;
+  cost: Cents;
 }
 export interface ConnectionDto {
   toCityId: string;
   toCity: CityRefDto;
   distanceKm: number;
-  /** (draft) – fehlt im Backend, bis Reiseregeln umgesetzt sind */
-  durationSeconds?: number | null;
-  /** (draft) */
-  cost?: Cents | null;
+  /** (draft, T-119) */
+  travelOptions?: TravelOptionDto[];
 }
 export interface CommodityDto {
   id: string;
   slug: string;
   name: string;
-  description: string | null;
-  illegal: boolean;
-  unitWeightG: number;
+  realm: Realm;
   basePrice: Cents;
-  /** Bildpfad relativ zu images/ (ADR-020, T-114) */
-  image?: string | null;
+  /** Volumeneinheiten je Einheit */
+  unitVolume: number;
+  /** Bildpfad relativ zu images/ (ADR-020) */
+  image: string | null;
 }
-export interface MarketPriceDto {
+export interface MarketRowDto {
   commodity: CommodityDto;
-  buyPrice: Cents;
-  sellPrice: Cents;
-  supply: number;
+  /** Marktbestand (Kommazahl) */
+  stock: number;
+  /** Gleichgewichtspreis P* (F-ECO-07) in Cent – nur Anzeige */
+  referencePrice: Cents;
+  activeEvent: string | null;
+  eventTicksLeft: number | null;
   updatedAt: ISO;
 }
 export interface MarketDto {
   city: CityRefDto;
-  prices: MarketPriceDto[];
+  markets: MarketRowDto[];
 }
 export interface PricePointDto {
   city: CityRefDto;
-  price: Cents;
-  updatedAt: ISO;
+  referencePrice: Cents;
 }
 export interface OverviewDto {
   commodities: {
     commodity: CommodityDto;
-    lowestBuy: PricePointDto | null;
-    highestSell: PricePointDto | null;
+    lowestPrice: PricePointDto | null;
+    highestPrice: PricePointDto | null;
   }[];
 }
 
 /* Besitz */
 export interface InventoryDto {
   items: { commodity: CommodityDto; quantity: number; avgBuyPrice: Cents }[];
-  capacityG: number | null;
-  usedG: number;
+  /** Volumeneinheiten: Rucksack + aktives Fahrzeug (nie null) */
+  capacity: number;
+  used: number;
 }
 export interface VehicleTypeDto {
   id: string;
   slug: string;
   name: string;
   price: Cents;
-  capacityG: number;
   speedKmh: number;
-  licenseClass: number | null;
-  /** Bildpfad relativ zu images/ (ADR-020, T-114) */
-  image?: string | null;
+  consumptionPer100Km: number;
+  /** Volumeneinheiten */
+  capacity: number;
+  /** Versteckbonus gegen Kontrollen (0–1) */
+  hide: number;
+  image: string | null;
 }
 export interface VehicleDto {
   id: string;
@@ -163,15 +205,12 @@ export interface VehicleDto {
 export interface EquipmentTypeDto {
   id: string;
   slug: string;
-  name: string;
-  description: string | null;
   slot: 'WEAPON' | 'ARMOR';
-  attack: number;
-  defense: number;
-  weightG: number | null;
+  /** null, solange der Eintrag in parameters.toml keinen Namen hat */
+  name: string | null;
+  strength: number;
   price: Cents;
-  /** Bildpfad relativ zu images/ (ADR-020, T-114) */
-  image?: string | null;
+  image: string | null;
 }
 export interface EquipmentDto {
   id: string;
@@ -207,7 +246,8 @@ export interface ClanMemberDto {
   joinedAt: ISO;
 }
 export interface ClanDetailDto extends ClanListItemDto {
-  bank: Cents | null;
+  /** Clan-Kasse (ADR-018), nur für Mitglieder, sonst null */
+  treasury: { cash: Cents; bank: Cents } | null;
   members: ClanMemberDto[];
 }
 export interface ClanInviteDto {

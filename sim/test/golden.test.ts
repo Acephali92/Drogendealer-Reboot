@@ -13,6 +13,7 @@ import { availability, bust, controlProbability, distance, fuelCost, heatDecay, 
 import { loadParams, paramsAvailable, REPO_ROOT } from '../src/params.js';
 import { normal, uniform } from '../src/rng.js';
 import { handoverRun, npcEquilibrium, npcRouteFlow } from '../src/model/npc.js';
+import { dailyCap, gamblingRate, loanShark, loanSharkEligible, loanSharkRepay, papersConfiscation, tiers, wash as washTier } from '../src/model/laundering.js';
 
 // SIM_GOLDEN setzt test/golden-setup.ts (Export aus verify.py) oder der Aufrufer
 const goldenPath = resolve(process.env.SIM_GOLDEN ?? resolve(REPO_ROOT, 'docs/game-design/golden.json'));
@@ -29,6 +30,7 @@ describe.skipIf(!ready)('Golden Vectors (Agent 2, verify.py)', () => {
     expect(exp, `${id} fehlt in golden.json`).toBeDefined();
     for (const [k, v] of Object.entries(exp!)) {
       if (typeof v === 'number') expect(actual[k], `${id}.${k}`).toBeCloseTo(v, 6);
+      else if (typeof v === 'boolean') expect(actual[k], `${id}.${k}`).toBe(v);
       else expect(actual[k], `${id}.${k}`).toBe(v);
     }
   };
@@ -119,14 +121,30 @@ describe.skipIf(!ready)('Golden Vectors (Agent 2, verify.py)', () => {
     const c = controlProbability(p, 'rotterdam', 'muenchen', { kokain: 200 }, 10, p.vehicles.transporter!.hide, 4);
     ex('EX-TRV-02', { n: c.n, police_avg: r(c.policeAvg, 6), hv: r(c.hv, 6), g: r(c.g, 6), p_seg: r(c.pSeg, 6), p_total: r(c.pTotal, 6) });
     const b = bust(p, { kokain: 200 }, c.policeAvg, 4);
-    ex('EX-TRV-03', { cargo_base_value: b.cargoBaseValue, fine: b.fine, bribe_cost: b.bribeCost, bribe_chance: r(b.bribeChance) });
+    const adr023 = !('fine' in G['EX-TRV-03']!);
+    if (adr023) {
+      // F-TRV-06 nach ADR-023 (T-120): keine Strafe, Beschlagnahme des mitgeführten Bargelds
+      const low = bust(p, { kokain: 200 }, c.policeAvg, 4, 500_000);
+      const high = bust(p, { kokain: 200 }, c.policeAvg, 4, 2_000_000);
+      ex('EX-TRV-03', {
+        cargo_base_value: low.cargoBaseValue,
+        bribe_cost: low.bribeCost,
+        bribe_chance: r(low.bribeChance),
+        bribe_possible_500k: low.bribePossible as unknown as number,
+        confiscated_cash_500k: low.confiscatedCash,
+        bribe_possible_2m: high.bribePossible as unknown as number,
+        cash_after_bribe_2m: high.cashAfterBribeSuccess!,
+      });
+    } else {
+      ex('EX-TRV-03', { cargo_base_value: b.cargoBaseValue, fine: b.fine, bribe_cost: b.bribeCost, bribe_chance: r(b.bribeChance) });
+    }
     const buy = buyCost(p, 'rotterdam', 'kokain', { S: targetStock(p, 'rotterdam', 'kokain'), x: 0 }, 200).cost;
     const rev = sellRevenue(p, 'muenchen', 'kokain', { S: targetStock(p, 'muenchen', 'kokain'), x: 0 }, 200).revenue;
     const dd = distance(p, 'rotterdam', 'muenchen');
     const fuel = fuelCost(p, dd, 'transporter', 'rotterdam');
     // verify.py rechnet mit dem auf 6 Stellen gerundeten p_total aus EX-TRV-02
     const pt = r(c.pTotal, 6);
-    const evv = (1 - pt) * rev - buy - fuel - pt * b.fine;
+    const evv = (1 - pt) * rev - buy - fuel - pt * (adr023 ? 300_000 : b.fine);
     ex('EX-TRV-04', { fuel, T: travelTicks(p, dd, p.vehicles.transporter!.speed), profit_no_bust: rev - buy - fuel, EV: Math.floor(evv + 0.5) });
   });
 
@@ -150,6 +168,35 @@ describe.skipIf(!ready)('Golden Vectors (Agent 2, verify.py)', () => {
   it.skipIf(!('EX-NPC-04' in G))('EX-NPC-04 Rückbau k (F-NPC-04)', () => {
     const run = handoverRun(p, [...Array(35).fill(true), ...Array(14).fill(false)]);
     ex('EX-NPC-04', { day13: run[12]!, day14: run[13]!, day21: run[20]!, day35: run[34]!, day42: run[41]!, day49: run[48]! });
+  });
+
+  it.skipIf(!('EX-ML-05' in G))('EX-ML-05…08 Waschstufen und Kredithai (ADR-023, T-120)', () => {
+    const t = tiers(p);
+    const u = uniform('demo-server', 1, 'gamble/p1/1', 0);
+    const e5 = G['EX-ML-05']!;
+    const g0 = washTier(t.gambling!, Number.MAX_SAFE_INTEGER, 0, 0, u);
+    const g5 = washTier(t.gambling!, Number.MAX_SAFE_INTEGER, 5, 0, u);
+    expect(r(u, 6)).toBeCloseTo(e5.U as number, 6);
+    expect(r(gamblingRate(t.gambling!, u), 6)).toBeCloseTo(e5.rate as number, 6);
+    expect(dailyCap(t.gambling!, 0)).toBe(e5.cap_L0);
+    expect(dailyCap(t.gambling!, 5)).toBe(e5.cap_L5);
+    expect(g5.accepted).toBe(e5.accepted_L5);
+    expect(washTier(t.gambling!, 150_000, 0, 0, u).credit).toBe(e5.credit);
+    expect(g0.accepted).toBe(e5.cap_L0);
+    const e6 = G['EX-ML-06']!;
+    expect(washTier(t.shell!, 100_000_000, 10, 0, 0).credit).toBe(e6.shell_1m);
+    expect(washTier(t.shell!, 5_000_000, 10, 0, 0).accepted).toBe(0);
+    expect(washTier(t.foundation!, 500_000_000, 15, 0, 0).credit).toBe(e6.foundation_5m);
+    const e7 = G['EX-ML-07']!;
+    expect(t.foundation!.papers_probability_per_day).toBe(e7.p_day);
+    expect(papersConfiscation(t.foundation!, 950_000_000)).toBe(e7.confiscated);
+    const e8 = G['EX-ML-08']!;
+    const k = loanShark(p);
+    expect(loanSharkEligible(k, 1, 0, 50_000, 50_000, false)).toBe(e8.eligible_ok);
+    expect(loanSharkEligible(k, 2, 0, 50_000, 50_000, false)).toBe(e8.eligible_2_vehicles);
+    expect(loanSharkEligible(k, 1, 1, 50_000, 50_000, false)).toBe(e8.eligible_weapon);
+    expect(k.amount).toBe(e8.amount);
+    expect(loanSharkRepay(k, 400_000, k.amount)).toBe(e8.repay);
   });
 
   it('EX-PRF-01…03 Progression', () => {

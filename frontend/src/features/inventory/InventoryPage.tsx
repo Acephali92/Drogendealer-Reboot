@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { CommodityImage, EquipmentImage } from '@/components/ui/GameImages';
 import { EmptyState, Skeleton } from '@/components/ui/Feedback';
-import { formatMoney, formatNumber, formatWeight, multiplyMoney, percentDelta } from '@/lib/money';
+import { formatMoney, formatNumber, formatVolume, multiplyMoney, percentDelta } from '@/lib/money';
 import { cn } from '@/lib/cn';
 
 export function InventoryPage() {
@@ -21,7 +21,8 @@ export function InventoryPage() {
   const market = useMarket(city?.slug);
   const equipment = useEquipment();
   const items = inventory.data?.items ?? [];
-  const sellPrice = new Map((market.data ?? []).map((m) => [m.commodity.id, m.sellPrice]));
+  /** Wert zum Richtpreis der aktuellen Stadt (echte Verkaufspreise je Menge folgen mit T-103). */
+  const sellPrice = new Map((market.data ?? []).map((m) => [m.commodity.id, m.referencePrice]));
 
   const cost = items.reduce((s, i) => s + multiplyMoney(i.avgBuyPrice, i.quantity), 0n);
   const value = items.reduce(
@@ -36,7 +37,7 @@ export function InventoryPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
           label={t('stats.cargo')}
-          value={cargo ? formatWeight(cargo.used) : '—'}
+          value={cargo ? formatVolume(cargo.used) : '—'}
           hint={
             cargo && (
               <div className="space-y-1">
@@ -44,8 +45,7 @@ export function InventoryPage() {
                   <ProgressBar value={cargo.used / Math.max(1, cargo.capacity)} tone="auto" size="xs" />
                 )}
                 <span className="num">
-                  {t('stats.freeCargo')}:{' '}
-                  {cargo.free !== null ? formatWeight(cargo.free) : t('stats.noVehicle')}
+                  {t('stats.freeCargo')}: {formatVolume(cargo.free)}
                 </span>
               </div>
             )
@@ -102,7 +102,7 @@ export function InventoryPage() {
                           <div>
                             <p className="font-semibold text-ink">{i.commodity.name}</p>
                             <p className="text-xs text-ink-faint">
-                              {formatWeight(i.quantity * i.commodity.unitWeightG)}
+                              {formatVolume(i.quantity * i.commodity.unitVolume)}
                             </p>
                           </div>
                         </div>
@@ -176,10 +176,7 @@ export function InventoryPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-ink">{e.equipmentType.name}</p>
                   <p className="num text-xs text-ink-muted">
-                    {e.equipmentType.slot === 'WEAPON'
-                      ? `${t('weapons.firepower')} ${e.equipmentType.attack}`
-                      : `${t('weapons.defense')} ${e.equipmentType.defense}`}{' '}
-                    · {formatWeight(e.equipmentType.weightG)}
+                    {t('weapons.strength')} {e.equipmentType.strength}
                   </p>
                 </div>
                 <Badge tone={e.equipped ? 'brass' : 'neutral'}>

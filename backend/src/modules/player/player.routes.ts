@@ -5,7 +5,7 @@ import { getPlayerProfileByUserId, listMoneyTransactions, listOnlinePlayers } fr
 /** Registered inside the authenticated scope (see app.ts). */
 const playerRoutes: FastifyPluginAsync = async (app) => {
   app.get('/me', async (request) => {
-    const player = await getPlayerProfileByUserId(app.prisma, request.user.sub);
+    const player = await getPlayerProfileByUserId(app.prisma, app.gameParams, request.user.sub);
     return { player };
   });
 

@@ -39,6 +39,7 @@ import {
   xpHandel,
   xpSchmuggel,
 } from './model/travel.js';
+import { expectedRate, loanSharkEligible, loanSharkRepay, papersConfiscation, tiers, wash as washTier } from './model/laundering.js';
 import { npcTraderFlows } from './model/npc.js';
 import type { Params, Proposals } from './params.js';
 import { normal, uniform } from './rng.js';
@@ -60,6 +61,19 @@ export interface SimOptions {
   confiscationShare?: number;
   /** [Design] F-PRG-01 Organisationskosten (proposals.toml [progression]) */
   wealthSink?: boolean;
+  /**
+   * ADR-023 / T-120 (Agent 2): Kontrolle beschlagnahmt Ware + gesamtes Schwarzgeld, keine Strafe;
+   * Bankkonto (Weißgeld), Waschstufen F-ML-07…09, Kredithai F-ML-10 (Werte aus parameters.toml).
+   */
+  adr023?: boolean;
+  /** ADR-023: Bots waschen (Waschstufen aktiv). */
+  laundering?: boolean;
+  /** ADR-023: Kredithai aktiv. */
+  loanShark?: boolean;
+  /** [Design] Kredithai nur innerhalb von 7 Tagen nach einer Beschlagnahme */
+  loanAfterConfiscation?: boolean;
+  /** [Design] Kredithai zahlt aufs Bankkonto (Weißgeld) statt als Schwarzgeld */
+  loanToBank?: boolean;
 }
 
 export interface Market {
@@ -87,16 +101,29 @@ export interface Lot {
 }
 
 export type Ledger = Record<
-  'sale' | 'purchase' | 'fuel' | 'train' | 'fine' | 'bribe' | 'vehicleBuy' | 'vehicleSell' | 'loan' | 'debtRepay' | 'orgCost',
+  | 'sale'
+  | 'purchase'
+  | 'fuel'
+  | 'train'
+  | 'fine'
+  | 'bribe'
+  | 'vehicleBuy'
+  | 'vehicleSell'
+  | 'loan'
+  | 'debtRepay'
+  | 'orgCost'
+  | 'confiscation'
+  | 'washFee'
+  | 'papers',
   number
 >;
 
 export function emptyLedger(): Ledger {
-  return { sale: 0, purchase: 0, fuel: 0, train: 0, fine: 0, bribe: 0, vehicleBuy: 0, vehicleSell: 0, loan: 0, debtRepay: 0, orgCost: 0 };
+  return { sale: 0, purchase: 0, fuel: 0, train: 0, fine: 0, bribe: 0, vehicleBuy: 0, vehicleSell: 0, loan: 0, debtRepay: 0, orgCost: 0, confiscation: 0, washFee: 0, papers: 0 };
 }
 
 export const FAUCETS: Array<keyof Ledger> = ['sale', 'vehicleSell', 'loan'];
-export const SINKS: Array<keyof Ledger> = ['purchase', 'fuel', 'train', 'fine', 'bribe', 'vehicleBuy', 'debtRepay', 'orgCost'];
+export const SINKS: Array<keyof Ledger> = ['purchase', 'fuel', 'train', 'fine', 'bribe', 'vehicleBuy', 'debtRepay', 'orgCost', 'confiscation', 'washFee', 'papers'];
 
 export interface Trip {
   id: string;
@@ -115,7 +142,10 @@ export interface Player {
   id: string;
   profile: BotProfile;
   tracked: boolean;
+  /** Schwarzgeld (mitgeführt, bei Kontrolle beschlagnahmbar) */
   cash: number;
+  /** Weißgeld auf dem Bankkonto (ADR-023, sicher vor Kontrollen) */
+  bank: number;
   debt: number;
   city: string;
   vehicles: string[];
@@ -143,6 +173,17 @@ export interface Player {
   buyCity: Map<string, string>;
   /** Gelernter Prognosefaktor: tatsächlicher ÷ erwarteter Verkaufserlös (gleitender Mittelwert) */
   forecastBias: number;
+  /** ADR-023 */
+  xpFinanzen: number;
+  washedCt: number;
+  washDay: number;
+  washUsedToday: Map<string, number>;
+  washOps: number;
+  w4Credits: Array<[number, number]>;
+  confiscatedCashCt: number;
+  loans: number;
+  papersHits: number;
+  lastConfiscationTick: number;
 }
 
 export class World {
@@ -211,6 +252,7 @@ export class World {
       profile: PROFILES[profileId],
       tracked,
       cash: this.p.player.start_cash_black,
+      bank: this.p.player.start_cash_white,
       debt: 0,
       city: startCity,
       vehicles: [],
@@ -236,6 +278,16 @@ export class World {
       recoveries: 0,
       forecastBias: 1,
       buyCity: new Map(),
+      xpFinanzen: 0,
+      washedCt: 0,
+      washDay: -1,
+      washUsedToday: new Map(),
+      washOps: 0,
+      w4Credits: [],
+      confiscatedCashCt: 0,
+      loans: 0,
+      papersHits: 0,
+      lastConfiscationTick: -1e9,
     };
     this.players.push(pl);
     return pl;
@@ -299,7 +351,25 @@ export class World {
   networth(pl: Player): number {
     let assets = 0;
     for (const v of pl.vehicles) assets += this.p.vehicles[v]!.price;
-    return pl.cash - pl.debt + assets + this.goodsValue(pl);
+    return pl.cash + pl.bank - pl.debt + assets + this.goodsValue(pl);
+  }
+
+  /** Verfügbares Geld: Schwarz + Weiß (Einkauf mit Weißgeld erlaubt, trade.md). */
+  liquid(pl: Player): number {
+    return pl.cash + pl.bank;
+  }
+
+  /** Zahlung: zuerst Schwarzgeld, dann Weißgeld (trade.md „Schwarzgeld zuerst“). */
+  pay(pl: Player, amount: number): boolean {
+    if (amount > this.liquid(pl)) return false;
+    const fromCash = Math.min(pl.cash, amount);
+    pl.cash -= fromCash;
+    pl.bank -= amount - fromCash;
+    return true;
+  }
+
+  levelFinanzen(pl: Player): number {
+    return level(this.p, pl.xpFinanzen);
   }
 
   // ---------------------------------------------------------------- Märkte
@@ -427,8 +497,7 @@ export class World {
     } catch {
       return false;
     }
-    if (res.cost > pl.cash) return false;
-    pl.cash -= res.cost;
+    if (!this.pay(pl, res.cost)) return false;
     m.S = res.S;
     m.dayVolumeCt += res.cost;
     this.book(pl, 'purchase', res.cost);
@@ -461,7 +530,10 @@ export class World {
     this.book(pl, 'sale', res.revenue);
     pl.cash += res.revenue;
     if (pl.debt > 0) {
-      const pay = Math.min(pl.debt, Math.floor(res.revenue * (this.p.travel.debt_repayment_rate ?? 0.5)));
+      const pay =
+        this.o.adr023 && this.p.loan_shark
+          ? loanSharkRepay(this.p.loan_shark, res.revenue, pl.debt)
+          : Math.min(pl.debt, Math.floor(res.revenue * (this.p.travel.debt_repayment_rate ?? 0.5)));
       pl.debt -= pay;
       pl.cash -= pay;
       this.book(pl, 'debtRepay', pay);
@@ -475,13 +547,13 @@ export class World {
   buyVehicle(pl: Player, v: string): boolean {
     const price = this.p.vehicles[v]!.price;
     const resale = pl.active ? Math.floor(this.p.vehicles[pl.active]!.price * (this.p.travel.vehicle_resale_rate ?? 0.6)) : 0;
-    if (pl.cash + resale < price) return false;
+    if (this.liquid(pl) + resale < price) return false;
     if (pl.active) {
       pl.cash += resale;
       this.book(pl, 'vehicleSell', resale);
       pl.vehicles = pl.vehicles.filter((x) => x !== pl.active);
     }
-    pl.cash -= price;
+    this.pay(pl, price);
     this.book(pl, 'vehicleBuy', price);
     pl.vehicles.push(v);
     pl.active = v;
@@ -507,9 +579,9 @@ export class World {
     const d = distance(p, pl.city, to);
     const vehicle = pl.active;
     const cost = vehicle ? fuelCost(p, d, vehicle, pl.city) : trainCost(p, d);
-    if (cost > pl.cash) return false;
+    if (cost > this.liquid(pl)) return false;
     if (!vehicle && this.cargoVolume(pl) > p.player.backpack_capacity) return false;
-    pl.cash -= cost;
+    this.pay(pl, cost);
     this.book(pl, vehicle ? 'fuel' : 'train', cost);
     const T = travelTicks(p, d, vehicle ? p.vehicles[vehicle]!.speed : p.travel.train_speed);
     const cargo = this.cargo(pl);
@@ -532,6 +604,7 @@ export class World {
   }
 
   private control(pl: Player): void {
+    if (this.o.adr023) return this.controlAdr023(pl);
     const trip = pl.trip!;
     const cargo = this.cargo(pl);
     if (Object.keys(cargo).length === 0) return;
@@ -564,6 +637,113 @@ export class World {
     if (pl.trip) pl.trip.plan = null;
   }
 
+  /**
+   * F-TRV-06 (ADR-023): Ware + gesamtes mitgeführtes Schwarzgeld werden beschlagnahmt, keine Strafe/Schuld.
+   * Bestechung nur aus mitgeführtem Bargeld. [Annahme] Kontrolle nur mit Ladung (wie F-TRV-04: ohne Ware keine Folge).
+   */
+  private controlAdr023(pl: Player): void {
+    const trip = pl.trip!;
+    const cargo = this.cargo(pl);
+    if (Object.keys(cargo).length === 0) return;
+    const policeAvg = (this.police(trip.from) + this.police(trip.to)) / 2;
+    const b = bust(this.p, cargo, policeAvg, this.levelSchmuggel(pl));
+    pl.busts += 1;
+    const atStake = (trip.plan?.expectedRevenue ?? b.cargoBaseValue) + pl.cash;
+    let tryBribe = false;
+    if (pl.cash >= b.bribeCost) {
+      if (pl.profile.bribe === 'always') tryBribe = true;
+      // EV: Bestechen kostet C_b sicher; bei Misserfolg ist zusätzlich der Rest weg
+      else if (pl.profile.bribe === 'ev') tryBribe = b.bribeCost + (1 - b.bribeChance) * (atStake - b.bribeCost) < atStake;
+    }
+    if (tryBribe) {
+      pl.cash -= b.bribeCost;
+      this.book(pl, 'bribe', b.bribeCost);
+      if (uniform(this.o.seed, this.t, `bribe/${trip.id}`) < b.bribeChance) {
+        pl.bribesOk += 1;
+        return;
+      }
+    }
+    pl.confiscatedCt += b.cargoBaseValue;
+    pl.lots.clear();
+    pl.confiscatedCashCt += pl.cash;
+    this.book(pl, 'confiscation', pl.cash);
+    pl.cash = 0;
+    pl.lastConfiscationTick = this.t;
+    this.addHeat(pl, trip.to, (H) => Math.min(this.p.heat.max, H + this.p.travel.heat_on_bust));
+    if (pl.trip) pl.trip.plan = null;
+  }
+
+  // ---------------------------------------------------------------- Geldwäsche (ADR-023, F-ML-07…09)
+  /**
+   * Wäscht bis zu `amount` Schwarzgeld über die angegebene Stufe. Gibt die Gutschrift zurück.
+   * W0-Kurs: U(seed, t, `gamble/<spieler>/<n>`, 0) mit fortlaufendem n je Spieler.
+   */
+  wash(pl: Player, tierKey: string, amount: number): number {
+    const t = tiers(this.p)[tierKey];
+    if (!t || amount <= 0) return 0;
+    const day = Math.floor(this.t / this.tpd);
+    if (pl.washDay !== day) {
+      pl.washDay = day;
+      pl.washUsedToday.clear();
+    }
+    const used = pl.washUsedToday.get(tierKey) ?? 0;
+    const lFin = this.levelFinanzen(pl);
+    const u = t.rate === undefined ? uniform(this.o.seed, this.t, `gamble/${pl.id}/${pl.washOps + 1}`, 0) : 0;
+    const r = washTier(t, Math.min(amount, pl.cash), lFin, used, u);
+    if (r.accepted <= 0) return 0;
+    pl.washOps += 1;
+    pl.washUsedToday.set(tierKey, used + r.accepted);
+    pl.cash -= r.accepted;
+    pl.bank += r.credit;
+    this.book(pl, 'washFee', r.accepted - r.credit);
+    pl.washedCt += r.accepted;
+    pl.xpFinanzen += Math.floor((r.accepted / 100) * (this.p.professions.finanzen_xp_per_eur as number) + 1e-9);
+    if (t.papers_probability_per_day) pl.w4Credits.push([this.t, r.credit]);
+    for (const L of [2, 10, 15]) if (this.levelFinanzen(pl) >= L && pl.milestones[`finanzen:${L}`] === undefined) pl.milestones[`finanzen:${L}`] = this.t;
+    return r.credit;
+  }
+
+  /** Verfügbare Stufen nach Finanzen-Level, sortiert nach erwartetem Kurs (absteigend). */
+  washOptions(pl: Player): string[] {
+    const lFin = this.levelFinanzen(pl);
+    return Object.entries(tiers(this.p))
+      .filter(([, t]) => lFin >= t.min_level)
+      .sort((a, b) => expectedRate(b[1]) - expectedRate(a[1]))
+      .map(([k]) => k);
+  }
+
+  /** F-ML-09: „Papers“ einmal täglich je Spieler mit W4-Gutschriften im Rückblick. */
+  private papersDaily(): void {
+    for (const [key, t] of Object.entries(tiers(this.p))) {
+      if (!t.papers_probability_per_day) continue;
+      const look = t.papers_lookback_ticks ?? 4320;
+      for (const pl of this.players) {
+        pl.w4Credits = pl.w4Credits.filter(([tick]) => this.t - tick < look);
+        if (!pl.w4Credits.length) continue;
+        if (uniform(this.o.seed, this.t, `papers/${key}/${pl.id}`) >= t.papers_probability_per_day) continue;
+        const sum = pl.w4Credits.reduce((a, [, c]) => a + c, 0);
+        const take = Math.min(pl.bank, papersConfiscation(t, sum));
+        pl.bank -= take;
+        this.book(pl, 'papers', take);
+        pl.papersHits += 1;
+      }
+    }
+  }
+
+  /** F-ML-10: Kredithai. Waffen nicht simuliert (= 0). */
+  private loanSharkCheck(pl: Player): void {
+    if (!this.o.loanShark || !this.p.loan_shark) return;
+    const k = this.p.loan_shark;
+    if (!loanSharkEligible(k, pl.vehicles.length, 0, pl.cash, pl.bank, pl.debt > 0)) return;
+    if (pl.lots.size > 0) return; // [Annahme] Spieler mit Ware verkauft zuerst
+    if (this.o.loanAfterConfiscation && this.t - pl.lastConfiscationTick > 7 * this.tpd) return;
+    if (this.o.loanToBank) pl.bank += k.amount;
+    else pl.cash += k.amount;
+    pl.debt += Math.round(k.amount * k.repay_factor);
+    this.book(pl, 'loan', k.amount);
+    pl.loans += 1;
+  }
+
   private arrive(pl: Player): void {
     const trip = pl.trip!;
     if (Object.keys(this.cargo(pl)).length > 0) pl.xpSchmuggel += xpSchmuggel(this.p, trip.km, trip.hv);
@@ -594,7 +774,7 @@ export class World {
   // ---------------------------------------------------------------- Tick
   moneySupply(): number {
     let m = 0;
-    for (const pl of this.players) m += pl.cash;
+    for (const pl of this.players) m += pl.cash + pl.bank;
     return m;
   }
 
@@ -620,9 +800,11 @@ export class World {
       if (online) this.onlineNow++;
       if (pl.trip || !online) continue;
       this.safetyNet(pl);
+      if (this.o.adr023) this.loanSharkCheck(pl);
       decide(this, pl);
     }
     if (this.o.wealthSink && (this.t + 1) % this.tpd === 0) this.orgCosts();
+    if (this.o.adr023 && this.o.laundering && (this.t + 1) % this.tpd === 0) this.papersDaily();
     this.checkInvariants(before, ledgerBefore);
     this.t += 1;
   }
@@ -632,9 +814,9 @@ export class World {
     const { org_cost_rate_per_day: r, org_cost_threshold_ct: nw0 } = this.pr.progression;
     for (const pl of this.players) {
       const due = Math.ceil(r * Math.max(0, this.networth(pl) - nw0));
-      const paid = Math.min(pl.cash, due);
+      const paid = Math.min(this.liquid(pl), due);
       if (paid <= 0) continue;
-      pl.cash -= paid;
+      this.pay(pl, paid);
       this.book(pl, 'orgCost', paid);
     }
   }
@@ -663,6 +845,7 @@ export class World {
     if (after - before !== faucets - sinks) this.invariantViolations.push(`I-1 Tick ${this.t}: ΔM=${after - before}, Quellen−Senken=${faucets - sinks}`);
     for (const pl of this.players) {
       if (pl.cash < 0 || !Number.isSafeInteger(pl.cash)) this.invariantViolations.push(`I-4 Tick ${this.t}: Bargeld ${pl.id}=${pl.cash}`);
+      if (pl.bank < 0 || !Number.isSafeInteger(pl.bank)) this.invariantViolations.push(`I-4 Tick ${this.t}: Konto ${pl.id}=${pl.bank}`);
     }
     for (const m of this.markets.values()) {
       if (!(m.S >= this.p.economy.min_stock - 1e-9)) this.invariantViolations.push(`I-4 Tick ${this.t}: Bestand ${m.key}=${m.S}`);

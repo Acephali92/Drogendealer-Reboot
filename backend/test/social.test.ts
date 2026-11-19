@@ -81,6 +81,7 @@ describe('player profile & presence', () => {
       await app.prisma.moneyTransaction.create({
         data: {
           playerId: u.playerId,
+          account: 'CASH',
           amount: BigInt(i * 100),
           balanceAfter: BigInt(i * 100),
           reason: 'ADMIN',
@@ -89,8 +90,10 @@ describe('player profile & presence', () => {
       });
     }
     const body = (await request('GET', '/players/me/transactions?limit=2', u.token)).json();
-    expect(body).toMatchObject({ total: 3, limit: 2, offset: 0 });
+    // 3 entries plus the START_CAPITAL booking from registration
+    expect(body).toMatchObject({ total: 4, limit: 2, offset: 0 });
     expect(body.items.map((t: { amount: string }) => t.amount)).toEqual(['300', '200']);
+    expect(body.items[0]).toMatchObject({ account: 'CASH', reason: 'ADMIN' });
 
     const bad = await request('GET', '/players/me/transactions?limit=1000', u.token);
     expect(bad.statusCode).toBe(400);
@@ -111,7 +114,7 @@ describe('clans', () => {
     ]);
   });
 
-  it('sorts members by role hierarchy and hides the bank from outsiders', async () => {
+  it('sorts members by role hierarchy and hides the treasury from outsiders', async () => {
     const soldier = await createUser(app, 'soldier');
     const boss = await createUser(app, 'boss');
     const capo = await createUser(app, 'capo');
@@ -128,12 +131,12 @@ describe('clans', () => {
     );
 
     const asMember = (await request('GET', `/clans/${clan.id}`, soldier.token)).json().clan;
-    expect(asMember.bank).toBe('5000');
+    expect(asMember.treasury).toEqual({ cash: '5000', bank: '0' });
     expect(asMember.memberCount).toBe(3);
     expect(asMember.members.map((m: { role: string }) => m.role)).toEqual(['GODFATHER', 'CAPO', 'SOLDIER']);
 
     const asOutsider = (await request('GET', `/clans/${clan.id}`, outsider.token)).json().clan;
-    expect(asOutsider.bank).toBeNull();
+    expect(asOutsider.treasury).toBeNull();
 
     const missing = await request('GET', '/clans/does-not-exist', outsider.token);
     expect(missing.statusCode).toBe(404);
@@ -202,11 +205,12 @@ describe('rankings', () => {
     expect(body.entries).toEqual([
       { rank: 1, player: expect.objectContaining({ name: 'rich', clanTag: 'RCH' }), value: '5000000001' },
     ]);
+    // veteran still has the start capital, famous only 10 cents
     const second = (await request('GET', '/rankings?type=wealth&limit=1&offset=1', token)).json();
-    expect(second.entries[0]).toMatchObject({ rank: 2, player: { name: 'famous' } });
+    expect(second.entries[0]).toMatchObject({ rank: 2, player: { name: 'veteran' } });
   });
 
-  it('ranks clans by bank plus member wealth', async () => {
+  it('ranks clans by treasury plus member wealth', async () => {
     const { token } = await seedPlayers();
     const body = (await request('GET', '/rankings?type=clans', token)).json();
     expect(body.total).toBe(2);

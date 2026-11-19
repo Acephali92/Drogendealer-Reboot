@@ -1,10 +1,12 @@
 /**
  * Mock-Spielserver für Entwicklung und Demo. Antwortet exakt im Format von
- * docs/api/API-CONTRACT.md (Rohformate in api/contract.ts); noch nicht implementierte,
- * schreibende Endpunkte folgen dem Entwurf in docs/frontend/API-CONTRACT.md.
+ * docs/api/API-CONTRACT.md, Stand „Datenmodell v2“ (Rohformate in api/contract.ts).
+ * Noch nicht implementierte, schreibende Endpunkte folgen dem Entwurf in
+ * docs/frontend/API-CONTRACT.md.
  *
  * Das ist KEINE Spiellogik-Referenz – die Regeln definiert Agent 2, die verbindliche
- * Umsetzung Agent 3. Geld intern als Zahl in Cent (sicher bis ~9e15), an der Grenze als String.
+ * Umsetzung Agent 3. Geld intern als Zahl in Cent, an der API-Grenze als String.
+ * Laderaum in Volumeneinheiten (VE). Bargeld (schwarz) und Bankkonto (weiß) getrennt (ADR-023).
  */
 import type * as C from '@/api/contract';
 import {
@@ -15,13 +17,16 @@ import {
   COMMODITIES,
   DISTANCES,
   EQUIPMENT,
+  EVENT_DEMO_BOOST,
+  EVENTS,
   MOCK_TICK_MS,
+  SECONDS_PER_TICK,
   START,
+  TICKS_PER_HOUR,
   TRAIN,
   TRAVEL_TIME_SCALE,
   VEHICLE_RESALE_RATE,
   VEHICLES,
-  VOLUME_G,
 } from './data';
 
 export class MockApiError extends Error {
@@ -40,9 +45,12 @@ const fail = (status: number, code: string, message: string): never => {
 
 /* ------------------------------------------------------------------ Zustand */
 
-interface PriceRow {
+interface MarketRow {
+  /** Gleichgewichtspreis in Cent (Zahl) */
   mid: number;
-  supply: number;
+  stock: number;
+  event: string | null;
+  eventTicks: number;
   updatedAt: number;
 }
 
@@ -50,14 +58,17 @@ interface PlayerRow {
   id: string;
   name: string;
   isBot: boolean;
+  /** Bargeld (schwarz) */
   cash: number;
+  /** Bankkonto (weiß) */
   bank: number;
   health: number;
   maxHealth: number;
   level: number;
   experience: number;
   reputation: number;
-  heat: number;
+  /** Heat je Stadt */
+  heat: Record<string, number>;
   currentCityId: string | null;
   status: C.PlayerStatusDto;
   statusUntil: number | null;
@@ -76,7 +87,7 @@ interface ClanRow {
   name: string;
   tag: string;
   description: string | null;
-  bank: number;
+  treasury: { cash: number; bank: number };
   createdAt: number;
   members: { playerId: string; role: C.ClanRoleDto; joinedAt: number }[];
 }
@@ -101,11 +112,11 @@ interface UserRow {
 }
 
 export interface MockState {
-  version: 2;
+  version: 3;
   rng: number;
   lastTick: number;
   idSeq: number;
-  prices: Record<string, Record<string, PriceRow>>;
+  markets: Record<string, Record<string, MarketRow>>;
   users: UserRow[];
   tokens: Record<string, string>;
   players: Record<string, PlayerRow>;
@@ -123,21 +134,21 @@ export const cities: C.CityDto[] = CITIES.map((c) => ({
   id: cityId(c.slug),
   slug: c.slug,
   name: c.name,
-  description: c.description,
-  country: c.country,
-  techLevel: null,
-  policeStrength: Math.round(c.police * 100),
-  population: c.pop * 1000,
-}));
+  realm: 'earth' as const,
+  pop: c.pop,
+  wealth: c.wealth,
+  police: c.police,
+  fuelPrice: String(c.fuelPrice),
+  spaceport: c.spaceport,
+})).sort((a, b) => a.name.localeCompare(b.name, 'de'));
 
 export const commodities: C.CommodityDto[] = COMMODITIES.map((c) => ({
   id: comId(c.slug),
   slug: c.slug,
   name: c.name,
-  description: c.description,
-  illegal: true,
-  unitWeightG: c.volume * VOLUME_G,
+  realm: 'earth' as const,
   basePrice: String(c.basePrice),
+  unitVolume: c.volume,
   image: c.image,
 }));
 
@@ -146,21 +157,19 @@ export const vehicleTypes: C.VehicleTypeDto[] = VEHICLES.map((v) => ({
   slug: v.slug,
   name: v.name,
   price: String(v.price),
-  capacityG: v.capacity * VOLUME_G,
   speedKmh: v.speedKmh,
-  licenseClass: null,
+  consumptionPer100Km: v.consumption,
+  capacity: v.capacity,
+  hide: v.hide,
   image: v.image,
-}));
+})).sort((a, b) => Number(a.price) - Number(b.price));
 
 export const equipmentTypes: C.EquipmentTypeDto[] = EQUIPMENT.map((e) => ({
   id: `eq_${e.slug}`,
   slug: e.slug,
-  name: e.name,
-  description: e.description,
   slot: e.slot,
-  attack: e.slot === 'WEAPON' ? e.strength : 0,
-  defense: e.slot === 'ARMOR' ? e.strength : 0,
-  weightG: e.weightG,
+  name: e.name,
+  strength: e.strength,
   price: String(e.price),
   image: e.image,
 }));
@@ -168,6 +177,7 @@ export const equipmentTypes: C.EquipmentTypeDto[] = EQUIPMENT.map((e) => ({
 const citySeed = new Map(CITIES.map((c) => [cityId(c.slug), c]));
 const comSeed = new Map(COMMODITIES.map((c) => [comId(c.slug), c]));
 const vehSeed = new Map(VEHICLES.map((v) => [`vt_${v.slug}`, v]));
+const eventSeed = new Map(EVENTS.map((e) => [e.key, e]));
 const cityRef = (id: string): C.CityRefDto => {
   const c = cities.find((x) => x.id === id)!;
   return { id: c.id, slug: c.slug, name: c.name };
@@ -197,16 +207,18 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 /** Vorläufige Mock-Levelkurve (Backend liefert null, bis Agent 2 sie definiert). */
 const xpForNext = (level: number) => 100 * level * level;
 
+/** Mock-Spread um den Richtpreis, bis T-103 echte Orderpreise liefert. */
 const SPREAD = 0.04;
-const buyPrice = (mid: number) => Math.round(mid * (1 + SPREAD));
-const sellPrice = (mid: number) => Math.floor(mid * (1 - SPREAD));
+export const mockBuyPrice = (mid: number) => Math.round(mid * (1 + SPREAD));
+export const mockSellPrice = (mid: number) => Math.floor(mid * (1 - SPREAD));
 
-/** Gleichgewichtspreis aus Angebots-/Nachfragemultiplikatoren der Stadt. */
-function targetMid(cId: string, coId: string) {
+/** Gleichgewichtspreis aus Angebots-/Nachfragemultiplikatoren und aktivem Ereignis. */
+function targetMid(cId: string, coId: string, event: string | null = null) {
   const city = citySeed.get(cId)!;
   const com = comSeed.get(coId)!;
-  const sup = city.supply[com.slug] ?? 1;
-  const dem = (city.demand[com.slug] ?? 1) * city.wealth;
+  const ev = event ? eventSeed.get(event) : undefined;
+  const sup = (city.supply[com.slug] ?? 1) * (ev?.supplyMult ?? 1);
+  const dem = (city.demand[com.slug] ?? 1) * city.wealth * (ev?.demandMult ?? 1);
   return com.basePrice * Math.pow(dem / sup, 0.5);
 }
 
@@ -214,11 +226,11 @@ function targetMid(cId: string, coId: string) {
 
 export function createState(now: number = Date.now(), seed = 1337): MockState {
   const s: MockState = {
-    version: 2,
+    version: 3,
     rng: seed,
     lastTick: now,
     idSeq: 0,
-    prices: {},
+    markets: {},
     users: [],
     tokens: {},
     players: {},
@@ -227,13 +239,13 @@ export function createState(now: number = Date.now(), seed = 1337): MockState {
     ticker: [],
   };
   for (const c of cities) {
-    s.prices[c.id] = {};
+    s.markets[c.id] = {};
     for (const com of commodities) {
-      s.prices[c.id]![com.id] = {
+      s.markets[c.id]![com.id] = {
         mid: Math.round(targetMid(c.id, com.id) * (0.9 + rand(s) * 0.2)),
-        supply: Math.round(
-          (2_000 + rand(s) * 18_000) * (citySeed.get(c.id)!.supply[comSeed.get(com.id)!.slug] ?? 1),
-        ),
+        stock: (2_000 + rand(s) * 18_000) * (citySeed.get(c.id)!.supply[comSeed.get(com.id)!.slug] ?? 1),
+        event: null,
+        eventTicks: 0,
         updatedAt: now,
       };
     }
@@ -266,7 +278,10 @@ export function createState(now: number = Date.now(), seed = 1337): MockState {
       name: c.name,
       tag: c.tag,
       description: c.description,
-      bank: Math.round(2_000_000 + rand(s) * 80_000_000),
+      treasury: {
+        cash: Math.round(1_000_000 + rand(s) * 20_000_000),
+        bank: Math.round(2_000_000 + rand(s) * 60_000_000),
+      },
       createdAt: now - (30 - i * 7) * 86_400_000,
       members: members.map((pid, j) => ({
         playerId: pid,
@@ -284,14 +299,14 @@ function emptyPlayer(id: string, name: string, now: number): PlayerRow {
     id,
     name,
     isBot: false,
-    cash: START.cash,
+    cash: 0,
     bank: 0,
     health: START.maxHealth,
     maxHealth: START.maxHealth,
     level: 1,
     experience: 0,
     reputation: 0,
-    heat: 0,
+    heat: {},
     currentCityId: null,
     status: 'IDLE',
     statusUntil: null,
@@ -341,12 +356,22 @@ function notify(
   p.notifications.length = Math.min(p.notifications.length, 100);
 }
 
-function book(s: MockState, p: PlayerRow, amount: number, reason: C.TransactionReasonDto, at = Date.now()) {
-  p.cash += amount;
+/** Bucht auf Bargeld (CASH) oder Bankkonto (BANK) und schreibt das Kontobuch (ADR-023). */
+function book(
+  s: MockState,
+  p: PlayerRow,
+  account: C.AccountDto,
+  amount: number,
+  reason: C.TransactionReasonDto,
+  at = Date.now(),
+) {
+  if (account === 'CASH') p.cash += amount;
+  else p.bank += amount;
   p.transactions.unshift({
     id: nextId(s, 'tx'),
+    account,
     amount: String(amount),
-    balanceAfter: String(p.cash),
+    balanceAfter: String(account === 'CASH' ? p.cash : p.bank),
     reason,
     refId: null,
     createdAt: iso(at),
@@ -369,17 +394,38 @@ export function advance(s: MockState, now: number = Date.now()) {
   const ticks = Math.min(60, Math.floor((now - s.lastTick) / MOCK_TICK_MS));
   for (let t = 0; t < ticks; t++) {
     const at = s.lastTick + (t + 1) * MOCK_TICK_MS;
-    for (const cId of Object.keys(s.prices)) {
-      for (const [coId, row] of Object.entries(s.prices[cId]!)) {
-        const target = targetMid(cId, coId);
+    for (const cId of Object.keys(s.markets)) {
+      for (const [coId, row] of Object.entries(s.markets[cId]!)) {
+        // Ereignisse (Razzia, Lieferung, Stadtfest)
+        if (row.event) {
+          row.eventTicks -= 1;
+          if (row.eventTicks <= 0) {
+            row.event = null;
+            row.eventTicks = 0;
+          }
+        } else {
+          for (const ev of EVENTS) {
+            if (rand(s) < ev.probability * EVENT_DEMO_BOOST) {
+              row.event = ev.key;
+              row.eventTicks = ev.duration;
+              row.stock *= ev.stockShock;
+              pushTicker(s, 'MARKET_EVENT', `${cityRef(cId).name}: ${ev.name}!`, at, { event: ev.key });
+              break;
+            }
+          }
+        }
+        const target = targetMid(cId, coId, row.event);
         const drift = ((target - row.mid) / target) * 0.08;
         const noise = (rand(s) - 0.5) * 0.08;
         row.mid = Math.round(clamp(row.mid * (1 + drift + noise), target * 0.4, target * 2.5));
-        row.supply = Math.round(clamp(row.supply * (0.98 + rand(s) * 0.05), 500, 200_000));
+        row.stock = clamp(row.stock * (0.98 + rand(s) * 0.05), 200, 200_000);
         row.updatedAt = at;
       }
     }
-    for (const p of Object.values(s.players)) if (!p.isBot) p.heat = Math.max(0, p.heat - 1);
+    for (const p of Object.values(s.players)) {
+      if (p.isBot) continue;
+      for (const k of Object.keys(p.heat)) p.heat[k] = Math.max(0, p.heat[k]! - 0.5);
+    }
     if (rand(s) < 0.8) botTravelTicker(s, at);
   }
   if (ticks > 0) s.lastTick += ticks * MOCK_TICK_MS;
@@ -413,15 +459,13 @@ const activeVehicleType = (p: PlayerRow) => {
   return v ? vehicleTypes.find((t) => t.id === v.typeId) : undefined;
 };
 
-/** Laut Vertrag: Kapazität des aktiven Fahrzeugs oder null. */
-const contractCapacity = (p: PlayerRow) => activeVehicleType(p)?.capacityG ?? null;
-/** Für die Mock-Prüfung: ohne Fahrzeug zählt der Rucksack (player.backpack_capacity). */
-const effectiveCapacity = (p: PlayerRow) => contractCapacity(p) ?? START.backpackCapacity * VOLUME_G;
+/** Laderaum laut Vertrag: Rucksack + aktives Fahrzeug (VE). */
+const capacityOf = (p: PlayerRow) => START.backpackCapacity + (activeVehicleType(p)?.capacity ?? 0);
 
-function usedG(p: PlayerRow) {
-  let g = 0;
-  for (const [id, row] of Object.entries(p.inventory)) g += row.q * (comSeed.get(id)!.volume * VOLUME_G);
-  return g;
+function usedOf(p: PlayerRow) {
+  let v = 0;
+  for (const [id, row] of Object.entries(p.inventory)) v += row.q * comSeed.get(id)!.volume;
+  return v;
 }
 
 const clanOf = (s: MockState, playerId: string) =>
@@ -440,7 +484,7 @@ export function playerDto(s: MockState, p: PlayerRow): C.PlayerDto {
     experience: p.experience,
     experienceForNextLevel: xpForNext(p.level),
     reputation: p.reputation,
-    heat: Math.round(p.heat),
+    heat: p.currentCityId ? (p.heat[p.currentCityId] ?? 0) : 0,
     status: p.status,
     statusUntil: p.statusUntil ? iso(p.statusUntil) : null,
     createdAt: iso(p.createdAt),
@@ -463,15 +507,16 @@ export const inventoryDto = (p: PlayerRow): C.InventoryDto => ({
     .map(([id, r]) => ({
       commodity: commodities.find((c) => c.id === id)!,
       quantity: r.q,
-      avgBuyPrice: String(Math.round(r.avgBuy)),
+      avgBuyPrice: String(Math.floor(r.avgBuy)),
     })),
-  capacityG: contractCapacity(p),
-  usedG: usedG(p),
+  capacity: capacityOf(p),
+  used: usedOf(p),
 });
 
 function travelDto(p: PlayerRow): C.TravelDto | null {
   if (!p.travel) return null;
-  const vt = p.travel.vehicleId ? activeVehicleType(p) : undefined;
+  const v = p.travel.vehicleId ? p.vehicles.find((x) => x.id === p.travel!.vehicleId) : undefined;
+  const vt = v ? vehicleTypes.find((t) => t.id === v.typeId) : undefined;
   return {
     id: p.travel.id,
     status: 'IN_PROGRESS',
@@ -479,10 +524,7 @@ function travelDto(p: PlayerRow): C.TravelDto | null {
     arrivesAt: iso(p.travel.arr),
     fromCity: cityRef(p.travel.from),
     toCity: cityRef(p.travel.to),
-    vehicle:
-      vt && p.travel.vehicleId
-        ? { id: p.travel.vehicleId, vehicleType: { slug: vt.slug, name: vt.name } }
-        : null,
+    vehicle: v && vt ? { id: v.id, vehicleType: { slug: vt.slug, name: vt.name } } : null,
   };
 }
 
@@ -507,7 +549,7 @@ function clanDetail(s: MockState, c: ClanRow, viewerId: string | null): C.ClanDe
   const isMember = c.members.some((m) => m.playerId === viewerId);
   return {
     ...clanListItem(c),
-    bank: isMember ? String(c.bank) : null,
+    treasury: isMember ? { cash: String(c.treasury.cash), bank: String(c.treasury.bank) } : null,
     members: [...c.members]
       .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role])
       .map((m) => {
@@ -524,9 +566,7 @@ function clanDetail(s: MockState, c: ClanRow, viewerId: string | null): C.ClanDe
   };
 }
 
-function wealthOf(p: PlayerRow): number {
-  return p.isBot ? (p.botWealth ?? 0) : p.cash + p.bank;
-}
+const wealthOf = (p: PlayerRow) => (p.isBot ? (p.botWealth ?? 0) : p.cash + p.bank);
 
 /* ------------------------------------------------------------------- Auth */
 
@@ -542,6 +582,14 @@ const authResponse = (s: MockState, u: UserRow): C.AuthResponseDto => ({
   ...issueTokens(s, u.id),
   user: { id: u.id, email: u.email, username: u.username, role: 'PLAYER', playerId: u.playerId },
 });
+
+function newPlayer(s: MockState, id: string, name: string, now: number) {
+  const p = emptyPlayer(id, name, now);
+  s.players[id] = p;
+  if (START.cashBlack) book(s, p, 'CASH', START.cashBlack, 'START_CAPITAL', now);
+  if (START.cashWhite) book(s, p, 'BANK', START.cashWhite, 'START_CAPITAL', now);
+  return p;
+}
 
 export function register(
   s: MockState,
@@ -559,8 +607,7 @@ export function register(
   if (Object.values(s.players).some((p) => p.name.toLowerCase() === username.toLowerCase()))
     fail(409, 'USERNAME_TAKEN', 'Name bereits vergeben.');
   const pid = nextId(s, 'pl');
-  const p = emptyPlayer(pid, username, now);
-  s.players[pid] = p;
+  const p = newPlayer(s, pid, username, now);
   const user: UserRow = {
     id: nextId(s, 'usr'),
     email,
@@ -576,7 +623,7 @@ export function register(
     p,
     'WELCOME',
     'Willkommen auf der Straße',
-    'Du startest mit 2.000 € und einem Rucksack. Wähle eine Stadt und mach was draus.',
+    'Du startest mit 2.000 € Bargeld und einem Rucksack. Wähle eine Stadt und mach was draus.',
     { link: '/start' },
     now,
   );
@@ -644,8 +691,7 @@ export function playerForToken(
         pid?: string;
       };
       const pid = payload.pid ?? payload.sub;
-      s.players[pid] ??= emptyPlayer(pid, `Spieler_${pid.slice(-4)}`, now);
-      return s.players[pid]!;
+      return s.players[pid] ?? newPlayer(s, pid, `Spieler_${pid.slice(-4)}`, now);
     } catch {
       /* fällt durch */
     }
@@ -659,7 +705,7 @@ export function exportData(s: MockState, p: PlayerRow) {
   const u = s.users.find((x) => x.playerId === p.id);
   return {
     exportedAt: iso(Date.now()),
-    formatVersion: 1,
+    formatVersion: 2,
     account: u
       ? {
           id: u.id,
@@ -675,7 +721,12 @@ export function exportData(s: MockState, p: PlayerRow) {
     sessions: [],
     player: {
       ...playerDto(s, p),
-      inventory: inventoryDto(p).items,
+      heat: Object.entries(p.heat).map(([city, value]) => ({ city: citySeed.get(city)?.slug, value })),
+      inventoryLots: inventoryDto(p).items.map((i) => ({
+        commodity: i.commodity.slug,
+        quantity: i.quantity,
+      })),
+      inventoryMovements: [],
       moneyTransactions: p.transactions,
       notifications: p.notifications,
     },
@@ -704,42 +755,46 @@ function requireIdleInCity(p: PlayerRow) {
 const findCity = (slug: string) =>
   cities.find((x) => x.slug === slug) ?? fail(404, 'CITY_NOT_FOUND', 'Stadt nicht gefunden.');
 
-function routeFor(p: PlayerRow | null, from: string, to: string) {
+/** Reisedauer nach F-TRV-01 (Ticks · 600 s), für die Demo um TRAVEL_TIME_SCALE beschleunigt. */
+const travelSeconds = (d: number, speed: number) =>
+  Math.max(15, Math.round((Math.ceil((d / speed) * TICKS_PER_HOUR) * SECONDS_PER_TICK) / TRAVEL_TIME_SCALE));
+
+/** (draft, T-119) Reiseoptionen: Bahn (F-TRV-03) und aktives Fahrzeug (F-TRV-02). */
+function travelOptions(p: PlayerRow | null, from: string, to: string): C.TravelOptionDto[] {
   const d = distanceKm(from, to);
-  const vt = p ? activeVehicleType(p) : undefined;
-  const seed = vt ? vehSeed.get(vt.id)! : null;
-  const speed = seed?.speedKmh ?? TRAIN.speedKmh;
-  const cost = seed
-    ? Math.round(((d * seed.consumption) / 100) * citySeed.get(from)!.fuelPrice)
-    : d * TRAIN.centsPerKm;
-  return {
-    distanceKm: d,
-    durationSeconds: Math.max(15, Math.round(((d / speed) * 3600) / TRAVEL_TIME_SCALE)),
-    cost,
-  };
+  const options: C.TravelOptionDto[] = [
+    {
+      mode: 'train',
+      durationSeconds: travelSeconds(d, TRAIN.speedKmh),
+      cost: String(Math.ceil(d * TRAIN.centsPerKm)),
+    },
+  ];
+  const v = p?.vehicles.find((x) => x.isActive);
+  const seed = v ? vehSeed.get(v.typeId) : undefined;
+  if (v && seed) {
+    options.push({
+      mode: 'vehicle',
+      vehicleId: v.id,
+      durationSeconds: travelSeconds(d, seed.speedKmh),
+      cost: String(Math.ceil(((d * seed.consumption) / 100) * citySeed.get(from)!.fuelPrice)),
+    });
+  }
+  return options;
 }
 
-export function cityDetail(
-  _s: MockState,
-  p: PlayerRow | null,
-  slug: string,
-): { city: C.CityDto & { connections: C.ConnectionDto[] } } {
+export function cityDetail(_s: MockState, p: PlayerRow | null, slug: string) {
   const c = findCity(slug);
   return {
     city: {
       ...c,
       connections: cities
-        .filter((o) => o.id !== c.id)
-        .map((o) => {
-          const r = routeFor(p, c.id, o.id);
-          return {
-            toCityId: o.id,
-            toCity: cityRef(o.id),
-            distanceKm: r.distanceKm,
-            durationSeconds: r.durationSeconds,
-            cost: String(r.cost),
-          };
-        })
+        .filter((o) => o.id !== c.id && distanceKm(c.id, o.id) > 0)
+        .map((o) => ({
+          toCityId: o.id,
+          toCity: cityRef(o.id),
+          distanceKm: distanceKm(c.id, o.id),
+          travelOptions: travelOptions(p, c.id, o.id),
+        }))
         .sort((a, b) => a.distanceKm - b.distanceKm),
     },
   };
@@ -749,13 +804,14 @@ export function market(s: MockState, slug: string): C.MarketDto {
   const c = findCity(slug);
   return {
     city: cityRef(c.id),
-    prices: commodities.map((com) => {
-      const r = s.prices[c.id]![com.id]!;
+    markets: commodities.map((com) => {
+      const r = s.markets[c.id]![com.id]!;
       return {
         commodity: com,
-        buyPrice: String(buyPrice(r.mid)),
-        sellPrice: String(sellPrice(r.mid)),
-        supply: r.supply,
+        stock: Math.round(r.stock * 100) / 100,
+        referencePrice: String(r.mid),
+        activeEvent: r.event,
+        eventTicksLeft: r.event ? r.eventTicks : null,
         updatedAt: iso(r.updatedAt),
       };
     }),
@@ -768,15 +824,13 @@ export function overview(s: MockState): C.OverviewDto {
       let lowest: C.PricePointDto | null = null;
       let highest: C.PricePointDto | null = null;
       for (const c of cities) {
-        const r = s.prices[c.id]![com.id]!;
-        const b = buyPrice(r.mid);
-        const sp = sellPrice(r.mid);
-        if (!lowest || b < Number(lowest.price))
-          lowest = { city: cityRef(c.id), price: String(b), updatedAt: iso(r.updatedAt) };
-        if (!highest || sp > Number(highest.price))
-          highest = { city: cityRef(c.id), price: String(sp), updatedAt: iso(r.updatedAt) };
+        const mid = s.markets[c.id]![com.id]!.mid;
+        if (!lowest || mid < Number(lowest.referencePrice))
+          lowest = { city: cityRef(c.id), referencePrice: String(mid) };
+        if (!highest || mid > Number(highest.referencePrice))
+          highest = { city: cityRef(c.id), referencePrice: String(mid) };
       }
-      return { commodity: com, lowestBuy: lowest, highestSell: highest };
+      return { commodity: com, lowestPrice: lowest, highestPrice: highest };
     }),
   };
 }
@@ -811,42 +865,43 @@ export function trade(
     commodities.find((c) => c.id === body.commodityId) ??
     fail(404, 'COMMODITY_NOT_FOUND', 'Ware nicht gefunden.');
   const seed = comSeed.get(com.id)!;
-  const row = s.prices[p.currentCityId!]![com.id]!;
+  const row = s.markets[p.currentCityId!]![com.id]!;
   const inv = (p.inventory[com.id] ??= { q: 0, avgBuy: 0 });
+  const cityKey = p.currentCityId!;
   let unit: number;
   if (body.side === 'BUY') {
-    unit = buyPrice(row.mid);
-    if (qty > row.supply) fail(409, 'INSUFFICIENT_STOCK', 'So viel ist nicht verfügbar.');
+    unit = mockBuyPrice(row.mid);
+    if (qty > Math.floor(row.stock)) fail(409, 'INSUFFICIENT_STOCK', 'So viel ist nicht verfügbar.');
     if (unit * qty > p.cash) fail(409, 'INSUFFICIENT_FUNDS', 'Nicht genug Bargeld.');
-    if (usedG(p) + qty * com.unitWeightG > effectiveCapacity(p))
+    if (usedOf(p) + qty * seed.volume > capacityOf(p))
       fail(409, 'INSUFFICIENT_CAPACITY', 'Nicht genug Laderaum.');
     inv.avgBuy = (inv.avgBuy * inv.q + unit * qty) / (inv.q + qty);
     inv.q += qty;
-    row.supply -= qty;
-    row.mid = Math.round(row.mid * (1 + Math.min(0.08, qty / Math.max(1, row.supply) / 4)));
-    book(s, p, -unit * qty, 'TRADE', now);
-    p.heat = clamp(p.heat + ((unit * qty) / 100_000) * 0.5 * seed.heat, 0, 100);
+    row.stock -= qty;
+    row.mid = Math.round(row.mid * (1 + Math.min(0.08, qty / Math.max(1, row.stock) / 4)));
+    book(s, p, 'CASH', -unit * qty, 'TRADE_BUY', now);
   } else if (body.side === 'SELL') {
-    unit = sellPrice(row.mid);
+    unit = mockSellPrice(row.mid);
     if (qty > inv.q) fail(409, 'INSUFFICIENT_STOCK', 'So viel hast du nicht dabei.');
     const profit = (unit - inv.avgBuy) * qty;
     inv.q -= qty;
     if (inv.q === 0) inv.avgBuy = 0;
-    row.supply += qty;
-    row.mid = Math.round(row.mid * (1 - Math.min(0.08, qty / Math.max(1, row.supply) / 4)));
-    book(s, p, unit * qty, 'TRADE', now);
-    p.heat = clamp(p.heat + ((unit * qty) / 100_000) * 0.5 * seed.heat, 0, 100);
+    row.stock += qty;
+    row.mid = Math.round(row.mid * (1 - Math.min(0.08, qty / Math.max(1, row.stock) / 4)));
+    book(s, p, 'CASH', unit * qty, 'TRADE_SELL', now);
     if (profit > 0) p.reputation += Math.max(1, Math.round(profit / 10_000));
   } else {
     return fail(400, 'VALIDATION_ERROR', 'Ungültige Handelsseite.');
   }
+  // Heat pro Stadt: 0,5 je 1.000 € Handelsvolumen × Heat-Faktor der Ware (heat.trade_heat_per_keur)
+  p.heat[cityKey] = clamp((p.heat[cityKey] ?? 0) + ((unit * qty) / 100_000) * 0.5 * seed.heat, 0, 100);
   gainXp(p, Math.min(250, 1 + Math.floor((unit * qty) / 20_000)), s);
   return {
     player: playerDto(s, p),
     inventory: inventoryDto(p),
     transaction: {
       id: nextId(s, 'tr'),
-      cityId: p.currentCityId!,
+      cityId: cityKey,
       commodityId: com.id,
       side: body.side,
       quantity: qty,
@@ -873,7 +928,7 @@ export function buyVehicle(s: MockState, p: PlayerRow, typeId?: string, now = Da
     fail(404, 'VEHICLE_TYPE_NOT_FOUND', 'Fahrzeug nicht gefunden.');
   const price = Number(t.price);
   if (price > p.cash) fail(409, 'INSUFFICIENT_FUNDS', 'Nicht genug Bargeld.');
-  book(s, p, -price, 'VEHICLE', now);
+  book(s, p, 'CASH', -price, 'VEHICLE_BUY', now);
   const v = {
     id: nextId(s, 'veh'),
     typeId: t.id,
@@ -892,7 +947,7 @@ export function activateVehicle(_s: MockState, p: PlayerRow, id: string) {
   const prev = p.vehicles.find((v) => v.isActive);
   p.vehicles.forEach((v) => (v.isActive = false));
   target.isActive = true;
-  if (usedG(p) > effectiveCapacity(p)) {
+  if (usedOf(p) > capacityOf(p)) {
     target.isActive = false;
     if (prev) prev.isActive = true;
     fail(409, 'INSUFFICIENT_CAPACITY', 'Deine Ladung passt nicht in dieses Fahrzeug.');
@@ -904,12 +959,19 @@ export function sellVehicle(s: MockState, p: PlayerRow, id: string, now = Date.n
   requireIdleInCity(p);
   const v = p.vehicles.find((x) => x.id === id) ?? fail(404, 'VEHICLE_NOT_FOUND', 'Fahrzeug nicht gefunden.');
   p.vehicles = p.vehicles.filter((x) => x.id !== id);
-  if (v.isActive && usedG(p) > effectiveCapacity(p)) {
+  if (v.isActive && usedOf(p) > capacityOf(p)) {
     p.vehicles.push(v);
     fail(409, 'INSUFFICIENT_CAPACITY', 'Lade erst deine Ware aus.');
   }
   const t = vehicleTypes.find((x) => x.id === v.typeId)!;
-  book(s, p, Math.round(Number(t.price) * VEHICLE_RESALE_RATE * (v.condition / 100)), 'VEHICLE', now);
+  book(
+    s,
+    p,
+    'CASH',
+    Math.round(Number(t.price) * VEHICLE_RESALE_RATE * (v.condition / 100)),
+    'VEHICLE_SALE',
+    now,
+  );
   return { player: playerDto(s, p) };
 }
 
@@ -928,7 +990,7 @@ export function buyEquipment(s: MockState, p: PlayerRow, typeId?: string, now = 
     fail(404, 'EQUIPMENT_TYPE_NOT_FOUND', 'Ausrüstung nicht gefunden.');
   const price = Number(t.price);
   if (price > p.cash) fail(409, 'INSUFFICIENT_FUNDS', 'Nicht genug Bargeld.');
-  book(s, p, -price, 'EQUIPMENT', now);
+  book(s, p, 'CASH', -price, 'EQUIPMENT_BUY', now);
   const hasSlot = p.equipment.some(
     (e) => e.equipped && equipmentTypes.find((x) => x.id === e.typeId)?.slot === t.slot,
   );
@@ -940,21 +1002,29 @@ export function buyEquipment(s: MockState, p: PlayerRow, typeId?: string, now = 
 export function startTravel(
   s: MockState,
   p: PlayerRow,
-  toCityId?: string,
+  body: { toCityId?: string; mode?: 'train' | 'vehicle' },
   now = Date.now(),
 ): { travel: C.TravelDto } {
   requireIdleInCity(p);
-  const to = cities.find((c) => c.id === toCityId) ?? fail(404, 'CITY_NOT_FOUND', 'Ziel nicht gefunden.');
+  const to =
+    cities.find((c) => c.id === body.toCityId) ?? fail(404, 'CITY_NOT_FOUND', 'Ziel nicht gefunden.');
   if (to.id === p.currentCityId) fail(400, 'VALIDATION_ERROR', 'Du bist schon hier.');
-  const r = routeFor(p, p.currentCityId!, to.id);
-  if (r.cost > p.cash) fail(409, 'INSUFFICIENT_FUNDS', 'Nicht genug Geld für die Reise.');
-  book(s, p, -r.cost, 'TRAVEL', now);
-  const arr = now + r.durationSeconds * 1000;
+  const mode = body.mode ?? (p.vehicles.some((v) => v.isActive) ? 'vehicle' : 'train');
+  const option =
+    travelOptions(p, p.currentCityId!, to.id).find((o) => o.mode === mode) ??
+    fail(409, 'TRAVEL_MODE_UNAVAILABLE', 'Dafür brauchst du ein aktives Fahrzeug.');
+  // F-TRV-03: Mit der Bahn steht nur der Rucksack zur Verfügung.
+  if (mode === 'train' && usedOf(p) > START.backpackCapacity)
+    fail(409, 'CARGO_TOO_LARGE_FOR_TRAIN', 'Deine Ladung passt nicht in den Rucksack.');
+  const cost = Number(option.cost);
+  if (cost > p.cash) fail(409, 'INSUFFICIENT_FUNDS', 'Nicht genug Bargeld für die Reise.');
+  book(s, p, 'CASH', -cost, mode === 'train' ? 'TRAVEL_TICKET' : 'TRAVEL_FUEL', now);
+  const arr = now + option.durationSeconds * 1000;
   p.travel = {
     id: nextId(s, 'trv'),
     from: p.currentCityId!,
     to: to.id,
-    vehicleId: p.vehicles.find((v) => v.isActive)?.id ?? null,
+    vehicleId: mode === 'vehicle' ? (option.vehicleId ?? null) : null,
     dep: now,
     arr,
   };
@@ -980,6 +1050,7 @@ export function clanGet(s: MockState, viewer: PlayerRow, id: string) {
   return { clan: clanDetail(s, c, viewer.id) };
 }
 
+/** Gründung kostet clans.founding_cost aus dem Bankkonto (Weißgeld). */
 export function clanCreate(
   s: MockState,
   p: PlayerRow,
@@ -993,14 +1064,14 @@ export function clanCreate(
   if (!/^[A-Z0-9]{2,5}$/.test(tag)) fail(400, 'VALIDATION_ERROR', 'Kürzel: 2–5 Buchstaben/Ziffern.');
   if (s.clans.some((c) => c.name.toLowerCase() === name.toLowerCase() || c.tag === tag))
     fail(409, 'CLAN_NAME_TAKEN', 'Name oder Kürzel vergeben.');
-  if (p.cash < CLAN_FOUNDING_COST) fail(409, 'INSUFFICIENT_FUNDS', 'Nicht genug Geld für die Gründung.');
-  book(s, p, -CLAN_FOUNDING_COST, 'CLAN', now);
+  if (p.bank < CLAN_FOUNDING_COST) fail(409, 'INSUFFICIENT_FUNDS', 'Nicht genug Geld auf dem Bankkonto.');
+  book(s, p, 'BANK', -CLAN_FOUNDING_COST, 'CLAN_DEPOSIT', now);
   const c: ClanRow = {
     id: nextId(s, 'clan'),
     name,
     tag,
     description: body.description?.trim() || null,
-    bank: 0,
+    treasury: { cash: 0, bank: 0 },
     createdAt: now,
     members: [{ playerId: p.id, role: 'GODFATHER', joinedAt: now }],
   };
@@ -1085,7 +1156,7 @@ export function leaveClan(s: MockState, p: PlayerRow, id: string) {
   const me = c.members.find((m) => m.playerId === p.id) ?? fail(409, 'NOT_IN_CLAN', 'Du bist kein Mitglied.');
   c.members = c.members.filter((m) => m !== me);
   if (c.members.length === 0) s.clans = s.clans.filter((x) => x !== c);
-  // Nachfolge des Paten: offene Game-Design-Frage (Wahl, ADR-018) – Mock lässt den Clan ohne Paten.
+  // Nachfolge des Paten: Wahl (ADR-018) – Mock lässt den Clan vorerst ohne Paten.
 }
 
 /* --------------------------------------------------------------- Ranglisten */
@@ -1096,7 +1167,10 @@ export function rankings(s: MockState, type: C.RankingTypeDto, limit = 50, offse
     entries = s.clans
       .map((c) => ({
         c,
-        v: c.bank + c.members.reduce((sum, m) => sum + wealthOf(s.players[m.playerId]!), 0),
+        v:
+          c.treasury.cash +
+          c.treasury.bank +
+          c.members.reduce((sum, m) => sum + wealthOf(s.players[m.playerId]!), 0),
       }))
       .sort((a, b) => b.v - a.v)
       .map(({ c, v }, i) => ({

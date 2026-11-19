@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { imageFallbacks, readParams } from '../../vite/gameParams';
-import { CITIES, COMMODITIES, DISTANCES, EQUIPMENT, START, VEHICLES } from './data';
+import { CITIES, COMMODITIES, DISTANCES, EQUIPMENT, EVENTS, START, VEHICLES } from './data';
 
 /** Mock und Backend schöpfen aus derselben parameters.toml (ADR-020, T-115). */
 describe('Mock-Daten aus parameters.toml', () => {
@@ -10,6 +10,11 @@ describe('Mock-Daten aus parameters.toml', () => {
     expect(CITIES.map((c) => c.slug).sort()).toEqual(Object.keys(params.city!).sort());
     for (const c of CITIES) expect(c.name).toBe(params.city![c.slug]!.name);
     expect(DISTANCES['berlin-hamburg']).toBe(params.distances!['berlin-hamburg']);
+  });
+
+  it('übernimmt Ereignisse mit Anzeigenamen', () => {
+    expect(EVENTS.map((e) => e.key).sort()).toEqual(Object.keys(params.events!).sort());
+    for (const e of EVENTS) expect(e.name).toBe(params.events![e.key]!.name);
   });
 
   it('übernimmt Waren mit Namen, Preis und Bildpfad', () => {
@@ -24,8 +29,9 @@ describe('Mock-Daten aus parameters.toml', () => {
   it('übernimmt Fahrzeuge, Ausrüstung und Startwerte', () => {
     expect(VEHICLES.map((v) => v.name)).toEqual(Object.values(params.vehicles!).map((v) => v.name));
     expect(EQUIPMENT.length).toBe(Object.keys(params.weapons!).length + Object.keys(params.armor!).length);
-    for (const e of EQUIPMENT) expect(e.name).not.toBe(e.slug); // nie den Schlüssel anzeigen (T-112)
-    expect(START.cash).toBe((params.player as unknown as Record<string, number>).start_cash_black);
+    for (const e of EQUIPMENT)
+      expect(e.name).toBe(params[e.slot === 'WEAPON' ? 'weapons' : 'armor']![e.slug]!.name ?? null);
+    expect(START.cashBlack).toBe((params.player as unknown as Record<string, number>).start_cash_black);
   });
 
   it('liest Kategorie-Platzhalter nur als sichere Pfade', () => {

@@ -143,4 +143,29 @@ Es zählt nur, was im Code existiert. Belege sind als Datei:Zeile angegeben. Tes
 
 Behoben: Testdaten nutzen fiktive Namen (ADR-013); Lint/Format/CI ergänzt; C-2 (Parameter laden) erledigt mit T-101 (A-10).
 
+### Nachtrag: Stand nach Datenmodell v2 (2026-11-15)
+
+**Erledigt** (Details in [`docs/database/DATA_MODEL.md`](../../docs/database/DATA_MODEL.md) und TD-017 bis TD-020):
+
+- **D-1, D-4:** Journale und Historie hängen per Restrict am Spieler; die Kontolöschung pseudonymisiert nach ADR-017.
+- **D-2:** Alle Journale sind append-only.
+- **D-5:** Geld läuft nur noch über `bookMoney()` (Invariante M-1, mit Test).
+- **B-5:** `account` CASH/BANK und Gründe nach Quellen und Senken.
+- **B-6, B-13:** Katalog nur aus `parameters.toml`.
+- **B-9, B-10:** per ADR-023 entschieden (Bargeld/Bankkonto, keine Schulden durch Strafen).
+- **B-11:** Heat pro Stadt.
+- **B-12:** Volumeneinheiten.
+- **B-14:** Bestand als Float.
+- **B-15:** ADR-021.
+- **B-4:** Einstandspreis aus den Losen.
+- **C-6:** Inventarjournal.
+
+**Weiter offen:**
+
+- **D-3:** IP-Löschfrist (T-605).
+- **B-1, B-2:** Status und Reisen werden nicht aufgelöst.
+- **C-1:** Schreibende Spielaktionen fehlen. Vorher kommen `CommandLog` (C-5) und die Handelsformeln (T-103).
+- **C-4:** Tick-System (`WorldTick`).
+- **C-7, C-8:** NPCs, Immobilien und weitere Systeme.
+
 Abhängigkeiten zwischen den Systemen: siehe [SYSTEM_DEPENDENCIES](SYSTEM_DEPENDENCIES.md).

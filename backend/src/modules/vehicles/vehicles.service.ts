@@ -1,23 +1,15 @@
-import type { Prisma, PrismaClient } from '@prisma/client';
-import { withImage, type GameParameters } from '../../domain/index.js';
+import type { PrismaClient } from '@prisma/client';
+import type { GameParameters } from '../../domain/index.js';
 import { serialize } from '../../lib/serialize.js';
+import { vehicleTypeView } from '../catalog/catalog.js';
 
-export const vehicleTypeSelect = {
-  id: true,
-  slug: true,
-  name: true,
-  price: true,
-  capacityG: true,
-  speedKmh: true,
-  licenseClass: true,
-} as const satisfies Prisma.VehicleTypeSelect;
-
+/** Vehicle catalog from parameters.toml, ordered by price. */
 export async function listVehicleTypes(prisma: PrismaClient, params: GameParameters) {
-  const vehicleTypes = await prisma.vehicleType.findMany({
-    select: vehicleTypeSelect,
-    orderBy: [{ price: 'asc' }, { name: 'asc' }],
-  });
-  return serialize({ vehicleTypes: vehicleTypes.map((t) => withImage(params, 'vehicles', t)) });
+  const rows = await prisma.vehicleType.findMany({ select: { id: true, slug: true } });
+  const vehicleTypes = rows
+    .map((r) => vehicleTypeView(params, r))
+    .sort((a, b) => (a.price === b.price ? a.name.localeCompare(b.name) : a.price < b.price ? -1 : 1));
+  return serialize({ vehicleTypes });
 }
 
 export async function listPlayerVehicles(prisma: PrismaClient, params: GameParameters, playerId: string) {
@@ -28,11 +20,11 @@ export async function listPlayerVehicles(prisma: PrismaClient, params: GameParam
       condition: true,
       isActive: true,
       purchasedAt: true,
-      vehicleType: { select: vehicleTypeSelect },
+      vehicleType: { select: { id: true, slug: true } },
     },
     orderBy: [{ isActive: 'desc' }, { purchasedAt: 'asc' }],
   });
   return serialize({
-    vehicles: vehicles.map((v) => ({ ...v, vehicleType: withImage(params, 'vehicles', v.vehicleType) })),
+    vehicles: vehicles.map((v) => ({ ...v, vehicleType: vehicleTypeView(params, v.vehicleType) })),
   });
 }

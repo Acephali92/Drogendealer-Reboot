@@ -49,12 +49,21 @@ export interface PlayerResult {
   stuckDays: number;
   recoveries: number;
   vehicle: string | null;
+  /** ADR-023 */
+  bankEnd: number;
+  washedCt: number;
+  confiscatedCashCt: number;
+  confiscatedGoodsCt: number;
+  loans: number;
+  loanOpenEnd: number;
+  papersHits: number;
+  levelFinanzen: number;
 }
 
 export interface SeedResult {
   seed: string;
   tracked: PlayerResult[];
-  population: { nwFinal: number[]; profiles: ProfileId[] };
+  population: { nwFinal: number[]; profiles: ProfileId[]; stuckDays: number[]; loans: number[]; busts: number[]; confiscations: number[] };
   market: {
     /** je Tag: Mittel P/P* über alle Märkte, Anteil knapper Markt-Ticks */
     dailyPriceRatio: number[];
@@ -150,8 +159,23 @@ export function runSeed(p: Params, pr: Proposals, sc: Scenario, seed: string): S
       stuckDays: pl.stuckDays,
       recoveries: pl.recoveries,
       vehicle: pl.active,
+      bankEnd: pl.bank,
+      washedCt: pl.washedCt,
+      confiscatedCashCt: pl.confiscatedCashCt,
+      confiscatedGoodsCt: pl.confiscatedCt,
+      loans: pl.loans,
+      loanOpenEnd: pl.debt,
+      papersHits: pl.papersHits,
+      levelFinanzen: w.levelFinanzen(pl),
     })),
-    population: { nwFinal: w.players.map((pl) => w.networth(pl)), profiles: w.players.map((pl) => pl.profile.id) },
+    population: {
+      nwFinal: w.players.map((pl) => w.networth(pl)),
+      profiles: w.players.map((pl) => pl.profile.id),
+      stuckDays: w.players.map((pl) => pl.stuckDays),
+      loans: w.players.map((pl) => pl.loans),
+      busts: w.players.map((pl) => pl.busts),
+      confiscations: w.players.map((pl) => (pl.lastConfiscationTick >= 0 || pl.confiscatedCt > 0 ? 1 : 0)),
+    },
     market: { dailyPriceRatio, dailyScarce, dailyVolumeCt, perMarket },
     moneySupply,
     handover,

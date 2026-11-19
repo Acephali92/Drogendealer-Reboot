@@ -36,9 +36,22 @@ export interface Summary {
       stuckDays: number;
       recoveries: number;
       lossShare: number;
+      laundering: {
+        washedEur: number;
+        confiscatedCashEur: number;
+        confiscatedGoodsEur: number;
+        loans: number;
+        loanTakenShare: number;
+        loanOpenEndEur: number;
+        whiteShareEnd: number;
+        papersHits: number;
+        levelFinanzenMedian: number;
+      };
     }
   >;
   population: { giniMedian: number; topToMedianMedian: number };
+  /** Kennzahlen über ALLE Spieler eines Profils (beobachtet + Hintergrund), höhere Stichprobe */
+  allPlayers: Record<string, { n: number; lossShare: number; stuckDaysMean: number; loanShare: number; loansMean: number; confiscatedShare: number; nwMedianEur: number }>;
   market: { priceRatioMean: number; priceRatioMin: number; priceRatioMax: number; scarceShareMean: number; volumePerDayEur: number; topMarkets: Array<{ key: string; volumeEur: number; priceRatio: number; scarce: number }> };
   handover?: HandoverSummary;
   money: { supplyEndMedianEur: number; supplyGrowthLast30Pct: number; sinkFaucetRatio: number; ledgerEur: Record<string, number>; events: number };
@@ -53,6 +66,9 @@ const MILESTONES: Array<[string, (r: SeedResult['tracked'][number]) => number | 
   ['NW ≥ 50 000 €', (r) => firstDay(r.nw, 5_000_000)],
   ['NW ≥ 500 000 €', (r) => firstDay(r.nw, 50_000_000)],
   ['NW ≥ 5 Mio. €', (r) => firstDay(r.nw, 500_000_000)],
+  ['Finanzen L2 (W1)', (r) => r.milestones['finanzen:2'] ?? null],
+  ['Finanzen L10 (W3)', (r) => r.milestones['finanzen:10'] ?? null],
+  ['Finanzen L15 (W4)', (r) => r.milestones['finanzen:15'] ?? null],
 ];
 
 function firstDay(series: number[], threshold: number): number | null {
@@ -91,6 +107,17 @@ export function summarize(
       stuckDays: Math.round(mean(rs.map((r) => r.stuckDays)) * 10) / 10,
       recoveries: Math.round(mean(rs.map((r) => r.recoveries)) * 100) / 100,
       lossShare: rs.filter((r) => r.nw.at(-1)! < 200_000).length / rs.length,
+      laundering: {
+        washedEur: eur(mean(rs.map((r) => r.washedCt))),
+        confiscatedCashEur: eur(mean(rs.map((r) => r.confiscatedCashCt))),
+        confiscatedGoodsEur: eur(mean(rs.map((r) => r.confiscatedGoodsCt))),
+        loans: Math.round(mean(rs.map((r) => r.loans)) * 100) / 100,
+        loanTakenShare: rs.filter((r) => r.loans > 0).length / rs.length,
+        loanOpenEndEur: eur(mean(rs.map((r) => r.loanOpenEnd))),
+        whiteShareEnd: Math.round(quantile(rs.map((r) => { const gross = r.nw.at(-1)! + r.loanOpenEnd; return gross > 0 ? r.bankEnd / gross : 0; }), 0.5) * 100) / 100,
+        papersHits: Math.round(mean(rs.map((r) => r.papersHits)) * 100) / 100,
+        levelFinanzenMedian: quantile(rs.map((r) => r.levelFinanzen), 0.5),
+      },
     };
   }
   const ginis = results.map((r) => gini(r.population.nwFinal));
@@ -137,6 +164,7 @@ export function summarize(
     invariantViolations: results.reduce((a, r) => a + r.invariantViolations.length, 0),
     profiles,
     population: { giniMedian: Math.round(quantile(ginis, 0.5) * 1000) / 1000, topToMedianMedian: Math.round(quantile(topMed, 0.5) * 10) / 10 },
+    allPlayers: allPlayerStats(results),
     market: {
       priceRatioMean: Math.round(mean(priceRatios) * 1000) / 1000,
       priceRatioMin: Math.round(Math.min(...priceRatios) * 1000) / 1000,
@@ -155,6 +183,33 @@ export function summarize(
   };
 }
 
+function allPlayerStats(results: SeedResult[]): Summary['allPlayers'] {
+  const by: Record<string, { nw: number[]; stuck: number[]; loans: number[]; conf: number[] }> = {};
+  for (const r of results) {
+    const pop = r.population;
+    pop.profiles.forEach((id, i) => {
+      const b = (by[id] ??= { nw: [], stuck: [], loans: [], conf: [] });
+      b.nw.push(pop.nwFinal[i]!);
+      b.stuck.push(pop.stuckDays[i]!);
+      b.loans.push(pop.loans[i]!);
+      b.conf.push(pop.confiscations[i]!);
+    });
+  }
+  const out: Summary['allPlayers'] = {};
+  for (const [id, b] of Object.entries(by)) {
+    out[id] = {
+      n: b.nw.length,
+      lossShare: Math.round((b.nw.filter((x) => x < 200_000).length / b.nw.length) * 1000) / 1000,
+      stuckDaysMean: Math.round(mean(b.stuck) * 10) / 10,
+      loanShare: Math.round((b.loans.filter((x) => x > 0).length / b.nw.length) * 1000) / 1000,
+      loansMean: Math.round(mean(b.loans) * 100) / 100,
+      confiscatedShare: Math.round((b.conf.filter((x) => x > 0).length / b.nw.length) * 1000) / 1000,
+      nwMedianEur: eur(quantile(b.nw, 0.5)),
+    };
+  }
+  return out;
+}
+
 function sumLedgers(results: SeedResult[]) {
   const acc = { ...results[0]!.ledger };
   for (const k of Object.keys(acc) as Array<keyof typeof acc>) acc[k] = results.reduce((a, r) => a + r.ledger[k], 0);
@@ -169,7 +224,7 @@ export function toMarkdown(s: Summary): string {
   L.push(`### ${sc.id} – ${sc.title}`);
   L.push('');
   L.push(`- **Hypothese:** ${s.hypothesis}`);
-  L.push(`- **Setup:** ${sc.background} Hintergrundspieler + je 1 beobachteter Bot A–E, ${sc.days} Tage, ${s.seeds.length} Seeds. Erweiterungen: Wirtschaft ${sc.options.economyExt ? 'an' : 'aus'}, NPC-Händler F-NPC-01 ${sc.options.npc ? `an (k = ${sc.options.npcIntensity})` : 'aus'}, Kundenbindung/Polizeidruck ${sc.options.npcExt ? 'an' : 'aus'}, Sicherheitsnetz ${sc.options.safetyNet ? 'an' : 'aus'}, Beschlagnahme bei Kontrolle ${Math.round((sc.options.confiscationShare ?? 1) * 100)} % der Ladung, Organisationskosten F-PRG-01 ${sc.options.wealthSink ? 'an' : 'aus'}.`);
+  L.push(`- **Setup:** ${sc.background} Hintergrundspieler + je 1 beobachteter Bot A–E, ${sc.days} Tage, ${s.seeds.length} Seeds. Erweiterungen: Wirtschaft ${sc.options.economyExt ? 'an' : 'aus'}, NPC-Händler F-NPC-01 ${sc.options.npc ? `an (k = ${sc.options.npcIntensity})` : 'aus'}, Kundenbindung/Polizeidruck ${sc.options.npcExt ? 'an' : 'aus'}, Sicherheitsnetz ${sc.options.safetyNet ? 'an' : 'aus'}, Beschlagnahme bei Kontrolle ${Math.round((sc.options.confiscationShare ?? 1) * 100)} % der Ladung, Organisationskosten F-PRG-01 ${sc.options.wealthSink ? 'an' : 'aus'}${sc.options.adr023 ? `, **ADR-023** (Totalbeschlagnahme Ware + Bargeld): Wäsche ${sc.options.laundering ? 'an' : 'aus'}, Kredithai ${sc.options.loanShark ? 'an' : 'aus'}` : ''}.`);
   if (Object.keys(s.overrides).length) L.push(`- **Geänderter Parameter:** ${Object.entries(s.overrides).map(([k, v]) => `\`${k}\` = ${v}`).join(', ')}`);
   L.push(`- **Parameter:** \`${s.paramsSource}\` (SHA-256 \`${s.paramsSha256.slice(0, 12)}…\`), Vorschläge \`sim/proposals.toml\` (\`${s.proposalsSha256.slice(0, 12)}…\`). Invariantenverletzungen: **${s.invariantViolations}**.`);
   L.push('');
@@ -195,12 +250,33 @@ export function toMarkdown(s: Summary): string {
   L.push('');
   L.push('**Verhalten und Risiko [gemessen]** (Mittel je beobachtetem Bot)');
   L.push('');
-  L.push('| Profil | Fahrten/Tag | Kontrollquote je Fahrt | Ø Marge je Handel | Einnahmen Verkauf € | Einkauf € | Reisekosten € | Strafen, Bestechung, Tilgung, Organisation € | Sackgassen-Tage | Neustarts | Ende < Startkapital |');
+  L.push('| Profil | Fahrten/Tag | Kontrollquote je Fahrt | Ø Marge je Handel | Einnahmen Verkauf € | Einkauf € | Reisekosten € | Strafen, Bestechung, Tilgung, Organisation, Beschlagnahme, Wäsche € | Sackgassen-Tage | Neustarts | Ende < Startkapital |');
   L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
   for (const id of sc.tracked) {
     const pr = s.profiles[id]!;
     const i = pr.incomeEur;
-    L.push(`| ${id} | ${pr.tripsPerDay} | ${(pr.bustRate * 100).toFixed(1)} % | ${(pr.avgMargin * 100).toFixed(0)} % | ${fmt(i.sale!)} | ${fmt(i.purchase!)} | ${fmt(i.fuel! + i.train!)} | ${fmt(i.fine! + i.bribe! + i.debtRepay! + i.orgCost!)} | ${pr.stuckDays} | ${pr.recoveries} | ${Math.round(pr.lossShare * 100)} % |`);
+    L.push(`| ${id} | ${pr.tripsPerDay} | ${(pr.bustRate * 100).toFixed(1)} % | ${(pr.avgMargin * 100).toFixed(0)} % | ${fmt(i.sale!)} | ${fmt(i.purchase!)} | ${fmt(i.fuel! + i.train!)} | ${fmt(i.fine! + i.bribe! + i.debtRepay! + i.orgCost! + i.confiscation! + i.washFee! + i.papers!)} | ${pr.stuckDays} | ${pr.recoveries} | ${Math.round(pr.lossShare * 100)} % |`);
+  }
+  L.push('');
+  if (sc.options.adr023) {
+    L.push('**Wäsche, Beschlagnahme, Kredithai [gemessen]** (Mittel je beobachtetem Bot; Weißgeld-Anteil = Median Konto ÷ Bruttovermögen am Ende)');
+    L.push('');
+    L.push('| Profil | gewaschen € | Waschgebühren € | beschlagnahmtes Bargeld € | beschlagnahmte Ware (P_base) € | Kredite | Anteil mit Kredit | offene Kreditschuld Ende € | Weißgeld-Anteil | Finanzen-Level (Median) | Papers |');
+    L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
+    for (const id of sc.tracked) {
+      const x = s.profiles[id]!.laundering;
+      L.push(`| ${id} | ${fmt(x.washedEur)} | ${fmt(s.profiles[id]!.incomeEur.washFee!)} | ${fmt(x.confiscatedCashEur)} | ${fmt(x.confiscatedGoodsEur)} | ${x.loans} | ${Math.round(x.loanTakenShare * 100)} % | ${fmt(x.loanOpenEndEur)} | ${Math.round(x.whiteShareEnd * 100)} % | ${x.levelFinanzenMedian} | ${x.papersHits} |`);
+    }
+    L.push('');
+  }
+  L.push('**Alle Spieler je Profil [gemessen]** (beobachtete + Hintergrund-Bots, Stand letzter Tag; Leitkennzahl für den Sackgassen-Nachweis)');
+  L.push('');
+  L.push('| Profil | n | unter Startkapital | Ø Sackgassen-Tage | mit Beschlagnahme | mit Kredit | Ø Kredite | NW Median € |');
+  L.push('|---|---:|---:|---:|---:|---:|---:|---:|');
+  for (const id of ['A', 'B', 'C', 'D', 'E']) {
+    const a = s.allPlayers[id];
+    if (!a) continue;
+    L.push(`| ${id} ${PROFILES[id as ProfileId].name} | ${a.n} | **${Math.round(a.lossShare * 100)} %** | ${a.stuckDaysMean} | ${Math.round(a.confiscatedShare * 100)} % | ${Math.round(a.loanShare * 100)} % | ${a.loansMean} | ${fmt(a.nwMedianEur)} |`);
   }
   L.push('');
   L.push('**Markt und Geldmenge [gemessen]**');

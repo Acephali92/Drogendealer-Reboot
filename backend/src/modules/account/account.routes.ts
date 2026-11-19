@@ -5,8 +5,12 @@ import { deleteAccount, exportAccountData } from './account.service.js';
 const deleteAccountSchema = z.object({ password: z.string().min(1).max(128) });
 
 /** Account self-service (ADR-015 / T-306). Registered under /players inside the authenticated scope. */
-const accountRoutes: FastifyPluginAsync = async (app) => {
-  const rateLimit = { rateLimit: { max: 5, timeWindow: '1 minute' } };
+export interface AccountRoutesOptions {
+  rateLimitMax: number;
+}
+
+const accountRoutes: FastifyPluginAsync<AccountRoutesOptions> = async (app, opts) => {
+  const rateLimit = { rateLimit: { max: opts.rateLimitMax, timeWindow: '1 minute' } };
 
   app.get('/me/export', { config: rateLimit }, async (request, reply) => {
     const data = await exportAccountData(app.prisma, request.user.sub);

@@ -1,6 +1,9 @@
 import type { PrismaClient } from '@prisma/client';
-import { withImage, type GameParameters } from '../../domain/index.js';
-import { citySummarySelect } from '../world/world.selects.js';
+import type { GameParameters } from '../../domain/index.js';
+import { serialize } from '../../lib/serialize.js';
+import { citySummaryView, vehicleTypeView } from '../catalog/catalog.js';
+
+const row = { select: { id: true, slug: true } } as const;
 
 /**
  * The player's travel in progress, or null.
@@ -16,14 +19,20 @@ export async function getCurrentTravel(prisma: PrismaClient, params: GameParamet
       status: true,
       departedAt: true,
       arrivesAt: true,
-      fromCity: { select: citySummarySelect },
-      toCity: { select: citySummarySelect },
-      vehicle: { select: { id: true, vehicleType: { select: { slug: true, name: true } } } },
+      fromCity: row,
+      toCity: row,
+      vehicle: { select: { id: true, vehicleType: row } },
     },
   });
   if (!travel) return { travel: null };
-  const vehicle = travel.vehicle
-    ? { ...travel.vehicle, vehicleType: withImage(params, 'vehicles', travel.vehicle.vehicleType) }
-    : null;
-  return { travel: { ...travel, vehicle } };
+  return serialize({
+    travel: {
+      ...travel,
+      fromCity: citySummaryView(params, travel.fromCity),
+      toCity: citySummaryView(params, travel.toCity),
+      vehicle: travel.vehicle
+        ? { id: travel.vehicle.id, vehicleType: vehicleTypeView(params, travel.vehicle.vehicleType) }
+        : null,
+    },
+  });
 }

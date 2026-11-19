@@ -1,87 +1,107 @@
 import type { PrismaClient } from '@prisma/client';
-import { withImage, type GameParameters } from '../../domain/index.js';
+import { equilibriumPrice, roundHalfUp, type GameParameters } from '../../domain/index.js';
 import { notFound } from '../../lib/errors.js';
 import { serialize } from '../../lib/serialize.js';
-import { citySelect, citySummarySelect, commoditySelect } from './world.selects.js';
+import { citySummaryView, cityView, commodityView } from '../catalog/catalog.js';
+import { catalogRowSelect } from './world.selects.js';
+
+/** Equilibrium price P* (F-ECO-07) in whole cents, commercially rounded (display value, README §2). */
+const referencePrice = (params: GameParameters, cid: string, g: string): bigint =>
+  roundHalfUp(equilibriumPrice(params, cid, g));
 
 const cityNotFound = (slug: string) => notFound('CITY_NOT_FOUND', `City '${slug}' does not exist`);
 
-export async function listCities(prisma: PrismaClient) {
-  const cities = await prisma.city.findMany({ select: citySelect, orderBy: { name: 'asc' } });
-  return { cities };
+/** All locations (earth cities first, then space), values from parameters.toml. */
+export async function listCities(prisma: PrismaClient, params: GameParameters) {
+  const rows = await prisma.city.findMany({ select: catalogRowSelect });
+  const cities = rows
+    .map((r) => cityView(params, r))
+    .sort((a, b) => (a.realm === b.realm ? a.name.localeCompare(b.name) : a.realm === 'earth' ? -1 : 1));
+  return serialize({ cities });
 }
 
-export async function getCity(prisma: PrismaClient, slug: string) {
-  const city = await prisma.city.findUnique({
-    where: { slug },
-    select: {
-      ...citySelect,
-      connectionsFrom: {
-        select: { toCityId: true, distanceKm: true, toCity: { select: citySummarySelect } },
-        orderBy: { distanceKm: 'asc' },
-      },
-    },
-  });
-  if (!city) throw cityNotFound(slug);
-  const { connectionsFrom, ...rest } = city;
-  return { city: { ...rest, connections: connectionsFrom } };
+/** City details with road connections from [distances] (travel options follow with T-119). */
+export async function getCity(prisma: PrismaClient, params: GameParameters, slug: string) {
+  const rows = await prisma.city.findMany({ select: catalogRowSelect });
+  const row = rows.find((r) => r.slug === slug);
+  if (!row) throw cityNotFound(slug);
+  const bySlug = new Map(rows.map((r) => [r.slug, r]));
+
+  const connections = Object.entries(params.distances)
+    .map(([key, distanceKm]) => {
+      const [a, b] = key.split('-') as [string, string];
+      const other = a === slug ? b : b === slug ? a : null;
+      const target = other ? bySlug.get(other) : undefined;
+      return target ? { toCityId: target.id, toCity: citySummaryView(params, target), distanceKm } : null;
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null)
+    .sort((x, y) => x.distanceKm - y.distanceKm);
+
+  return serialize({ city: { ...cityView(params, row), connections } });
 }
 
+/**
+ * Market of a city: current state per good plus the equilibrium price P* (F-ECO-07).
+ * Buy/sell prices for an order follow with the trade formulas (T-103).
+ */
 export async function getCityMarket(prisma: PrismaClient, params: GameParameters, slug: string) {
   const city = await prisma.city.findUnique({
     where: { slug },
     select: {
-      ...citySummarySelect,
-      marketPrices: {
+      ...catalogRowSelect,
+      marketStates: {
         select: {
-          buyPrice: true,
-          sellPrice: true,
-          supply: true,
+          stock: true,
+          activeEvent: true,
+          eventTicksLeft: true,
           updatedAt: true,
-          commodity: { select: commoditySelect },
+          commodity: { select: catalogRowSelect },
         },
-        orderBy: { commodity: { name: 'asc' } },
       },
     },
   });
   if (!city) throw cityNotFound(slug);
-  const { marketPrices, ...summary } = city;
-  return serialize({
-    city: summary,
-    prices: marketPrices.map((p) => ({ ...p, commodity: withImage(params, 'goods', p.commodity) })),
-  });
+  const markets = city.marketStates
+    .map((m) => ({
+      commodity: commodityView(params, m.commodity),
+      stock: m.stock,
+      referencePrice: referencePrice(params, slug, m.commodity.slug),
+      activeEvent: m.activeEvent,
+      eventTicksLeft: m.eventTicksLeft,
+      updatedAt: m.updatedAt,
+    }))
+    .sort((a, b) => a.commodity.name.localeCompare(b.commodity.name));
+  return serialize({ city: citySummaryView(params, city), markets });
 }
 
-/** For every commodity: the cheapest city to buy and the best city to sell. */
+/** For every good: the city with the lowest and the highest equilibrium price. */
 export async function getMarketOverview(prisma: PrismaClient, params: GameParameters) {
-  const prices = await prisma.marketPrice.findMany({
-    select: {
-      buyPrice: true,
-      sellPrice: true,
-      updatedAt: true,
-      city: { select: citySummarySelect },
-      commodity: { select: commoditySelect },
-    },
+  const states = await prisma.marketState.findMany({
+    select: { city: { select: catalogRowSelect }, commodity: { select: catalogRowSelect } },
   });
 
-  type Price = (typeof prices)[number];
-  const byCommodity = new Map<string, { commodity: Price['commodity']; bestBuy: Price; bestSell: Price }>();
-  for (const p of prices) {
-    const entry = byCommodity.get(p.commodity.id);
-    if (!entry) {
-      byCommodity.set(p.commodity.id, { commodity: p.commodity, bestBuy: p, bestSell: p });
+  type Entry = { city: { id: string; slug: string }; price: bigint };
+  const byGood = new Map<string, { commodity: { id: string; slug: string }; low: Entry; high: Entry }>();
+  for (const s of states) {
+    const entry: Entry = {
+      city: s.city,
+      price: referencePrice(params, s.city.slug, s.commodity.slug),
+    };
+    const current = byGood.get(s.commodity.slug);
+    if (!current) {
+      byGood.set(s.commodity.slug, { commodity: s.commodity, low: entry, high: entry });
       continue;
     }
-    if (p.buyPrice < entry.bestBuy.buyPrice) entry.bestBuy = p;
-    if (p.sellPrice > entry.bestSell.sellPrice) entry.bestSell = p;
+    if (entry.price < current.low.price) current.low = entry;
+    if (entry.price > current.high.price) current.high = entry;
   }
 
-  const commodities = [...byCommodity.values()]
-    .sort((a, b) => a.commodity.name.localeCompare(b.commodity.name))
-    .map(({ commodity, bestBuy, bestSell }) => ({
-      commodity: withImage(params, 'goods', commodity),
-      lowestBuy: { city: bestBuy.city, price: bestBuy.buyPrice, updatedAt: bestBuy.updatedAt },
-      highestSell: { city: bestSell.city, price: bestSell.sellPrice, updatedAt: bestSell.updatedAt },
-    }));
+  const commodities = [...byGood.values()]
+    .map(({ commodity, low, high }) => ({
+      commodity: commodityView(params, commodity),
+      lowestPrice: { city: citySummaryView(params, low.city), referencePrice: low.price },
+      highestPrice: { city: citySummaryView(params, high.city), referencePrice: high.price },
+    }))
+    .sort((a, b) => a.commodity.name.localeCompare(b.commodity.name));
   return serialize({ commodities });
 }

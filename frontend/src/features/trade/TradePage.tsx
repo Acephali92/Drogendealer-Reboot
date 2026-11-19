@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowDownRight, ArrowUpRight, Minus, ShoppingCart, Tag } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Info, Megaphone, Minus, ShoppingCart, Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { MarketEntry, TradeSide, Trend } from '@/api/types';
 import { useMarket, useOverview } from '@/api/queries';
@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Tabs } from '@/components/ui/Tabs';
 import { CommodityImage } from '@/components/ui/GameImages';
 import { ErrorState, Skeleton } from '@/components/ui/Feedback';
-import { formatNumber, formatWeight, multiplyMoney, percentDelta, toCents } from '@/lib/money';
+import { formatNumber, formatVolume, multiplyMoney, percentDelta, toCents } from '@/lib/money';
+import { eventLabel } from '@/lib/events';
 import { cn } from '@/lib/cn';
 import { TravelProgress } from '@/features/city/TravelProgress';
 import { TradeDialog } from './TradeDialog';
@@ -23,6 +24,24 @@ export function TrendIcon({ trend, className }: { trend: Trend; className?: stri
   if (trend === 'DOWN')
     return <ArrowDownRight className={cn('h-4 w-4 text-neon', className)} aria-label="fällt" />;
   return <Minus className={cn('h-4 w-4 text-ink-faint', className)} aria-label="stabil" />;
+}
+
+/** Aktives Marktereignis (Razzia, Lieferung, Stadtfest) mit Anzeigenamen aus parameters.toml. */
+export function EventBadge({ entry }: { entry: Pick<MarketEntry, 'activeEvent' | 'eventTicksLeft'> }) {
+  const { t } = useTranslation();
+  const label = eventLabel(entry.activeEvent);
+  if (!label) return null;
+  return (
+    <Badge tone="warn" className="normal-case tracking-normal">
+      <Megaphone className="h-3 w-3" aria-hidden />
+      {label}
+      {entry.eventTicksLeft !== null && (
+        <span className="font-normal opacity-80">
+          · {t('market.eventTicks', { n: entry.eventTicksLeft })}
+        </span>
+      )}
+    </Badge>
+  );
 }
 
 type Filter = 'all' | 'owned';
@@ -41,7 +60,7 @@ export function TradePage() {
     return w ? { slug: w, side: 'BUY' } : null;
   });
 
-  /** Beste Preise in ganz Europa je Ware (aus /market/overview). */
+  /** Höchster Richtpreis in ganz Europa je Ware (aus /market/overview). */
   const best = useMemo(() => new Map((overview.data ?? []).map((r) => [r.commodity.id, r])), [overview.data]);
 
   const ownedBy = useMemo(
@@ -52,9 +71,9 @@ export function TradePage() {
   const rows = useMemo(() => {
     let list = [...(market.data ?? [])];
     if (filter === 'owned') list = list.filter((m) => (ownedBy.get(m.commodity.id)?.quantity ?? 0) > 0);
-    const deal = (m: MarketEntry) => percentDelta(m.buyPrice, m.commodity.basePrice) ?? 0;
+    const deal = (m: MarketEntry) => percentDelta(m.referencePrice, m.commodity.basePrice) ?? 0;
     if (sort === 'name') list.sort((a, b) => a.commodity.name.localeCompare(b.commodity.name, 'de'));
-    if (sort === 'price') list.sort((a, b) => Number(toCents(b.buyPrice) - toCents(a.buyPrice)));
+    if (sort === 'price') list.sort((a, b) => Number(toCents(b.referencePrice) - toCents(a.referencePrice)));
     if (sort === 'deal') list.sort((a, b) => deal(a) - deal(b));
     return list;
   }, [market.data, filter, sort, ownedBy]);
@@ -95,14 +114,19 @@ export function TradePage() {
         />
       </div>
 
+      <p className="mb-5 flex items-start gap-2 text-xs text-ink-faint">
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        {t('trade.priceNote')}
+      </p>
+
       {market.isError && <ErrorState error={market.error} onRetry={() => market.refetch()} />}
       <div className="grid gap-4 xl:grid-cols-2">
         {market.isPending && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-56" />)}
         {rows.map((m, i) => {
           const own = ownedBy.get(m.commodity.id);
           const ownedQty = own?.quantity ?? 0;
-          const b = best.get(m.commodity.id);
-          const vsBase = percentDelta(m.buyPrice, m.commodity.basePrice);
+          const top = best.get(m.commodity.id)?.highestPrice;
+          const vsBase = percentDelta(m.referencePrice, m.commodity.basePrice);
           return (
             <article
               key={m.commodity.id}
@@ -110,20 +134,17 @@ export function TradePage() {
               style={{ animationDelay: `${i * 30}ms` }}
             >
               <header className="panel-header">
-                <div className="flex min-w-0 items-center gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <h2 className="truncate font-display font-semibold text-ink">{m.commodity.name}</h2>
-                  <Badge tone={m.commodity.illegal ? 'danger' : 'neon'}>
-                    {m.commodity.illegal ? t('trade.illegal') : t('trade.legal')}
-                  </Badge>
+                  <EventBadge entry={m} />
                 </div>
                 <TrendIcon trend={m.trend} />
               </header>
               <div className="p-4">
-                <p className="mb-4 text-sm text-ink-muted">{m.commodity.description}</p>
-                {b?.highestSell && b.highestSell.city.id !== city.id && (
-                  <p className="-mt-2 mb-4 text-xs text-ink-faint">
-                    {t('trade.bestSellHint')} <Money value={b.highestSell.price} className="text-brass" />{' '}
-                    {t('trade.in')} <span className="text-brass">{b.highestSell.city.name}</span>
+                {top && top.city.id !== city.id && (
+                  <p className="mb-4 text-xs text-ink-faint">
+                    {t('trade.bestSellHint')} <Money value={top.referencePrice} className="text-brass" />{' '}
+                    {t('trade.in')} <span className="text-brass">{top.city.name}</span>
                   </p>
                 )}
                 <div className="flex gap-4">
@@ -134,20 +155,20 @@ export function TradePage() {
                     <dl className="space-y-1.5 text-sm">
                       <p className="mb-1 font-semibold text-ink">{city.name}</p>
                       <div className="flex justify-between gap-2">
-                        <dt className="text-ink-muted">{t('trade.buyPrice')}</dt>
+                        <dt className="text-ink-muted">{t('trade.referencePrice')}</dt>
                         <dd>
-                          <Money value={m.buyPrice} className="font-semibold text-ink" />
+                          <Money value={m.referencePrice} className="font-semibold text-ink" />
                         </dd>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <dt className="text-ink-muted">{t('trade.sellPrice')}</dt>
-                        <dd>
-                          <Money value={m.sellPrice} className="text-ink" />
-                        </dd>
+                        <dt className="text-ink-muted">{t('trade.stock')}</dt>
+                        <dd className="num text-ink">{formatNumber(m.stock)}</dd>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <dt className="text-ink-muted">{t('trade.available')}</dt>
-                        <dd className="num text-ink">{formatNumber(m.supply)}</dd>
+                        <dt className="text-ink-muted">{t('trade.volume')}</dt>
+                        <dd className="num text-ink">
+                          {t('trade.perUnitVolume', { v: formatVolume(m.commodity.unitVolume) })}
+                        </dd>
                       </div>
                       {vsBase !== null && (
                         <div className="flex justify-between gap-2">
@@ -171,7 +192,7 @@ export function TradePage() {
                         <dd className="num text-ink">
                           {formatNumber(ownedQty)}{' '}
                           <span className="text-ink-faint">
-                            ({formatWeight(ownedQty * m.commodity.unitWeightG)})
+                            ({formatVolume(ownedQty * m.commodity.unitVolume)})
                           </span>
                         </dd>
                       </div>
@@ -185,7 +206,7 @@ export function TradePage() {
                         <dt className="text-ink-muted">{t('trade.value')}</dt>
                         <dd>
                           <Money
-                            value={multiplyMoney(m.sellPrice, ownedQty)}
+                            value={multiplyMoney(m.referencePrice, ownedQty)}
                             className="font-semibold text-neon"
                           />
                         </dd>

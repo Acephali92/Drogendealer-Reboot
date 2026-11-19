@@ -16,6 +16,8 @@ const envSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
+  /** Requests per minute for account export and deletion. */
+  ACCOUNT_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
   /** Path to parameters.toml; default: <repo>/docs/game-design/parameters.toml. */
   GAME_PARAMETERS_PATH: z.string().min(1).optional(),
 });

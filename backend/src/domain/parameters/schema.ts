@@ -43,21 +43,8 @@ const name = z.string().min(1, 'must not be empty');
 export const CLAN_RANKS = ['GODFATHER', 'CONSIGLIERE', 'CAPO', 'SOLDIER', 'ASSOCIATE'] as const;
 export type ClanRank = (typeof CLAN_RANKS)[number];
 
-/**
- * TRANSITIONAL (until T-117): parameters.toml still uses the former German values. They are
- * mapped to the technical values and reported as warnings (see legacyRankWarnings).
- */
-export const LEGACY_CLAN_RANKS: Readonly<Record<string, ClanRank>> = {
-  PATE: 'GODFATHER',
-  SOLDAT: 'SOLDIER',
-  MITLAEUFER: 'ASSOCIATE',
-};
-
-const rank = z
-  .enum([...CLAN_RANKS, ...(Object.keys(LEGACY_CLAN_RANKS) as [string, ...string[]])], {
-    error: `rank must be one of ${CLAN_RANKS.join(', ')}`,
-  })
-  .transform((v): ClanRank => LEGACY_CLAN_RANKS[v] ?? (v as ClanRank));
+/** Only the technical values are accepted (ADR-021; the German transition values ended with T-117). */
+const rank = z.enum(CLAN_RANKS, { error: `rank must be one of ${CLAN_RANKS.join(', ')}` });
 
 /** Image categories (ADR-020) = folder under frontend/public/images/. */
 export const IMAGE_CATEGORIES = ['goods', 'vehicles', 'weapons', 'armor', 'crew', 'ships'] as const;
@@ -543,9 +530,12 @@ const npc = z
   })
   .strict();
 
-/** "section.key" → [min, max] for the invariant check. */
+/**
+ * Dotted path to a numeric parameter → [min, max] for the invariant check. Paths may be nested,
+ * e.g. "economy.elasticity" or "laundering.tiers.strawman.rate" (T-120).
+ */
 const bounds = z.record(
-  z.string().regex(/^[a-z_]+\.[a-z_]+$/, 'key must be "section.key"'),
+  z.string().regex(/^[a-z_]+(\.[a-z0-9_]+)+$/, 'key must be a dotted path like "section.key"'),
   z.tuple([real, real]),
 );
 

@@ -82,7 +82,8 @@ export interface Params {
     control_base: number;
     control_segment_max: number;
     cargo_heat_half: number;
-    fine_rate: number;
+    /** entfällt mit ADR-023 (T-120) */
+    fine_rate?: number;
     heat_on_bust: number;
     bribe_cost_rate: number;
     bribe_base_success: number;
@@ -103,7 +104,38 @@ export interface Params {
   unlocks: Record<string, { field?: string; level?: number; level_sum?: number; white_cash?: number; networth?: number }>;
   trade: { spread_base: number; max_trade_share: number; slippage_tolerance?: number };
   bounds?: Record<string, [number, number]>;
+  /** ADR-023 / T-120 (Agent 2, money-laundering.md F-ML-07…10). Optional, bis der PR in main ist. */
+  laundering?: { tiers?: Record<string, WashTier> } & Record<string, unknown>;
+  loan_shark?: LoanShark;
   [section: string]: unknown;
+}
+
+export interface WashTier {
+  name: string;
+  tier: number;
+  min_level: number;
+  /** W0 Glücksspiel: Kurs gleichverteilt in [rate_min, rate_max] */
+  rate_min?: number;
+  rate_max?: number;
+  daily_cap_base?: number;
+  daily_cap_per_level?: number;
+  /** W1, W3, W4: Festkurs */
+  rate?: number;
+  daily_cap?: number;
+  min_amount?: number;
+  papers_probability_per_day?: number;
+  papers_lookback_ticks?: number;
+  papers_confiscation_rate?: number;
+}
+
+export interface LoanShark {
+  name: string;
+  amount: number;
+  max_assets: number;
+  max_vehicles: number;
+  max_weapons: number;
+  repayment_rate: number;
+  repay_factor: number;
 }
 
 export interface LoadedToml<T> {

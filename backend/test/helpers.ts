@@ -11,6 +11,7 @@ export async function createTestApp(overrides: Record<string, string> = {}): Pro
     DATABASE_URL: process.env.TEST_DATABASE_URL,
     JWT_SECRET: 'test-secret-that-is-definitely-longer-than-32-characters',
     AUTH_RATE_LIMIT_MAX: '1000',
+    ACCOUNT_RATE_LIMIT_MAX: '1000',
     ...overrides,
   });
   const app = await buildApp(env);

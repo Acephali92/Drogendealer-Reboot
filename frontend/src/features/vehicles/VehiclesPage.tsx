@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Gauge, Lock, Package, Wrench } from 'lucide-react';
+import { EyeOff, Fuel, Gauge, Package, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Vehicle } from '@/api/types';
 import {
@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState, Skeleton } from '@/components/ui/Feedback';
-import { formatMoney, formatWeight, toCents } from '@/lib/money';
+import { formatMoney, formatPercent, formatVolume, toCents } from '@/lib/money';
 import { errorMessage } from '@/lib/errors';
 import { toast } from '@/stores/toast';
 import { cn } from '@/lib/cn';
@@ -79,7 +79,7 @@ export function VehiclesPage() {
                   <Spec
                     icon={<Package className="h-3 w-3" />}
                     label={t('vehicles.capacity')}
-                    value={formatWeight(v.vehicleType.capacityG)}
+                    value={formatVolume(v.vehicleType.capacity)}
                   />
                   <Spec
                     icon={<Gauge className="h-3 w-3" />}
@@ -135,7 +135,6 @@ export function VehiclesPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {types.isPending && Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-60" />)}
           {types.data?.map((vt, i) => {
-            const locked = vt.licenseClass !== null && player.level < vt.licenseClass;
             const poor = toCents(vt.price) > toCents(player.cash);
             return (
               <article
@@ -145,12 +144,6 @@ export function VehiclesPage() {
               >
                 <div className="relative grid h-32 place-items-center bg-gradient-to-b from-surface-3/60 to-surface">
                   <VehicleImage type={vt} size={112} />
-                  {vt.licenseClass !== null && (
-                    <Badge tone={locked ? 'danger' : 'neutral'} className="absolute left-3 top-3">
-                      {locked && <Lock className="h-3 w-3" />}
-                      {t('vehicles.licenseClass', { n: vt.licenseClass })}
-                    </Badge>
-                  )}
                 </div>
                 <div className="p-4">
                   <div className="flex items-baseline justify-between gap-2">
@@ -160,22 +153,32 @@ export function VehiclesPage() {
                       className={cn('font-semibold', poor ? 'text-danger' : 'text-brass')}
                     />
                   </div>
-                  <dl className="mt-3 grid grid-cols-2 gap-2">
+                  <dl className="mt-3 grid grid-cols-2 gap-x-2 gap-y-3">
                     <Spec
                       icon={<Package className="h-3 w-3" />}
                       label={t('vehicles.capacity')}
-                      value={formatWeight(vt.capacityG)}
+                      value={formatVolume(vt.capacity)}
                     />
                     <Spec
                       icon={<Gauge className="h-3 w-3" />}
                       label={t('vehicles.speed')}
                       value={`${vt.speedKmh} km/h`}
                     />
+                    <Spec
+                      icon={<Fuel className="h-3 w-3" />}
+                      label={t('vehicles.consumption')}
+                      value={`${vt.consumptionPer100Km.toLocaleString('de-DE')} l/100 km`}
+                    />
+                    <Spec
+                      icon={<EyeOff className="h-3 w-3" />}
+                      label={t('vehicles.hide')}
+                      value={formatPercent(vt.hide)}
+                    />
                   </dl>
                   <Button
                     className="mt-4 w-full"
-                    variant={locked || poor ? 'outline' : 'primary'}
-                    disabled={locked || poor || traveling}
+                    variant={poor ? 'outline' : 'primary'}
+                    disabled={poor || traveling}
                     loading={buy.isPending && buy.variables === vt.id}
                     onClick={() =>
                       buy.mutate(vt.id, {
@@ -184,7 +187,7 @@ export function VehiclesPage() {
                       })
                     }
                   >
-                    {locked ? t('vehicles.licenseLocked', { n: vt.licenseClass }) : t('vehicles.buy')}
+                    {t('vehicles.buy')}
                   </Button>
                 </div>
               </article>

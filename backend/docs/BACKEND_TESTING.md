@@ -1,6 +1,6 @@
 # Backend-Tests
 
-> Verantwortlich: Agent 3. Stand: 2026-11-09 (T-101). Insgesamt 302 Testfälle, alle grün: 85 Integrationstests und 217 Unit-Tests der Domain-Schicht. Gezählt sind Testfälle, also bei `it.each` jede Zeile einzeln.
+> Verantwortlich: Agent 3. Stand: 2026-11-15 (Datenmodell v2). Insgesamt 338 Testfälle, alle grün: 93 Integrationstests und 245 Unit-Tests der Domain-Schicht. Gezählt sind Testfälle, also bei `it.each` jede Zeile einzeln.
 
 ## 1. Testarten
 
@@ -22,27 +22,31 @@ Die CI (`.github/workflows/backend.yml`) führt alles in dieser Reihenfolge aus:
 
 ## 3. Hilfsmittel
 
-| Datei              | Inhalt                                                                                                                                                                                                                      |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test/helpers.ts`  | `createTestApp(overrides)` (App mit Test-ENV), `truncateAll`, `register`, `validUser`                                                                                                                                       |
-| `test/fixtures.ts` | Factories für Testdaten: `createUser`, `createCity`, `connectCities`, `createCommodity`, `setPrice`, `createVehicleType`, `createClan`, `auth()`. **Nur für Tests.** Die Namen sind fiktiv (ADR-013) und keine Spielinhalte |
+| Datei              | Inhalt                                                                                                                                                                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test/helpers.ts`  | `createTestApp(overrides)` (App mit Test-ENV), `truncateAll`, `register`, `validUser`                                                                                                                                                                           |
+| `test/fixtures.ts` | Factories: `createUser`, `createCity`/`createCommodity`/`createVehicleType`/`createEquipmentType` (Upsert **echter Schlüssel** aus `parameters.toml`), `setMarket`, `addLot` (Los + Warenbewegung), `createClan`, `auth()`, `TEST_PASSWORD`. **Nur für Tests.** |
 
 ## 4. Bestand nach Datei
 
-| Datei                       | Tests | Schwerpunkte                                                                                                                                                                                  |
-| --------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth.test.ts`              | 22    | Registrierung inkl. Altersbestätigung, Login, Refresh-Rotation, Erkennung wiederverwendeter Tokens, Logout, 404, Rate-Limit                                                                   |
-| `social.test.ts`            | 35    | 401 auf allen geschützten Routen, Profil, Online-Liste, Kontobuch, Clans, Ranglisten, Benachrichtigungen, Ticker                                                                              |
-| `world.test.ts`             | 9     | Städte, Markt, Marktübersicht (BigInt > 2³¹), Inventar/Kapazität, Fahrzeuge, Ausrüstung, Reise                                                                                                |
-| `price-journal.test.ts`     | 6     | Trigger: Erstpreis, Ursache und Referenz, kein Übergreifen des Kontexts auf andere Transaktionen, keine Zeile ohne Änderung, append-only, Restrict                                            |
-| `account.test.ts`           | 5     | Export ohne Hashes, Löschung mit Passwort, Clan-Bereinigung                                                                                                                                   |
-| `password.test.ts`          | 4     | argon2id, Token-Hash, `serialize`                                                                                                                                                             |
-| `domain/rng.test.ts`        | 154   | F-GLB-01 bitgenau und F-GLB-02 innerhalb von 4 ULP gegen 72 Referenzwerte aus `verify.py`, EX-GLB-01, Strom-API, Grenzen                                                                      |
-| `domain/sha256.test.ts`     | 10    | FIPS-180-4-Testvektoren, Abgleich mit `node:crypto`, UTF-8                                                                                                                                    |
-| `domain/parameters.test.ts` | 22    | echte `parameters.toml` gültig, Parser-Konformität zu Python `tomllib`, 15 Negativfälle mit genauem Pfad, Fail-fast                                                                           |
-| `parameters.test.ts`        | 4     | Start mit echten Parametern, `hp_max` für neue Spieler, Startabbruch bei fehlender oder fehlerhafter Datei                                                                                    |
-| `domain/money.test.ts`      | 24    | Rundung bei negativen Werten, Rundungsrichtung, **Aufteilen eines Handels erzeugt kein Geld**, Faktor-Grenzen, Parsing und `ceilCt`/`floorCt`/`roundHalfUp` mit Toleranz 10⁻⁹ wie `verify.py` |
-| `domain/time.test.ts`       | 7     | Tick-Grenzen, ungültige Eingaben, Aufholen verpasster Ticks                                                                                                                                   |
+| Datei                       | Tests | Schwerpunkte                                                                                                                                                                                              |
+| --------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.test.ts`              | 22    | Registrierung inkl. Altersbestätigung und **Startkapital als Journalbuchung**, Login, Refresh-Rotation, Erkennung wiederverwendeter Tokens, Logout, 404, Rate-Limit                                       |
+| `social.test.ts`            | 35    | 401 auf allen geschützten Routen, Profil, Online-Liste, Kontobuch, Clans, Ranglisten, Benachrichtigungen, Ticker                                                                                          |
+| `world.test.ts`             | 9     | Städte, Verbindungen und Markt mit Werten aus `parameters.toml`, `referencePrice` gegen EX-ECO-01, Float-Bestand, Inventar in Volumeneinheiten (Rucksack + Fahrzeug), Katalog Fahrzeuge/Ausrüstung, Reise |
+| `journals.test.ts`          | 7     | Marktzustands-Journal (Ursache, `refId`, Tick, kein Kontext-Leck, Countdown ohne Eintrag), append-only für **alle** Journale, Restrict, `bookMoney` mit Überziehungsschutz und Invariante M-1             |
+| `account.test.ts`           | 6     | Export v2 ohne Hashes; Löschung nach ADR-017: Pseudonym, Vermögen per Journal ausgebucht, **Konsistenztest Σ Journal = Projektion**, Ranglisten ohne gelöschte Spieler, Clan-Auflösung mit Kassenbuchung  |
+| `password.test.ts`          | 4     | argon2id, Token-Hash, `serialize`                                                                                                                                                                         |
+| `domain/rng.test.ts`        | 154   | F-GLB-01 bitgenau und F-GLB-02 innerhalb von 4 ULP gegen 72 Referenzwerte aus `verify.py`, EX-GLB-01, Strom-API, Grenzen                                                                                  |
+| `domain/sha256.test.ts`     | 10    | FIPS-180-4-Testvektoren, Abgleich mit `node:crypto`, UTF-8                                                                                                                                                |
+| `domain/parameters.test.ts` | 42    | echte `parameters.toml` gültig, Parser-Konformität zu Python `tomllib`, 15 Negativfälle mit genauem Pfad, Fail-fast                                                                                       |
+| `parameters.test.ts`        | 4     | Start mit echten Parametern, `hp_max` für neue Spieler, Startabbruch bei fehlender oder fehlerhafter Datei                                                                                                |
+| `catalog.test.ts`           | 2     | Katalog-Sync legt alle Schlüssel an (idempotent), unbekannte Schlüssel oder falscher Slot brechen den Start ab                                                                                            |
+| `images.test.ts`            | 4     | `image` in Markt, Übersicht, Inventar, Fahrzeugen, Reise, Ausrüstung je Slot; `GET /images`                                                                                                               |
+| `domain/economy.test.ts`    | 4     | `equilibriumPrice` gegen EX-ECO-01, `loc`, `multipliers`, `markets`                                                                                                                                       |
+| `domain/images.test.ts`     | 4     | `imageFor` inkl. Prototyp-Schlüssel, Fallbacks                                                                                                                                                            |
+| `domain/money.test.ts`      | 24    | Rundung bei negativen Werten, Rundungsrichtung, **Aufteilen eines Handels erzeugt kein Geld**, Faktor-Grenzen, Parsing und `ceilCt`/`floorCt`/`roundHalfUp` mit Toleranz 10⁻⁹ wie `verify.py`             |
+| `domain/time.test.ts`       | 7     | Tick-Grenzen, ungültige Eingaben, Aufholen verpasster Ticks                                                                                                                                               |
 
 ## 5. Golden Vectors aus `verify.py`
 

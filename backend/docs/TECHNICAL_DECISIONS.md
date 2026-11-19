@@ -27,6 +27,8 @@
 
 ## TD-004 – Preisjournal per DB-Trigger mit transaktionslokalem Kontext
 
+> **Weitergeführt in TD-018:** Mit Datenmodell v2 journalisiert derselbe Mechanismus den Marktzustand (`MarketStateChange`).
+
 - **Kontext:** Jede Preisänderung muss rekonstruierbar sein (T-105, ADR-010), auch wenn Code am Service vorbei schreibt.
 - **Entscheidung:**
   - Ein `AFTER INSERT OR UPDATE`-Trigger auf `MarketPrice` schreibt `MarketPriceChange`.
@@ -119,6 +121,8 @@
 
 ## TD-015 – Spielparameter: Laden beim Start, vollständige Validierung, Fail-fast
 
+> **Nachtrag 2026-11-17:** `[bounds]` akzeptiert verschachtelte Pfade beliebiger Tiefe (z. B. `laundering.tiers.strawman.rate`, T-120). Aufgelöst wird nur über eigene Eigenschaften, Prototyp-Schlüssel werden nie getroffen. Seit ADR-024 passen Agent 2 und Agent 5 `schema.ts` bei neuen Schlüsseln im eigenen PR an; `validate.ts` bleibt bei Agent 3.
+
 - **Kontext:** `docs/game-design/parameters.toml` ist die einzige Quelle für Spielwerte (ARCHITECTURE §3, T-101).
 - **Entscheidung:**
   - **Parsen:** smol-toml mit `integersAsBigInt`. So bleiben Ganzzahl- und Gleitkomma-Literale unterscheidbar, und ein Geldbetrag wie `10.5` fällt auf.
@@ -134,6 +138,8 @@
 
 ## TD-016 – Bildfelder im Parameter-Schema (T-114a) und Übergang der Clan-Ränge (ADR-021)
 
+> **Nachtrag 2026-11-15:** T-117 ist in `main`; die Übergangsabbildung der deutschen Ränge ist entfernt. Es gelten nur noch die technischen Werte.
+
 - **Kontext:** ADR-020 führt optionale `image`-Felder und `[images]` mit `fallback.<kategorie>` in `parameters.toml` ein. Das strikte Schema (TD-015) würde diese Felder ablehnen. ADR-021 legt die Clan-Ränge technisch auf `GODFATHER/CONSIGLIERE/CAPO/SOLDIER/ASSOCIATE` fest; `parameters.toml` verwendet noch `PATE/SOLDAT/MITLAEUFER`, bis Agent 2 T-117 umsetzt.
 - **Entscheidung:**
   - **`image`** ist optional bei Waren, Fahrzeugen, Waffen, Rüstungen, Crew und Schiffen.
@@ -148,3 +154,43 @@
   - Agent 2 kann T-113 (Bildpfade) eintragen, ohne dass der Start bricht.
   - Nach T-117 entfernt ein Folge-Commit `LEGACY_CLAN_RANKS`, dann gilt die strikte Prüfung.
   - Die Auslieferung der Bilder über die API ist T-114.
+
+## TD-017 – Katalogwerte nur aus `parameters.toml`, DB hält nur Schlüssel
+
+- **Kontext:** Waren, Orte, Fahrzeuge und Ausrüstung standen mit Werten in der DB und in `parameters.toml`. Das Risiko war doppelte Pflege. Entscheidung des Users: eine Quelle; Agent 1 hat das ausdrücklich gewünscht.
+- **Entscheidung:**
+  - `City`, `Commodity`, `VehicleType` und `EquipmentType` enthalten nur `id` + `slug` (+ `slot`).
+  - Beim Start legt `syncCatalog()` fehlende Schlüssel an. Unbekannte Schlüssel oder ein falscher Slot brechen den Start ab.
+  - Die API-Sichten (`cityView`, `commodityView` …) setzen die Werte aus `app.gameParams` zusammen.
+- **Konsequenzen:**
+  - Werteänderungen brauchen keine Migration, nur eine Parameteränderung.
+  - Ein Schlüssel kann nicht aus `parameters.toml` entfernt werden, solange er in der DB steht; das schützt die Journale.
+  - Tests verwenden echte Schlüssel.
+
+## TD-018 – Marktzustand statt Preise speichern; Journal über Trigger
+
+- **Kontext:** economy.md §2: Gespeichert werden Bestand S und Rauschen x (beide Float) sowie das aktive Ereignis; der Preis ist abgeleitet. GAME_ECONOMY.md §7 T-2/T-6 verlangt dazu die Ursache `NPC` und den Tick.
+- **Entscheidung:** `MarketState` ersetzt `MarketPrice`, `MarketStateChange` ersetzt `MarketPriceChange`. Das Trigger-Muster aus TD-004 bleibt, erweitert um einen Tick-Kontext.
+- **Konsequenzen:**
+  - Historische Preise lassen sich aus Journal und Parametern rekonstruieren.
+  - Bis T-103 liefert die API nur den Gleichgewichtspreis (F-ECO-07) als `referencePrice`.
+
+## TD-019 – Geld nur über `bookMoney()`, bedingtes Update gegen Überziehung
+
+- **Kontext:** Invariante M-1 (Projektion = Σ Journal) und ADR-023 mit den zwei Konten Bargeld und Bank.
+- **Entscheidung:**
+  - `bookMoney(tx, { playerId, account, amount, reason, refId })` ist der einzige Schreibweg. Er macht ein bedingtes `updateMany` (`WHERE cash >= Betrag`) und schreibt danach die Journalzeile mit `balanceAfter`.
+  - Reicht das Guthaben nicht, kommt `422 INSUFFICIENT_FUNDS`, und die Transaktion wird zurückgerollt.
+  - Das Startkapital wird als `START_CAPITAL` gebucht.
+- **Konsequenzen:** Das Verfahren ist sicher bei gleichzeitigen Buchungen, ohne Lese-Schreib-Wettlauf. Künftige Geldbewegungen (Handel, Reisen, Wäsche) rufen nur diese Funktion auf.
+
+## TD-020 – Kontolöschung pseudonymisiert (ADR-017)
+
+- **Entscheidung:** Siehe `docs/database/DATA_MODEL.md` §5.
+  - Gelöscht wird der `User`; der `Player` bleibt mit Pseudonym (`Gelöschter Spieler #` + 10 Hex-Zeichen von SHA-256 der Spieler-ID) und dem Status `DELETED` erhalten.
+  - Das Vermögen wird über die Journale ausgebucht.
+  - Ein Clan ohne Mitglieder wird aufgelöst (`dissolvedAt`), seine Kasse wird per `DISSOLUTION` ausgebucht.
+- **Konsequenzen:**
+  - Journale bleiben vollständig, und der Konsistenztest gilt auch nach einer Löschung.
+  - Das Pseudonym lässt sich nicht auf Name oder E-Mail zurückführen.
+  - Ranglisten und die Online-Liste filtern `DELETED`.

@@ -165,8 +165,8 @@ describe('invalid parameters are rejected with a precise path', () => {
       'images.base_dir',
     ],
     [
-      'duplicate rank after mapping legacy names',
-      (r: Raw) => (section(r, 'clans').ranks = ['PATE', 'GODFATHER', 'CAPO', 'SOLDAT', 'MITLAEUFER']),
+      'duplicate rank',
+      (r: Raw) => (section(r, 'clans').ranks = ['GODFATHER', 'GODFATHER', 'CAPO', 'SOLDIER', 'ASSOCIATE']),
       'clans.ranks',
     ],
   ])('%s', (_name, mutate, path) => {
@@ -174,7 +174,7 @@ describe('invalid parameters are rejected with a precise path', () => {
     expect(issues.map((i) => i.path)).toContain(path);
   });
 
-  it('rejects ranks that are neither technical nor legacy values', () => {
+  it('rejects unknown rank values', () => {
     const issues = issuesFor((r) => (section(r, 'clans').ranks = ['GODFATHER', 'BOSS']));
     expect(issues.map((i) => i.path)).toContain('clans.ranks.1');
   });
@@ -195,6 +195,46 @@ describe('invalid parameters are rejected with a precise path', () => {
     expect(() =>
       parseGameParameters(PARAMETERS_TOML.replace('base_price = 1_000', 'base_price = 10.5')),
     ).toThrow(/goods\.gras\.base_price/);
+  });
+});
+
+describe('[bounds] with nested paths (T-120 prep)', () => {
+  const withBound = (path: string, range: [number, number]) => (r: Raw) => {
+    section(r, 'bounds')[path] = range;
+  };
+
+  it('accepts a bound on a nested numeric parameter that is in range', () => {
+    const volume = Number(section(raw(), 'goods', 'gras').volume);
+    const r = raw();
+    withBound('goods.gras.volume', [volume - 1, volume + 1])(r);
+    const result = validateGameParameters(r);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues));
+  });
+
+  it('reports a nested value outside its bounds with the full path', () => {
+    const volume = Number(section(raw(), 'goods', 'gras').volume);
+    const issues = issuesFor(withBound('goods.gras.volume', [volume + 1, volume + 5]));
+    expect(issues.map((i) => i.path)).toContain('goods.gras.volume');
+  });
+
+  it.each(['goods.gras.name', 'goods.nope.volume', 'goods.__proto__.x', 'goods.gras.volume.deeper'])(
+    'rejects %s as unknown or non-numeric',
+    (path) => {
+      const issues = issuesFor(withBound(path, [0, 1]));
+      expect(issues).toContainEqual(
+        expect.objectContaining({
+          path: `bounds.${path}`,
+          message: expect.stringMatching(/unknown or non-numeric/),
+        }),
+      );
+    },
+  );
+
+  it('rejects malformed bound keys', () => {
+    expect(issuesFor(withBound('economy', [0, 1])).map((i) => i.path)).toContain('bounds.economy');
+    expect(issuesFor(withBound('Economy.Elasticity', [0, 1])).map((i) => i.path)).toContain(
+      'bounds.Economy.Elasticity',
+    );
   });
 });
 
@@ -244,24 +284,27 @@ describe('clan ranks (ADR-021)', () => {
     expect([...CLAN_RANKS].sort()).toEqual(Object.values($Enums.ClanRole).sort());
   });
 
-  // Both tests set the rank values themselves, so they hold before and after T-117 changes the file.
-  it('maps the legacy German values and reports them as warnings (transition)', () => {
-    const r = raw();
-    const clans = section(r, 'clans');
-    clans.ranks = ['PATE', 'CONSIGLIERE', 'CAPO', 'SOLDAT', 'MITLAEUFER'];
-    clans.election_voter_min_rank = 'SOLDAT';
-    clans.election_candidate_min_rank = 'CAPO';
-    clans.no_confidence_min_rank = 'CAPO';
-    const result = validateGameParameters(r);
+  it('rejects the former German rank values since T-117 (ADR-021)', () => {
+    const issues = issuesFor((r) => {
+      const clans = section(r, 'clans');
+      clans.ranks = ['PATE', 'CONSIGLIERE', 'CAPO', 'SOLDAT', 'MITLAEUFER'];
+      clans.election_voter_min_rank = 'SOLDAT';
+    });
+    expect(issues.map((i) => i.path)).toEqual(
+      expect.arrayContaining([
+        'clans.ranks.0',
+        'clans.ranks.3',
+        'clans.ranks.4',
+        'clans.election_voter_min_rank',
+      ]),
+    );
+  });
+
+  it('loads the real parameters.toml with the technical rank values and no warnings', () => {
+    const result = validateGameParameters(raw());
     if (!result.ok) throw new Error(JSON.stringify(result.issues));
-    expect(result.params.clans.ranks).toEqual(['GODFATHER', 'CONSIGLIERE', 'CAPO', 'SOLDIER', 'ASSOCIATE']);
-    expect(result.params.clans.election_voter_min_rank).toBe('SOLDIER');
-    expect(result.warnings.map((w) => w.path)).toEqual([
-      'clans.ranks.0',
-      'clans.ranks.3',
-      'clans.ranks.4',
-      'clans.election_voter_min_rank',
-    ]);
+    expect(result.params.clans.ranks).toEqual([...CLAN_RANKS]);
+    expect(result.warnings).toEqual([]);
   });
 
   it('accepts the technical values without warnings (state after T-117)', () => {

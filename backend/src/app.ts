@@ -5,6 +5,7 @@ import rateLimit from '@fastify/rate-limit';
 import { corsOrigins, type Env } from './config/env.js';
 import prismaPlugin from './plugins/prisma.js';
 import { loadGameParameters } from './config/parameters.js';
+import { syncCatalog } from './modules/catalog/catalog.js';
 import type { GameParameters } from './domain/index.js';
 import authPlugin from './plugins/auth.js';
 import errorsPlugin from './plugins/errors.js';
@@ -65,6 +66,13 @@ export async function buildApp(env: Env, options: BuildAppOptions = {}): Promise
   // Rate limiting is opt-in per route (see auth routes).
   await app.register(rateLimit, { global: false });
   await app.register(prismaPlugin, { databaseUrl: env.DATABASE_URL });
+  // Catalog keys (goods, locations, vehicle/equipment types) must match parameters.toml (data model v2).
+  try {
+    await syncCatalog(app.prisma, gameParams);
+  } catch (err) {
+    await app.close();
+    throw err;
+  }
   await app.register(authPlugin, { secret: env.JWT_SECRET, accessTokenTtl: env.ACCESS_TOKEN_TTL });
 
   await app.register(
@@ -81,7 +89,7 @@ export async function buildApp(env: Env, options: BuildAppOptions = {}): Promise
       await api.register(async (game) => {
         game.addHook('onRequest', app.authenticate);
         await game.register(playerRoutes, { prefix: '/players' });
-        await game.register(accountRoutes, { prefix: '/players' });
+        await game.register(accountRoutes, { prefix: '/players', rateLimitMax: env.ACCOUNT_RATE_LIMIT_MAX });
         await game.register(worldRoutes);
         await game.register(inventoryRoutes);
         await game.register(vehicleRoutes);
