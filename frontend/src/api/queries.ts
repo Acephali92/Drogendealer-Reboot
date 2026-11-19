@@ -11,7 +11,7 @@ import {
   vehicleApi,
   worldApi,
 } from './endpoints';
-import type { RankingType, TradeSide } from './types';
+import type { RankingType, TradeSide, TravelMode } from './types';
 
 /** Zentrale Query-Keys – Invalidierungen laufen nur hierüber. */
 export const qk = {
@@ -129,7 +129,8 @@ export function useTrade() {
 export function useStartTravel() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: travelApi.start,
+    mutationFn: ({ toCityId, mode }: { toCityId: string; mode: TravelMode }) =>
+      travelApi.start(toCityId, mode),
     onSuccess: (t) => {
       qc.setQueryData(qk.travel, t);
       void qc.invalidateQueries({ queryKey: qk.me });

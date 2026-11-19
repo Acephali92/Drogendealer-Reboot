@@ -2,6 +2,7 @@ import { delay, http, HttpResponse, type HttpHandler } from 'msw';
 import type { RankingTypeDto } from '@/api/contract';
 import * as E from './engine';
 import { getState, saveState } from './store';
+import { imageFallbacks } from 'virtual:game-images';
 
 /** Passt auf relative (/api/v1) und absolute Basis-URLs. */
 const P = (path: string) => `*/api/v1${path}`;
@@ -81,6 +82,11 @@ const authHandlers: HttpHandler[] = [
 ];
 
 const gameHandlers: HttpHandler[] = [
+  /* System (öffentlich) */
+  http.get(
+    P('/images'),
+    run(() => ({ fallback: imageFallbacks, allowedExtensions: ['.webp', '.png', '.svg'] })),
+  ),
   /* Spieler & Konto */
   http.get(
     P('/players/me'),
@@ -199,7 +205,11 @@ const gameHandlers: HttpHandler[] = [
   ),
   http.post(
     P('/travel'),
-    run(async (c) => E.startTravel(c.s, me(c), (await json<{ toCityId: string }>(c.request)).toCityId), 201),
+    run(
+      async (c) =>
+        E.startTravel(c.s, me(c), await json<{ toCityId?: string; mode?: 'train' | 'vehicle' }>(c.request)),
+      201,
+    ),
   ),
 
   /* Clans */

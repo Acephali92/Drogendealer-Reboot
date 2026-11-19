@@ -1,4 +1,13 @@
-import { affordable, formatMoney, formatWeight, multiplyMoney, percentDelta, toCents } from './money';
+import {
+  affordable,
+  formatMoney,
+  formatPercent,
+  formatVolume,
+  formatWeight,
+  multiplyMoney,
+  percentDelta,
+  toCents,
+} from './money';
 
 describe('money', () => {
   it('parst Cent-Strings als BigInt', () => {
@@ -24,6 +33,12 @@ describe('money', () => {
     expect(percentDelta('150', '100')).toBe(50);
     expect(percentDelta('90', '100')).toBe(-10);
     expect(percentDelta('90', '0')).toBeNull();
+  });
+
+  it('formatiert Volumen und Prozent', () => {
+    expect(formatVolume(60)).toBe('60\u00a0VE');
+    expect(formatVolume(12.5)).toBe('12,5\u00a0VE');
+    expect(formatPercent(0.55)).toBe('55\u00a0%');
   });
 
   it('formatiert Gewicht', () => {

@@ -3,6 +3,8 @@
  *
  * - `virtual:game-images`  → Kategorie-Platzhalter aus `[images] fallback.<kategorie>`.
  *                             Klein, wird auch im Production-Build genutzt.
+ * - `virtual:game-labels`  → Anzeigenamen von Ereignissen (`[events.<schlüssel>] name`), damit das UI
+ *                             `activeEvent` nie als Schlüssel zeigt (T-112). Klein, auch im Production-Build.
  * - `virtual:game-params`  → Spielparameter für den Mock-Server (Namen, Bildpfade, Preise …),
  *                             damit Mock und Backend aus derselben Quelle schöpfen.
  *                             Wird nur vom Mock-Code importiert (nicht im Production-Build).
@@ -21,6 +23,8 @@ export const IMAGE_CATEGORIES = ['goods', 'vehicles', 'weapons', 'armor', 'crew'
 
 const IMAGES_ID = 'virtual:game-images';
 const PARAMS_ID = 'virtual:game-params';
+const LABELS_ID = 'virtual:game-labels';
+const IDS = [IMAGES_ID, PARAMS_ID, LABELS_ID];
 
 type Table = Record<string, unknown>;
 
@@ -33,19 +37,31 @@ export function imageFallbacks(params: Table): Record<string, string | null> {
   return Object.fromEntries(IMAGE_CATEGORIES.map((c) => [c, safeImagePath(fallback[c])]));
 }
 
+export function eventNames(params: Table): Record<string, string> {
+  const events = (params.events ?? {}) as Record<string, Table>;
+  return Object.fromEntries(
+    Object.entries(events)
+      .filter(([, e]) => typeof e?.name === 'string')
+      .map(([k, e]) => [k, e.name as string]),
+  );
+}
+
 export function gameParamsPlugin(path = PARAMS_PATH): Plugin {
   return {
     name: 'game-params',
     resolveId(id) {
-      if (id === IMAGES_ID || id === PARAMS_ID) return '\0' + id;
+      if (IDS.includes(id)) return '\0' + id;
       return null;
     },
     load(id) {
-      if (id !== '\0' + IMAGES_ID && id !== '\0' + PARAMS_ID) return null;
+      if (!IDS.some((x) => id === '\0' + x)) return null;
       this.addWatchFile(path);
       const params = readParams(path);
       if (id === '\0' + IMAGES_ID) {
         return `export const imageFallbacks = ${JSON.stringify(imageFallbacks(params))};`;
+      }
+      if (id === '\0' + LABELS_ID) {
+        return `export const eventNames = ${JSON.stringify(eventNames(params))};`;
       }
       return `export default ${JSON.stringify(params)};`;
     },

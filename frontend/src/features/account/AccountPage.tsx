@@ -92,7 +92,7 @@ export function AccountPage() {
         />
         <StatTile
           label={t('stats.heat')}
-          value={player.heat}
+          value={Math.round(player.heat)}
           hint={t(`heat.${heatLevel(player.heat)}`)}
           icon={<Flame className="h-4 w-4" />}
         />
@@ -107,7 +107,10 @@ export function AccountPage() {
           ) : (
             <ul className="max-h-[480px] divide-y divide-line/5 overflow-y-auto">
               {tx.data.map((x) => (
-                <li key={x.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                <li key={x.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm">
+                  <Badge tone={x.account === 'CASH' ? 'neon' : 'info'}>
+                    {t(`account.accounts.${x.account}`, { defaultValue: t('account.reasons.OTHER') })}
+                  </Badge>
                   <Badge>
                     {t(`account.reasons.${x.reason}`, { defaultValue: t('account.reasons.OTHER') })}
                   </Badge>

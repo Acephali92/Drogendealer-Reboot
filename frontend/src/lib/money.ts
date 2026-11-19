@@ -84,3 +84,13 @@ export function formatWeight(grams: number | null | undefined): string {
   }
   return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(g / 1_000_000)}\u00a0t`;
 }
+
+const volFmt = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
+/** Laderaum in Volumeneinheiten (T-119): 60 → „60 VE“. */
+export function formatVolume(ve: number | null | undefined): string {
+  if (ve === null || ve === undefined) return '—';
+  return `${volFmt.format(Math.max(0, ve))}\u00a0VE`;
+}
+
+/** Polizeistärke 0–1 als Prozent: 0.55 → „55 %“. */
+export const formatPercent = (v: number) => `${Math.round(v * 100)}\u00a0%`;

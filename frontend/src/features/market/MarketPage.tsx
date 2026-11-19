@@ -8,7 +8,6 @@ import { Money } from '@/components/ui/Money';
 import { CommodityImage } from '@/components/ui/GameImages';
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/Feedback';
 import { percentDelta } from '@/lib/money';
-import { formatRelative } from '@/lib/time';
 import { cn } from '@/lib/cn';
 
 /** Marktübersicht laut Vertrag: je Ware die günstigste Einkaufs- und die beste Verkaufsstadt. */
@@ -19,7 +18,10 @@ export function MarketPage() {
 
   const rows = (ov.data ?? []).map((r) => ({
     ...r,
-    margin: r.lowestBuy && r.highestSell ? percentDelta(r.highestSell.price, r.lowestBuy.price) : null,
+    margin:
+      r.lowestPrice && r.highestPrice
+        ? percentDelta(r.highestPrice.referencePrice, r.lowestPrice.referencePrice)
+        : null,
   }));
   const top = [...rows]
     .filter((r) => (r.margin ?? 0) > 0)
@@ -54,9 +56,9 @@ export function MarketPage() {
                 <div className="min-w-0 flex-1 text-sm">
                   <p className="font-semibold text-ink">{r.commodity.name}</p>
                   <p className="flex flex-wrap items-center gap-1 text-xs">
-                    <CityLink id={r.lowestBuy!.city.id} name={r.lowestBuy!.city.name} tone="neon" />
+                    <CityLink id={r.lowestPrice!.city.id} name={r.lowestPrice!.city.name} tone="neon" />
                     <ArrowRight className="h-3 w-3 text-ink-faint" aria-hidden />
-                    <CityLink id={r.highestSell!.city.id} name={r.highestSell!.city.name} tone="brass" />
+                    <CityLink id={r.highestPrice!.city.id} name={r.highestPrice!.city.name} tone="brass" />
                   </p>
                 </div>
                 <span className="num text-lg font-bold text-neon">
@@ -87,22 +89,26 @@ export function MarketPage() {
                       </span>
                     </th>
                     <td className="px-4 py-3">
-                      {r.lowestBuy ? (
+                      {r.lowestPrice ? (
                         <span className="flex items-center gap-2">
                           <TrendingDown className="h-4 w-4 text-neon" aria-hidden />
-                          <Money value={r.lowestBuy.price} className="font-semibold text-ink" />
-                          <CityLink id={r.lowestBuy.city.id} name={r.lowestBuy.city.name} tone="neon" />
+                          <Money value={r.lowestPrice.referencePrice} className="font-semibold text-ink" />
+                          <CityLink id={r.lowestPrice.city.id} name={r.lowestPrice.city.name} tone="neon" />
                         </span>
                       ) : (
                         '—'
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {r.highestSell ? (
+                      {r.highestPrice ? (
                         <span className="flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-brass" aria-hidden />
-                          <Money value={r.highestSell.price} className="font-semibold text-ink" />
-                          <CityLink id={r.highestSell.city.id} name={r.highestSell.city.name} tone="brass" />
+                          <Money value={r.highestPrice.referencePrice} className="font-semibold text-ink" />
+                          <CityLink
+                            id={r.highestPrice.city.id}
+                            name={r.highestPrice.city.name}
+                            tone="brass"
+                          />
                         </span>
                       ) : (
                         '—'
@@ -141,20 +147,24 @@ export function MarketPage() {
                         : '—'}
                     </span>
                   </div>
-                  {r.lowestBuy && r.highestSell && (
+                  {r.lowestPrice && r.highestPrice && (
                     <dl className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <dt className="label">{t('market.cheapest')}</dt>
                         <dd>
-                          <Money value={r.lowestBuy.price} className="text-ink" />{' '}
-                          <CityLink id={r.lowestBuy.city.id} name={r.lowestBuy.city.name} tone="neon" />
+                          <Money value={r.lowestPrice.referencePrice} className="text-ink" />{' '}
+                          <CityLink id={r.lowestPrice.city.id} name={r.lowestPrice.city.name} tone="neon" />
                         </dd>
                       </div>
                       <div>
                         <dt className="label">{t('market.priciest')}</dt>
                         <dd>
-                          <Money value={r.highestSell.price} className="text-ink" />{' '}
-                          <CityLink id={r.highestSell.city.id} name={r.highestSell.city.name} tone="brass" />
+                          <Money value={r.highestPrice.referencePrice} className="text-ink" />{' '}
+                          <CityLink
+                            id={r.highestPrice.city.id}
+                            name={r.highestPrice.city.name}
+                            tone="brass"
+                          />
                         </dd>
                       </div>
                     </dl>
@@ -163,14 +173,12 @@ export function MarketPage() {
               ))}
             </ul>
           </div>
-          {rows[0]?.lowestBuy && (
-            <p className="mt-3 text-xs text-ink-faint">
-              {t('market.updated', { when: formatRelative(rows[0].lowestBuy.updatedAt) })} ·{' '}
-              <Link to="/reisen" className="text-brass hover:underline">
-                {t('city.toTravel')}
-              </Link>
-            </p>
-          )}
+          <p className="mt-3 text-xs text-ink-faint">
+            {t('trade.priceNote')} ·{' '}
+            <Link to="/reisen" className="text-brass hover:underline">
+              {t('city.toTravel')}
+            </Link>
+          </p>
         </>
       )}
     </div>

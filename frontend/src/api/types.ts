@@ -3,11 +3,12 @@
  * `api/adapters.ts` übersetzt die Rohformate des Backend-Vertrags (`api/contract.ts`)
  * hierher – ändert sich der Vertrag, ändert sich nur der Adapter.
  */
-import type { ClanRoleDto, PlayerStatusDto, TransactionReasonDto } from './contract';
+import type { AccountDto, ClanRoleDto, PlayerStatusDto, Realm, TransactionReasonDto } from './contract';
 
 /** Geldbetrag in ganzzahligen Cent als String (ADR-019, BigInt-sicher). */
 export type Money = string;
 export type ISODate = string;
+export type { Realm };
 
 export interface AuthUser {
   id: string;
@@ -38,7 +39,9 @@ export interface CityRef {
 export interface Player {
   id: string;
   name: string;
+  /** Bargeld = Schwarzgeld, mitgeführt (ADR-023) */
   cash: Money;
+  /** Bankkonto = Weißgeld (ADR-023) */
   bank: Money;
   health: number;
   maxHealth: number;
@@ -47,6 +50,7 @@ export interface Player {
   /** null, solange die Levelkurve nicht feststeht */
   experienceForNextLevel: number | null;
   reputation: number;
+  /** Fahndungsdruck in der aktuellen Stadt (0–100) */
   heat: number;
   currentCityId: string | null;
   currentCity: CityRef | null;
@@ -61,20 +65,32 @@ export interface City {
   id: string;
   slug: string;
   name: string;
-  description: string | null;
-  country: string | null;
-  techLevel: number | null;
-  policeStrength: number | null;
-  population: number | null;
+  realm: Realm;
+  /** Einwohner (absolut, aus „Tausend“ umgerechnet) */
+  population: number;
+  wealth: number;
+  /** Polizeistärke 0–1 */
+  police: number;
+  /** Spritpreis in Cent pro Liter */
+  fuelPrice: Money;
+  spaceport: boolean;
+}
+
+export type TravelMode = 'train' | 'vehicle';
+
+export interface TravelOption {
+  mode: TravelMode;
+  vehicleId: string | null;
+  durationSeconds: number;
+  cost: Money;
 }
 
 export interface CityConnection {
   toCityId: string;
   toCity: CityRef;
   distanceKm: number;
-  /** Fehlt, bis das Backend die Reiseregeln umsetzt */
-  durationSeconds: number | null;
-  cost: Money | null;
+  /** Leer, bis das Backend die Reiseregeln umsetzt (T-119) */
+  travelOptions: TravelOption[];
 }
 
 export interface CityDetail extends City {
@@ -85,10 +101,10 @@ export interface Commodity {
   id: string;
   slug: string;
   name: string;
-  description: string | null;
-  illegal: boolean;
-  unitWeightG: number;
+  realm: Realm;
   basePrice: Money;
+  /** Volumeneinheiten (VE) je Einheit */
+  unitVolume: number;
   /** Bildpfad relativ zu images/ oder null (ADR-020) */
   image: string | null;
 }
@@ -97,24 +113,26 @@ export type Trend = 'UP' | 'DOWN' | 'FLAT';
 
 export interface MarketEntry {
   commodity: Commodity;
-  buyPrice: Money;
-  sellPrice: Money;
-  supply: number;
-  /** Vom Client aus dem letzten bekannten Preis abgeleitet */
+  /** Marktbestand (ganzzahlig gerundet für die Anzeige) */
+  stock: number;
+  /** Richtpreis (Gleichgewichtspreis) in Cent – echte Kauf-/Verkaufspreise je Menge folgen mit T-103 */
+  referencePrice: Money;
+  activeEvent: string | null;
+  eventTicksLeft: number | null;
+  /** Vom Client aus dem letzten bekannten Richtpreis abgeleitet */
   trend: Trend;
   updatedAt: ISODate;
 }
 
 export interface PricePoint {
   city: CityRef;
-  price: Money;
-  updatedAt: ISODate;
+  referencePrice: Money;
 }
 
 export interface OverviewRow {
   commodity: Commodity;
-  lowestBuy: PricePoint | null;
-  highestSell: PricePoint | null;
+  lowestPrice: PricePoint | null;
+  highestPrice: PricePoint | null;
 }
 
 export interface InventoryItem {
@@ -125,9 +143,9 @@ export interface InventoryItem {
 
 export interface Inventory {
   items: InventoryItem[];
-  /** null = kein aktives Fahrzeug (Kapazität bestimmt der Server) */
-  capacityG: number | null;
-  usedG: number;
+  /** Volumeneinheiten: Rucksack + aktives Fahrzeug */
+  capacity: number;
+  used: number;
 }
 
 export type TradeSide = 'BUY' | 'SELL';
@@ -142,10 +160,12 @@ export interface VehicleType {
   slug: string;
   name: string;
   price: Money;
-  capacityG: number;
   speedKmh: number;
-  licenseClass: number | null;
-  /** Bildpfad relativ zu images/ oder null (ADR-020) */
+  consumptionPer100Km: number;
+  /** Volumeneinheiten */
+  capacity: number;
+  /** Versteckbonus gegen Kontrollen (0–1) */
+  hide: number;
   image: string | null;
 }
 
@@ -160,14 +180,11 @@ export interface Vehicle {
 export interface EquipmentType {
   id: string;
   slug: string;
-  name: string;
-  description: string | null;
   slot: 'WEAPON' | 'ARMOR';
-  attack: number;
-  defense: number;
+  /** Anzeigename; fehlt er in den Parametern, setzt der Adapter einen neutralen Namen je Slot */
+  name: string;
+  strength: number;
   price: Money;
-  weightG: number | null;
-  /** Bildpfad relativ zu images/ oder null (ADR-020) */
   image: string | null;
 }
 
@@ -209,8 +226,8 @@ export interface ClanMember {
 }
 
 export interface ClanDetail extends ClanSummary {
-  /** Nur für Mitglieder sichtbar, sonst null */
-  bank: Money | null;
+  /** Clan-Kasse (ADR-018), nur für Mitglieder sichtbar, sonst null */
+  treasury: { cash: Money; bank: Money } | null;
   members: ClanMember[];
 }
 
@@ -266,10 +283,13 @@ export interface NotificationList {
 }
 
 export type TransactionReason = TransactionReasonDto;
+export type Account = AccountDto;
 
 export interface MoneyTransaction {
   id: string;
+  account: Account;
   amount: Money;
+  /** Saldo des jeweiligen Kontos nach der Buchung */
   balanceAfter: Money;
   reason: TransactionReason;
   createdAt: ISODate;

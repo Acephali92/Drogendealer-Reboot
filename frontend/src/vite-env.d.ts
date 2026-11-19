@@ -19,3 +19,6 @@ declare module 'virtual:game-params' {
   const params: Record<string, unknown>;
   export default params;
 }
+declare module 'virtual:game-labels' {
+  export const eventNames: Record<string, string>;
+}

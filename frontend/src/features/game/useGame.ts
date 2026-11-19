@@ -15,15 +15,12 @@ export function useGame() {
   const cityById = (id: string | null | undefined) => cities.data?.find((c) => c.id === id) ?? null;
   const city = cityById(player?.currentCityId);
   const destination = traveling ? cityById(travel.data?.toCityId) : null;
+  /** Laderaum in Volumeneinheiten: Rucksack + aktives Fahrzeug (T-119) */
   const cargo = inventory.data
     ? {
-        used: inventory.data.usedG,
-        capacity: inventory.data.capacityG,
-        /** null = unbekannt (kein Fahrzeug, Kapazität bestimmt der Server) */
-        free:
-          inventory.data.capacityG === null
-            ? null
-            : Math.max(0, inventory.data.capacityG - inventory.data.usedG),
+        used: inventory.data.used,
+        capacity: inventory.data.capacity,
+        free: Math.max(0, inventory.data.capacity - inventory.data.used),
       }
     : null;
   return {
