@@ -192,11 +192,17 @@ describe.skipIf(!ready)('Golden Vectors (Agent 2, verify.py)', () => {
     expect(papersConfiscation(t.foundation!, 950_000_000)).toBe(e7.confiscated);
     const e8 = G['EX-ML-08']!;
     const k = loanShark(p);
-    expect(loanSharkEligible(k, 1, 0, 50_000, 50_000, false)).toBe(e8.eligible_ok);
-    expect(loanSharkEligible(k, 2, 0, 50_000, 50_000, false)).toBe(e8.eligible_2_vehicles);
-    expect(loanSharkEligible(k, 1, 1, 50_000, 50_000, false)).toBe(e8.eligible_weapon);
+    // Eingaben wie verify.py ex_ml_08 (Schwelle max_assets 200 €, ADR-023-Nachtrag)
+    expect(loanSharkEligible(k, 1, 0, 15_000, 0, false)).toBe(e8.eligible_ok);
+    expect(loanSharkEligible(k, 2, 0, 15_000, 0, false)).toBe(e8.eligible_2_vehicles);
+    expect(loanSharkEligible(k, 1, 1, 15_000, 0, false)).toBe(e8.eligible_weapon);
+    if ('eligible_rich' in e8) expect(loanSharkEligible(k, 1, 0, 15_000, 10_000, false)).toBe(e8.eligible_rich);
     expect(k.amount).toBe(e8.amount);
-    expect(loanSharkRepay(k, 400_000, k.amount)).toBe(e8.repay);
+    const outstanding = Math.floor(k.amount * k.repay_factor + 0.5);
+    const repay = loanSharkRepay(k, 100_000, outstanding);
+    expect(repay).toBe(e8.repay);
+    if ('to_player' in e8) expect(100_000 - repay).toBe(e8.to_player);
+    if ('outstanding' in e8) expect(outstanding - repay).toBe(e8.outstanding);
   });
 
   it('EX-PRF-01…03 Progression', () => {
