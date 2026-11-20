@@ -16,6 +16,7 @@
 | 6 | **NPC-Rückbau (R-4):** Die Kennzahlen sind bei ≈ 120–130 Spielern erfüllt, k sinkt erstmals bei 117–134 Spielern (3 von 4 Läufen). Engpass ist die Marktaktivität. | `s8-handover` | Prognose für den Betreiber |
 | 8 | **ADR-023 (Totalbeschlagnahme):** Ohne Wäsche liegen 74 % der Durchschnittsspieler unter dem Startkapital. Mit Wäsche, Kredithai 1.000 € (ab < 200 € Restvermögen), Finanzen-XP ×10 und W0 Ø 0,85 sind es **6 %**. Der Kredithai mit 100.000 € ist eine Schuldenfalle (52 %). | §4 | B-8…B-10 |
 | 9 | **NPC-Händler unter ADR-023 (B-11):** Bei k = 1 liegen 38 % (A) und 20 % (B) unter dem Startkapital. Mit `npc.trader_threshold_base` 0,15 → 0,45 sind es 4 %/7 % nach 90 und 4 %/8 % nach 365 Tagen, die Top-Route bleibt gedämpft (2,26 statt 3,05). | §5 | B-11 |
+| 10 | **Kokain-Dominanz (B-2):** 65 % des Handelsumsatzes, entsteht im Fernhandel mit Fahrzeugen. Nur der Kokain-Konsum wirkt (0,003: 56 %), kostet aber Handelsvolumen. Empfehlung: vorerst keine Änderung, Umsatzanteil je Ware als neue Kennzahl. Strohmann 0,88 (User) ist für Sackgassen neutral. | §5.5, §6 | B-2, B-13 |
 | 7 | **0 Invariantenverletzungen** in allen Läufen: Geldbilanz je Tick exakt, keine negativen Bestände, deterministisch. | alle | – |
 
 ## 0. Änderungen am Modell
@@ -739,8 +740,8 @@ Erster Rückgang von k je Seed: kein Rückgang; Tag 145 bei 128 Spielern; Tag 13
 
 | Hypothese | Änderung (genau eine) | Basis |
 |---|---|---|
-| Ein Kokain-Engpass verteilt den Handel auf mehrere Waren (B-2) | `goods.kokain.consumption` 0,004 → 0,003 | `npc-conf` |
-| Die Kurzroute Rotterdam → Amsterdam verliert ihre Dominanz | `city.amsterdam.police` 0,3 → 0,45 | `npc-conf` |
+| Ein Kokain-Engpass verteilt den Handel auf mehrere Waren (B-2) | `goods.kokain.consumption` 0,004 → 0,003 | ✅ erledigt, §6 (Anteil 65 % → 56 %) |
+| Die Kurzroute Rotterdam → Amsterdam verliert ihre Dominanz | `city.amsterdam.police` 0,3 → 0,45 | ✅ erledigt, §6 (keine Wirkung) |
 | Kombination B-1 + B-3 + Eigendynamik bleibt im Korridor | `wealthSink` an | `npc-conf` + `ext` |
 | Späte Einsteiger (S6) holen im Einkommen pro Stunde auf | Zustrom an Tag 30/180/365 | empfohlene Konfiguration |
 
@@ -1100,3 +1101,60 @@ Invariantenverletzungen in allen Läufen: **0**.
 - Handelsvolumen: 861.430 € pro Tag. Geldmenge am Ende (Median): 7.946.949 €, Wachstum in den letzten 30 Tagen: 8.8 %. Senken/Quellen (SFR): 0.955.
 - Ungleichheit am Ende (alle Spieler): Gini 0.642, reichster Spieler ÷ Median 21.4.
 - Umsatzstärkste Märkte: `muenchen/kokain` 181.000 €/Tag (P/P* 0.741, knapp 12 %); `hamburg/kokain` 99.406 €/Tag (P/P* 1.139, knapp 0 %); `frankfurt/kokain` 74.082 €/Tag (P/P* 0.915, knapp 2 %); `amsterdam/gras` 61.849 €/Tag (P/P* 1.209, knapp 0 %); `muenchen/gras` 49.200 €/Tag (P/P* 0.875, knapp 3 %).
+
+### 5.5 Endstand T-120 (PR #34) und Strohmann 0,88 [gemessen]
+
+> Läufe vom 2026-11-20 mit `parameters.toml` aus Agent 2s T-120-Branch @ `0129894`, **ohne Overrides**. Diese Fassung enthält P-5…P-12 und zusätzlich die Entscheidung des Users `laundering.tiers.strawman.rate` = 0,88 (statt 0,75): Cousin Kalle soll besser sein als das Glücksspiel (Ø 0,85). NPC-Händler k = 1.
+
+| Szenario | Tage × Seeds | A | **B** | C | D | E | Median NW B | Geldmenge Ende |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `t120-final` | 90 × 48 | 4 % | **9 %** | 13 % | 84 % | 1 % | 100.003 € | – |
+| `t120-final-365` | 365 × 24 | 4 % | **12 %** | 12 % | 81 % | 3 % | 386.011 € | 8,99 Mio. € |
+| `t120-final-365-s075` | 365 × 24, **gleiche Seeds**, Strohmann 0,75 | 4 % | **12 %** | 11 % | 84 % | 3 % | 335.733 € | 7,84 Mio. € |
+
+1. **Der Strohmann-Kurs 0,88 ist für Sackgassen neutral.** Im gepaarten Vergleich mit denselben Seeds (neu: `seedPrefix`, gemeinsame Zufallszahlen) liegt B in beiden Fällen bei 12 %. Er erhöht das Vermögen der Durchschnittsspieler um 15 % und die Geldmenge entsprechend.
+2. **B liegt langfristig um die 10-%-Marke.** Mit den Seeds von `b11-theta45-365` waren es 8 %, mit denen von `t120-final-365` 12 %. Die Streuung zwischen Seed-Sätzen beträgt bei n = 216 also etwa ±2 Prozentpunkte. Nach 90 Tagen ist das Ziel klar erfüllt. → Befund B-13.
+
+## 6. B-2: Kokain-Dominanz
+
+> Läufe vom 2026-11-19/20. Basis ist die Gesamtempfehlung nach B-11 (`b11-theta45`: ADR-023-Empfehlung + NPC-Händler k = 1 + θ₀ = 0,45, T-120-Parameter `72102ab`). Jede Variante ändert genau einen Wert. Neue Kennzahl im Bericht: **Umsatzanteil je Ware** über alle Märkte.
+
+### 6.1 Statische Routenanalyse [gemessen]
+
+Neues Skript `npx tsx src/routes-static.ts [--set schlüssel=wert]` (bisher nur ad hoc, §1). Einsteiger mit 2.000 €, Bahn, Gleichgewichtsbestände, Rucksack nach Volumen. Es reproduziert §1: beste Route `rotterdam → amsterdam / kokain` ≈ 1.470 €/h (§1: 1.460), Dominanz-Index 26,9 (§1: 27,6, Abweichung durch Datenmodell v2).
+
+| Variante | beste Route €/h | Median €/h | Dominanz-Index | Kokain an den Top-10-Routen |
+|---|---:|---:|---:|---:|
+| Basis | 1.470 | 55 | 26,9 | 80 % |
+| `goods.kokain.consumption` 0,003 | 1.404 | 55 | 25,7 | 80 % |
+| `goods.kokain.consumption` 0,002 | 1.348 | 53 | 25,3 | 80 % |
+| `city.amsterdam.police` 0,45 | 1.462 | 56 | 26,1 | 80 % |
+| `city.rotterdam.supply.kokain` 2,0 | 998 | 51 | 19,4 | 80 % |
+| `goods.kokain.volume` 2 | 1.202 | 55 | 22,0 | 80 % |
+
+**Befund zur Kennzahl:** Der Route-Dominanz-Index (Ziel ≤ 2) ist für B-2 ungeeignet. Er misst €/h je Fahrt, und die skalieren mit 1/Fahrzeit. Die 80-km-Kurzroute Rotterdam → Amsterdam ist deshalb mit **jeder** Ware ein Vielfaches des Medians (Heroin auf derselben Route ≈ 650 €/h = 12 × Median). Kein einzelner Warenparameter bringt den Index in die Nähe von 2.
+
+### 6.2 Dynamische Läufe [gemessen]
+
+| Szenario | Änderung | Tage × Seeds | Kokain-Umsatzanteil | A | **B** | C | E | Geldmenge Ende |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| `b11-theta45` | Basis | 90 × 48 | **65 %** | 4 % | **7 %** | 12 % | 1 % | 1,51 Mio. € |
+| `b2-coke-cons` | `goods.kokain.consumption` 0,004 → 0,003 | 90 × 48 | **56 %** | 5 % | **8 %** | 15 % | 3 % | 1,35 Mio. € |
+| `b2-coke-cons2` | `goods.kokain.consumption` 0,004 → 0,002 | 90 × 48 | **44 %** | 6 % | **12 %** | 18 % | 1 % | 1,19 Mio. € |
+| `b2-ams-police` | `city.amsterdam.police` 0,3 → 0,45 | 90 × 48 | 66 % | 5 % | **8 %** | 10 % | 4 % | 1,47 Mio. € |
+| `b2-rot-supply` | `city.rotterdam.supply.kokain` 2,5 → 2,0 | 90 × 48 | 64 % | 4 % | **10 %** | 13 % | 2 % | 1,53 Mio. € |
+| `b2-coke-vol` | `goods.kokain.volume` 1 → 2 | 90 × 48 | 65 % | 2 % | **6 %** | 7 % | 0 % | 1,61 Mio. € |
+| `t120-final-365` | Vergleich: T-120-Endstand, 365 Tage | 365 × 24 | 57 % | 4 % | **12 %** | 12 % | 3 % | 8,99 Mio. € |
+| `b2-coke-cons-365` | wie b2-coke-cons, 365 Tage | 365 × 24 | **48 %** | 3 % | **13 %** | 15 % | 3 % | 7,05 Mio. € |
+
+Invariantenverletzungen in allen Läufen: **0**.
+
+### 6.3 Auswertung
+
+1. **Die Dominanz entsteht im Fernhandel mit Fahrzeugen, nicht auf der Einsteiger-Kurzroute.** Die umsatzstärksten Märkte sind München, Hamburg und Frankfurt (Kokain). Der Markt `amsterdam/kokain` gehört nicht zu den Top-Märkten. Hebel, die nur die Kurzroute treffen (Polizei Amsterdam, Angebot Rotterdam), ändern den Kokain-Anteil nicht (64–66 %).
+2. **Der Kokain-Konsum wirkt über die Markttiefe**, nicht über das Preisverhältnis. `consumption` gilt in allen Städten gleich und kürzt sich im Preisverhältnis heraus (statisch kaum Wirkung). Er bestimmt aber die Bestände: Kleinere Lager bedeuten mehr Preisrutsch für große Fahrzeugladungen. Konsum 0,003 senkt den Anteil auf 56 % (365 Tage: 48 %), 0,002 auf 44 %.
+3. **Der Preis dafür ist weniger Handel insgesamt.** Mit 0,003 sinken Handelsvolumen (−14 %) und Geldmenge (−10 %), A und B bleiben nach 90 Tagen im Rahmen der Streuung (5 %/8 %). Mit 0,002 steigen B auf 12 % und C auf 18 %, das ist zu viel.
+4. **Doppeltes Kokain-Volumen ändert den Anteil nicht** (65 %), verbessert aber A, B und C deutlich (2 %/6 %/7 %). Vermutlich sinkt der Verlust je Kontrolle, weil Fahrzeugladungen weniger Kokain enthalten. **[Hypothese]**, nicht weiter untersucht.
+5. **Ein Teil der „Dominanz“ ist ein Preiseffekt.** Kokain hat den höchsten Basispreis (80 €) der Erdwaren. Ein Umsatzanteil in Euro überzeichnet daher seine Rolle gegenüber billigen Waren. Gras folgt mit 15–26 %.
+
+**Empfehlung (B-2): vorerst keine Parameteränderung.** `goods.kokain.consumption` 0,003 ist der einzige Hebel mit deutlicher Wirkung auf die Warenverteilung, kostet aber Handelsvolumen und lässt B langfristig nicht unter 10 % (13 %, gleiche Größenordnung wie die Streuung). Als Option für den Product Owner, falls eine breitere Warenverteilung gewünscht ist, steht er in BALANCING_PARAMETERS P-4. Neue Leitkennzahl für B-2: Umsatzanteil je Ware (Ziel [Design]: keine Ware > 50 %) statt Route-Dominanz-Index.
