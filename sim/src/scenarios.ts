@@ -211,6 +211,11 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     scenario: sc('t120-final-365', 'wie t120-final über 365 Tage', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
     hypothesis: 'Wie t120-final, langfristig (Vergleich b11-theta45-365).',
   },
+  't120-final-365-s075': {
+    scenario: { ...sc('t120-final-365-s075', 'wie t120-final-365, Strohmann 0,88 → 0,75 (gepaart: gleiche Seeds)', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }), seedPrefix: 't120-final-365' },
+    overrides: { 'laundering.tiers.strawman.rate': 0.75 },
+    hypothesis: 'Gepaarter Vergleich zu t120-final-365: Der Strohmann-Kurs 0,88 statt 0,75 verschlechtert B nicht (höherer Kurs = weniger Waschverlust).',
+  },
   // ---------------------------------------------------------------- B-2: Kokain-Dominanz
   // Basis = b11-theta45 (ADR-023-Empfehlung + NPC-Händler k = 1, θ₀ = 0,45); je eine Änderung.
   'b2-coke-cons': {
@@ -237,6 +242,11 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     scenario: sc('b2-coke-vol', 'B-2: wie b11-theta45, goods.kokain.volume 1 → 2', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'goods.kokain.volume': 2 },
     hypothesis: 'Doppeltes Volumen halbiert die Kokain-Menge je Fahrzeugladung; Einsteiger (budgetbegrenzt) trifft das kaum. Der Kokain-Anteil sinkt, ohne A/B zu verschlechtern.',
+  },
+  'b2-coke-cons-365': {
+    scenario: sc('b2-coke-cons-365', 'B-2: wie b2-coke-cons über 365 Tage', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'goods.kokain.consumption': 0.003 },
+    hypothesis: 'Wie b2-coke-cons, langfristig (Vergleich b11-theta45-365).',
   },
   'b11-npc-365': {
     scenario: sc('b11-npc-365', 'B-11: wie b11-npc über 365 Tage (Vergleich zu b11-theta-365)', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),

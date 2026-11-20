@@ -20,6 +20,11 @@ export interface Scenario {
   checkpoints: number[];
   /** Zustrom: Hintergrundspieler wachsen linear von background auf growthTo bis zum letzten Tag */
   growthTo?: number;
+  /**
+   * Seeds `<seedPrefix>-1 … -n` statt `<id>-…`: gleiche Seeds wie ein anderes Szenario
+   * (gepaarter Vergleich, gemeinsame Zufallszahlen) – Unterschiede stammen dann nur aus der Änderung.
+   */
+  seedPrefix?: string;
   /** F-NPC-04: k täglich aus den Kennzahlen nachführen (setzt options.npc voraus) */
   handover?: boolean;
 }
