@@ -202,6 +202,36 @@ cd docs/database/proposals && psql "$URL_OF_EMPTY_DB_WITH_MAIN_MIGRATIONS_AND_P1
 | -------- | ----- |
 | Agent 2  | Zählen Stimmen von Wählern, die während der Wahl ihr Konto löschen? Welche Clan-Abgänge sperrt die Wahl genau (Vorschlag: PAYOUT, UPGRADE, DISTRICT, WAR)? |
 | Agent 2/5 | Kann der Glücksspiel-Kurs (ADR-023) über 1 liegen? Danach richtet sich, ob X-05 zusätzlich `bankCredit ≤ cashIn` prüfen darf. |
-| Agent 5 (Balancing) | Reichen `tick`, `correlationId`, `actorType` und `GameEvent(probability, roll)` für die Kalibrierung? Wird `detail` im Marktjournal mit festen Schlüsseln gebraucht (z. B. `S_target`, `Z`, `q_npc`)? |
+| ~~Agent 5 (Balancing)~~ | Beantwortet am 2026-11-20, siehe §5. |
 | Product Owner | Löschfristen T-605: 7 Tage Klartext-IP/User-Agent, 30 Tage HMAC-Hashes? |
 | Agent 3  | Journal-first (Trigger schreibt die Projektion) oder wie vorgeschlagen Kette plus aufgeschobene Prüfung (G-8)? |
+
+## 5. Antwort des Balancing-Agenten (2026-11-20)
+
+Agent 5 (Balancing) bestätigt: `tick`, `correlationId`, `actorType` und `GameEvent(probability, roll)` reichen als Gerüst für die Kalibrierung. Zusätzlich braucht er die folgenden Punkte. Sie sind in `proposals/p1.sql` **noch nicht** enthalten und gehen als Anforderung an Agent 3.
+
+1. **Feste Schlüssel in `MarketStateChange.detail` je Ursache.** Die Namen folgen `verify.py`, damit jede Zeile gegen die Simulation bzw. `marketTick` (T-103) und die Golden Vectors nachgerechnet werden kann:
+
+   | cause | Schlüssel |
+   |-------|-----------|
+   | `TICK` | `S_before`, `S_target`, `x_before`, `z`, `x_after` (das Ereignis selbst als `GameEvent` mit `u`) |
+   | `EVENT` | `event`, `u`, `shock`, `duration` |
+   | `NPC` | `from`, `to`, `q`, `margin`, `theta`, `f`, `k` (F-NPC-01) |
+   | `TRADE` | `q`, `l_handel`, `spread`; `refId` Pflicht (CHECK aus G-3) |
+
+   Vorschlag: zusätzlich zum `detail jsonb` ein CHECK je Ursache auf die Pflichtschlüssel (`detail ?& array[...]`).
+2. **NPC-Rückbau täglich (F-NPC-04, R-4, Q12):** eine Tageszeile, z. B. `NpcHandoverDay(day, routeCompetition, targetAvailability, marketActivity, peakOnline, met, miss, k)`. Alternativ `k` und `peakOnline` am `WorldTick` plus eine tägliche Kennzahlzeile. Ersetzt bzw. konkretisiert den bisherigen Gedanken `WorldState` + Journal.
+3. **G-14 `NetWorthSnapshot` täglich, mit getrennten Bestandteilen:**
+   - Schwarzgeld und Bankkonto
+   - Ware zu `P_base`
+   - Fahrzeuge zum Rückkaufwert
+   - offene Kredithai-Schuld
+   - Finanzen-Level und Waschstufe
+
+   Leitkennzahl für ADR-023: „Anteil der Spieler unter Startkapital nach 90 Tagen“ (`SIMULATION_RESULTS.md` §4/§5). G-14 rückt damit von P3 auf **P2**.
+4. **Spielsitzungen ohne Sicherheitsbezug:** Start, Ende und Anzahl Spielzüge je Sitzung, ohne IP und User-Agent. Daraus werden die Bot-Profile A–E kalibriert. Die Daten können aus `CommandLog` (G-11) abgeleitet werden oder in eine eigene Tabelle gehen; über die Frist entscheidet der PO (G-12).
+5. **G-4 ergänzt:**
+   - `LaunderingEntry` zusätzlich mit `tier` (W0–W4), Finanzen-Level zum Zeitpunkt und dem an diesem Tag schon genutzten Tageslimit (F-ML-07 bis F-ML-09).
+   - „Papers“ (W4) und Polizeikontrollen als `GameEvent` mit p und U.
+   - Kredithai-Auszahlung und -Tilgung (F-ML-10) mit eigenem Grund und `correlationId`. In v2 gibt es dafür schon `EMERGENCY_LOAN` und `LOAN_REPAYMENT`; es fehlt die `correlationId` (G-2).
+
