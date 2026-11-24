@@ -10,4 +10,5 @@ export * from './money.js';
 export * from './time.js';
 export * from './types.js';
 export * from './economy.js';
+export * from './trade.js';
 export * from './parameters/index.js';

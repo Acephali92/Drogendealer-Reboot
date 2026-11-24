@@ -1,17 +1,17 @@
 # Systemabhängigkeiten
 
-> Verantwortlich: Agent 3. Zeigt, welche Spielsysteme aufeinander aufbauen und welche externen Zuarbeiten sie blockieren. Task-IDs aus [`TASKS.md`](../../TASKS.md). Stand: 2026-11-09.
+> Verantwortlich: Agent 3. Zeigt, welche Spielsysteme aufeinander aufbauen und welche externen Zuarbeiten sie blockieren. Task-IDs aus [`TASKS.md`](../../TASKS.md). Stand: 2026-11-19.
 
 ## 1. Externe Zuarbeiten
 
-| Von                   | Liefert                                                                                                                                | Status                                        | Blockiert                                                                                     |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Agent 2 (Game Design) | `docs/game-design/parameters.toml`, Formeln (`F-*`), Golden Vectors (`verify.py`)                                                      | ✅ in `main` (PR #4); Laden umgesetzt (T-101) | T-102, T-103, T-104 sind freigeschaltet, warten aber auf Schema-Entscheidungen (B-9 bis B-15) |
-| Agent 2               | Regeln für Reisen und Fahrzeuge, Kampf, Clans/Wahl, NPCs, Immobilien, Ereignisse                                                       | offen                                         | T-201 ff., T-309, T-401, T-501, T-502, T-506                                                  |
-| Agent 5 (Datenbank)   | Review jeder Schemaänderung, Vorschläge in [DATA_MODELS §6](DATA_MODELS.md#6-offene-schema-vorschläge-warten-auf-review-durch-agent-5) | angefragt                                     | jede neue Migration, T-306, T-104, Idempotenz, Inventarjournal                                |
-| Agent 6 (Balancing)   | Bestätigung der Domain-Schnittstellen (`execute`, `applyTick`, `deriveRng`)                                                            | angefragt                                     | Signaturen der Regelfunktionen                                                                |
-| Agent 4 (Frontend)    | Bestätigung der Vertragsabweichungen                                                                                                   | offen                                         | T-107                                                                                         |
-| Agent 1               | Integration in `main`, Freigaben                                                                                                       | laufend                                       | Merge                                                                                         |
+| Von                   | Liefert                                                                                                                                | Status                                                                    | Blockiert                                                      |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Agent 2 (Game Design) | `docs/game-design/parameters.toml`, Formeln (`F-*`), Golden Vectors (`verify.py`)                                                      | ✅ in `main`; Laden (T-101), Datenmodell v2 und Formeln (T-103) umgesetzt | – (T-104 und T-106 sind freigeschaltet)                        |
+| Agent 2               | Regeln für Reisen und Fahrzeuge, Kampf, Clans/Wahl, NPCs, Immobilien, Ereignisse                                                       | offen                                                                     | T-201 ff., T-309, T-401, T-501, T-502, T-506                   |
+| Agent 5 (Datenbank)   | Review jeder Schemaänderung, Vorschläge in [DATA_MODELS §6](DATA_MODELS.md#6-offene-schema-vorschläge-warten-auf-review-durch-agent-5) | angefragt                                                                 | jede neue Migration, T-306, T-104, Idempotenz, Inventarjournal |
+| Agent 5 (Balancing)   | Bestätigung der Domain-Schnittstellen (`marketTick`, `buyCost`, `deriveRng`, …), Umstellung der Simulation auf Importe (ADR-012)       | angefragt (T-103)                                                         | Signaturen der Regelfunktionen                                 |
+| Agent 4 (Frontend)    | Bestätigung der Vertragsabweichungen                                                                                                   | offen                                                                     | T-107                                                          |
+| Agent 1               | Integration in `main`, Freigaben                                                                                                       | laufend                                                                   | Merge                                                          |
 
 ## 2. Interne Abhängigkeiten (Aufbaureihenfolge)
 
@@ -20,7 +20,7 @@
                     │ Parameter laden (T-101) ✅   │◄── parameters.toml (A2)
                     └──────────────┬───────────────┘
                                    ▼
- Domain-Basis ✅ ──► Regelfunktionen (T-103) ──► Seed-Daten (T-102)
+ Domain-Basis ✅ ──► Regelfunktionen (T-103) ✅ ──► Seed-Daten (T-102)
  (rng, money, time)          │                        │
                              ▼                        ▼
             Zeit/Tick-System (T-104) ◄── WorldTick-Schema (A5)
@@ -63,5 +63,5 @@
 
 1. **Kritischer Pfad jetzt über Agent 5.** Parameter und Formeln liegen vor (T-101 erledigt). Seed-Daten (T-102) und Markt (T-103/T-104) brauchen aber die Schema-Entscheidungen B-9 bis B-15: Schwarz-/Weißgeld, Heat pro Stadt, Volumen statt Gramm, Waren- und Stadtattribute, Bestände als Float, Clan-Ränge.
 2. **Schema-Engpass über Agent 5.** Idempotenz, Inventarjournal und Tick-Tabelle sind Voraussetzung für sichere Schreibaktionen. Ohne Review keine Migration.
-3. **Signaturen der Domain-Funktionen.** Werden sie nach dem Start der Simulation geändert, muss Agent 6 nachziehen (ADR-012). Deshalb vorher abstimmen.
+3. **Signaturen der Domain-Funktionen.** Werden sie geändert, nachdem die Simulation sie importiert, muss Agent 5 nachziehen (ADR-012). Deshalb vorher abstimmen. Für T-103 sind sie angekündigt.
 4. **Dauerhafte Welt (ADR-016).** Jede Parameter- oder Schemaänderung trifft eine laufende Welt. Migrationen müssen Daten erhalten; Parameteränderungen brauchen später eine Versionierung.

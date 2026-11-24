@@ -194,3 +194,17 @@
   - Journale bleiben vollständig, und der Konsistenztest gilt auch nach einer Löschung.
   - Das Pseudonym lässt sich nicht auf Name oder E-Mail zurückführen.
   - Ranglisten und die Online-Liste filtern `DELETED`.
+
+## TD-021 – Formelschicht 1:1 nach `verify.py`, Geld als `bigint`, Ereignisse im Handelspreis (T-103)
+
+- **Kontext:** T-103 verlangt die Preisformeln als reine Funktionen, getestet gegen das Prüfskript. Nach ADR-012 importiert die Simulation sie.
+- **Entscheidung:**
+  - `domain/economy.ts` (F-ECO-01…09, `marketTick` nach economy.md §5) und `domain/trade.ts` (F-TRD-01…06, F-PRF-03) übernehmen `verify.py` Formel für Formel, **auch in der Reihenfolge der Multiplikationen**, damit die Floats identisch bleiben. Die Namen entsprechen der Übergangsschicht in `sim/src/model/`.
+  - Zwischenwerte sind float64 wie in `verify.py`. Gerundet wird nur am Ende: `buyCost` und `sellRevenue` geben `bigint`-Cent zurück, mit `ceilCt` für Kosten und `floorCt` für Erlöse (ADR-019).
+  - `marketTick` folgt den Schritten aus `inv_monte_carlo`. Das Ereignis wird mit `U(seed, t, "<stadt>/<ware>", 0)` gewürfelt, das Rauschen mit `Z(…, 1)`. Im letzten Ereignistick gelten noch dessen Multiplikatoren.
+  - **Ereignisse im Handelspreis:** F-TRD-01/02 integrieren P(σ) aus F-ECO-06, also mit M_d. `buyCost` und `sellRevenue` nehmen deshalb optional `mods` an, wie die Simulation. In `verify.py` fehlt dieser Parameter bisher; die Frage liegt bei Agent 2. Ohne Ereignis ist das Ergebnis identisch mit `verify.py`.
+  - `MarketMods` enthält nur die beschlossenen Ereignis-Multiplikatoren. Die Erweiterungen der Simulation ab F-ECO-10 sind Vorschläge und bleiben im Sim.
+- **Konsequenzen:**
+  - Die Golden Vectors bekommen den Abschnitt `formulas` mit ungerundeten Werten (BACKEND_TESTING §5). Cent-Beträge werden exakt geprüft.
+  - T-104 (Tick-Job) und T-106 (Kauf und Verkauf) rufen nur noch diese Funktionen auf.
+  - Die Simulation kann ihre Übergangsschicht durch Importe ersetzen. Unterschiede: Geld ist `bigint`, und `p` ist `GameParameters`.

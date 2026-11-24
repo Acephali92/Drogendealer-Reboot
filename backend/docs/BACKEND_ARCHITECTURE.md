@@ -119,17 +119,17 @@ Es zählt nur, was im Code existiert. Belege sind als Datei:Zeile angegeben. Tes
 
 ### C – Noch nicht implementiert
 
-| #    | System                                                                                                                   | Abhängig von                    |
-| ---- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| C-1  | Schreibende Spielaktionen: Kaufen/Verkaufen, Reise starten, Fahrzeug/Ausrüstung kaufen, Startstadt, Kampf, Clan-Aktionen | Regeln A2, Schema A5            |
-| C-3  | Preisformeln und weitere Spielregeln als Domain-Funktionen (T-103)                                                       | Formeln + Golden Vectors von A2 |
-| C-4  | Tick-Scheduler, `WorldTick`, Markt-Tick (T-104)                                                                          | C-2, C-3, Schema A5             |
-| C-5  | Idempotenz-Schlüssel für Spielzüge (Schutz vor doppelter Ausführung)                                                     | Schema A5                       |
-| C-6  | Inventarjournal (Ein- und Ausgänge nachvollziehbar)                                                                      | Schema A5                       |
-| C-7  | NPC- und Händlersystem, NPC-Intensität k (T-506)                                                                         | Regeln A2/A6, Schema A5         |
-| C-8  | Immobilien (T-501), Fähigkeiten/Attribute, Aufträge, laufende Ausgaben, Wirtschaftsereignisse (T-502)                    | Regeln A2                       |
-| C-9  | Seed-Daten für Städte, Verbindungen, Waren (T-102)                                                                       | C-2                             |
-| C-10 | Deployment (T-602)                                                                                                       | M6                              |
+| #    | System                                                                                                                                                                                                            | Abhängig von                    |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| C-1  | Schreibende Spielaktionen: Kaufen/Verkaufen, Reise starten, Fahrzeug/Ausrüstung kaufen, Startstadt, Kampf, Clan-Aktionen                                                                                          | Regeln A2, Schema A5            |
+| C-3  | ✅ Preis- und Handelsformeln als Domain-Funktionen (T-103): `domain/economy.ts` (F-ECO-01…09, `marketTick`), `domain/trade.ts` (F-TRD-01…06). Reise-, Städte-, Kampf- und Wäscheformeln folgen mit ihren Aufgaben | Formeln + Golden Vectors von A2 |
+| C-4  | Tick-Scheduler, `WorldTick`, Markt-Tick (T-104)                                                                                                                                                                   | C-2, C-3, Schema A5             |
+| C-5  | Idempotenz-Schlüssel für Spielzüge (Schutz vor doppelter Ausführung)                                                                                                                                              | Schema A5                       |
+| C-6  | Inventarjournal (Ein- und Ausgänge nachvollziehbar)                                                                                                                                                               | Schema A5                       |
+| C-7  | NPC- und Händlersystem, NPC-Intensität k (T-506)                                                                                                                                                                  | Regeln A2/A6, Schema A5         |
+| C-8  | Immobilien (T-501), Fähigkeiten/Attribute, Aufträge, laufende Ausgaben, Wirtschaftsereignisse (T-502)                                                                                                             | Regeln A2                       |
+| C-9  | Seed-Daten für Städte, Verbindungen, Waren (T-102)                                                                                                                                                                | C-2                             |
+| C-10 | Deployment (T-602)                                                                                                                                                                                                | M6                              |
 
 ### D – Vorhanden, aber technisch problematisch
 
@@ -164,7 +164,7 @@ Behoben: Testdaten nutzen fiktive Namen (ADR-013); Lint/Format/CI ergänzt; C-2 
 
 - **D-3:** IP-Löschfrist (T-605).
 - **B-1, B-2:** Status und Reisen werden nicht aufgelöst.
-- **C-1:** Schreibende Spielaktionen fehlen. Vorher kommen `CommandLog` (C-5) und die Handelsformeln (T-103).
+- **C-1:** Schreibende Spielaktionen fehlen. Die Handelsformeln sind da (T-103); vor Kauf und Verkauf (T-106) fehlt noch `CommandLog` (C-5).
 - **C-4:** Tick-System (`WorldTick`).
 - **C-7, C-8:** NPCs, Immobilien und weitere Systeme.
 
