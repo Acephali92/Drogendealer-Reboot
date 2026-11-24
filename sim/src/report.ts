@@ -52,7 +52,7 @@ export interface Summary {
   population: { giniMedian: number; topToMedianMedian: number };
   /** Kennzahlen über ALLE Spieler eines Profils (beobachtet + Hintergrund), höhere Stichprobe */
   allPlayers: Record<string, { n: number; lossShare: number; stuckDaysMean: number; loanShare: number; loansMean: number; confiscatedShare: number; nwMedianEur: number }>;
-  market: { priceRatioMean: number; priceRatioMin: number; priceRatioMax: number; scarceShareMean: number; volumePerDayEur: number; topMarkets: Array<{ key: string; volumeEur: number; priceRatio: number; scarce: number }> };
+  market: { priceRatioMean: number; priceRatioMin: number; priceRatioMax: number; scarceShareMean: number; volumePerDayEur: number; topMarkets: Array<{ key: string; volumeEur: number; priceRatio: number; scarce: number }>; goodShare: Record<string, number> };
   handover?: HandoverSummary;
   money: { supplyEndMedianEur: number; supplyGrowthLast30Pct: number; sinkFaucetRatio: number; ledgerEur: Record<string, number>; events: number };
 }
@@ -133,6 +133,15 @@ export function summarize(
     }))
     .sort((a, b) => b.volumeEur - a.volumeEur)
     .slice(0, 8);
+  // Umsatzanteil je Ware über alle Märkte (B-2: Warendominanz)
+  const byGood: Record<string, number> = {};
+  for (const r of results) for (const [key, m] of Object.entries(r.market.perMarket)) byGood[key.split('/')[1]!] = (byGood[key.split('/')[1]!] ?? 0) + m.volumeCt;
+  const totalVol = Object.values(byGood).reduce((a, b) => a + b, 0);
+  const goodShare = Object.fromEntries(
+    Object.entries(byGood)
+      .sort((a, b) => b[1] - a[1])
+      .map(([g, v]) => [g, totalVol ? Math.round((v / totalVol) * 1000) / 1000 : 0]),
+  );
   const ledger: Record<string, number> = {};
   for (const k of [...FAUCETS, ...SINKS]) ledger[k] = eur(mean(results.map((r) => r.ledger[k])));
   const supplyEnd = results.map((r) => r.moneySupply.at(-1)!);
@@ -172,6 +181,7 @@ export function summarize(
       scarceShareMean: Math.round(mean(results.flatMap((r) => r.market.dailyScarce)) * 1000) / 1000,
       volumePerDayEur: eur(mean(results.flatMap((r) => r.market.dailyVolumeCt))),
       topMarkets,
+      goodShare,
     },
     money: {
       supplyEndMedianEur: eur(quantile(supplyEnd, 0.5)),
@@ -295,6 +305,7 @@ export function toMarkdown(s: Summary): string {
     L.push(`Erster Rückgang von k je Seed: ${s.handover.firstDrop.map((f) => (f.day ? `Tag ${f.day} bei ${f.players} Spielern` : 'kein Rückgang')).join('; ')}. k am Ende: ${s.handover.firstDrop.map((f) => f.kEnd).join(', ')}.`);
     L.push('');
   }
+  L.push(`- Umsatzanteil je Ware: ${Object.entries(s.market.goodShare).map(([g, v]) => `${g} ${(v * 100).toFixed(0)} %`).join(', ')}.`);
   L.push(`- Umsatzstärkste Märkte: ${s.market.topMarkets.slice(0, 5).map((m) => `\`${m.key}\` ${fmt(m.volumeEur)} €/Tag (P/P* ${m.priceRatio}, knapp ${(m.scarce * 100).toFixed(0)} %)`).join('; ')}.`);
   L.push('');
   return L.join('\n');

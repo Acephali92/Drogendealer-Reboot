@@ -200,6 +200,54 @@ export const EXPERIMENTS: Record<string, Experiment> = {
     overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.3, 'npc.k_start': 0.5 },
     hypothesis: 'Wie b11-theta-k05, langfristig.',
   },
+  // ---------------------------------------------------------------- T-120 Endstand (Agent 2, PR #34)
+  // Ohne Overrides: parameters.toml des T-120-Branches enthält alle übernommenen Werte
+  // (P-5…P-12) und zusätzlich laundering.tiers.strawman.rate 0,88 (Entscheidung des Users).
+  't120-final': {
+    scenario: sc('t120-final', 'T-120-Endstand (PR #34) mit NPC-Händlern k = 1, ohne Overrides', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    hypothesis: 'Strohmann 0,88 statt 0,75 ändert die Sackgassen-Quote nicht nennenswert: A und B bleiben ≤ 10 % (Vergleich b11-theta45).',
+  },
+  't120-final-365': {
+    scenario: sc('t120-final-365', 'wie t120-final über 365 Tage', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    hypothesis: 'Wie t120-final, langfristig (Vergleich b11-theta45-365).',
+  },
+  't120-final-365-s075': {
+    scenario: { ...sc('t120-final-365-s075', 'wie t120-final-365, Strohmann 0,88 → 0,75 (gepaart: gleiche Seeds)', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }), seedPrefix: 't120-final-365' },
+    overrides: { 'laundering.tiers.strawman.rate': 0.75 },
+    hypothesis: 'Gepaarter Vergleich zu t120-final-365: Der Strohmann-Kurs 0,88 statt 0,75 verschlechtert B nicht (höherer Kurs = weniger Waschverlust).',
+  },
+  // ---------------------------------------------------------------- B-2: Kokain-Dominanz
+  // Basis = b11-theta45 (ADR-023-Empfehlung + NPC-Händler k = 1, θ₀ = 0,45); je eine Änderung.
+  'b2-coke-cons': {
+    scenario: sc('b2-coke-cons', 'B-2: wie b11-theta45, goods.kokain.consumption 0,004 → 0,003', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'goods.kokain.consumption': 0.003 },
+    hypothesis: 'Weniger Kokain-Konsum verteilt den Handel auf mehrere Waren. Statisch [gemessen] kaum Wirkung: consumption gilt in allen Städten gleich und kürzt sich im Preisverhältnis heraus.',
+  },
+  'b2-ams-police': {
+    scenario: sc('b2-ams-police', 'B-2: wie b11-theta45, city.amsterdam.police 0,3 → 0,45', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'city.amsterdam.police': 0.45 },
+    hypothesis: 'Mehr Polizei in Amsterdam nimmt der Kurzroute Rotterdam → Amsterdam die Dominanz.',
+  },
+  'b2-rot-supply': {
+    scenario: sc('b2-rot-supply', 'B-2: wie b11-theta45, city.rotterdam.supply.kokain 2,5 → 2,0', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'city.rotterdam.supply.kokain': 2.0 },
+    hypothesis: 'Ein kleineres Kokain-Angebot im Erzeugerhafen senkt die Marge der Top-Route (statisch 1.470 → 998 €/h), ohne die Sackgassen-Quote von A und B zu erhöhen.',
+  },
+  'b2-coke-cons2': {
+    scenario: sc('b2-coke-cons2', 'B-2: wie b11-theta45, goods.kokain.consumption 0,004 → 0,002', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'goods.kokain.consumption': 0.002 },
+    hypothesis: 'b2-coke-cons wirkte über die Markttiefe (kleinere Bestände, mehr Preis-Slippage für große Ladungen): Halbierter Konsum senkt den Kokain-Anteil deutlich unter 50 %.',
+  },
+  'b2-coke-vol': {
+    scenario: sc('b2-coke-vol', 'B-2: wie b11-theta45, goods.kokain.volume 1 → 2', 90, 48, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'goods.kokain.volume': 2 },
+    hypothesis: 'Doppeltes Volumen halbiert die Kokain-Menge je Fahrzeugladung; Einsteiger (budgetbegrenzt) trifft das kaum. Der Kokain-Anteil sinkt, ohne A/B zu verschlechtern.',
+  },
+  'b2-coke-cons-365': {
+    scenario: sc('b2-coke-cons-365', 'B-2: wie b2-coke-cons über 365 Tage', 365, 24, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
+    overrides: { ...REC_W0, 'npc.trader_threshold_base': 0.45, 'goods.kokain.consumption': 0.003 },
+    hypothesis: 'Wie b2-coke-cons, langfristig (Vergleich b11-theta45-365).',
+  },
   'b11-npc-365': {
     scenario: sc('b11-npc-365', 'B-11: wie b11-npc über 365 Tage (Vergleich zu b11-theta-365)', 365, 8, 30, { ...BASE_OPTIONS, adr023: true, laundering: true, loanShark: true, npc: true, npcIntensity: 1 }),
     overrides: { ...REC_W0 },

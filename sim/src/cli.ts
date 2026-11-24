@@ -31,7 +31,7 @@ function args(name: string): string[] {
 }
 
 async function runParallel(params: unknown, proposals: unknown, scenario: Scenario): Promise<SeedResult[]> {
-  const seeds = Array.from({ length: scenario.seeds }, (_, i) => `${scenario.id}-${i + 1}`);
+  const seeds = Array.from({ length: scenario.seeds }, (_, i) => `${scenario.seedPrefix ?? scenario.id}-${i + 1}`);
   const results: SeedResult[] = new Array(seeds.length);
   const threads = Math.max(1, Math.min(cpus().length, seeds.length));
   let next = 0;
