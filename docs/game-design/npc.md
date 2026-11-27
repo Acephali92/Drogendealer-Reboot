@@ -36,7 +36,7 @@ NPCs agieren nur auf der Erde. Im Weltraum übernehmen Piraten (F-SPC-04) die Ro
 | $k_0$ | `npc.k_start` | 1,0 | Startwert der Intensität |
 | – | `npc.k_min` / `npc.k_max` | 0,0 / 1,0 | Grenzen von $k$ |
 | $\eta$ | `npc.trader_intensity` | 0,5 | Handelsvolumen der NPCs relativ zu $\min(A_a, D_b)$ |
-| $\theta_0$ | `npc.trader_threshold_base` | 0,15 | Mindestmarge, ab der NPCs handeln |
+| $\theta_0$ | `npc.trader_threshold_base` | 0,45 | Mindestmarge, ab der NPCs handeln (P-12: mittlere Margen bleiben den Spielern) |
 | $\theta_{km}$ | `npc.trader_threshold_per_km` | 0,0002 | Margenzuschlag je km |
 | $\theta_s$ | `npc.trader_threshold_scale` | 0,5 | Marge über der Schwelle, ab der NPCs voll aktiv sind |
 | – | `npc.couriers_per_city_day` | 4 | Kuriere je Stadt und Tag (bei $k = 1$) |
@@ -151,21 +151,24 @@ NPC-Schritte laufen in der Tick-Reihenfolge (README §4) so:
 Zu Beginn (Märkte im Gleichgewicht ohne NPCs):
 
 - $m = 15\,413{,}63 \cdot 0{,}95 / (5\,059{,}64 \cdot 1{,}05) - 1 =$ **1,7563**
-- $\theta = 0{,}15 + 0{,}0002 \cdot 820 =$ **0,314**, $f = \operatorname{clamp}((1{,}7563 - 0{,}314)/0{,}5) =$ **1,0**
+- $\theta = 0{,}45 + 0{,}0002 \cdot 820 =$ **0,614**, $f = \operatorname{clamp}((1{,}7563 - 0{,}614)/0{,}5) =$ **1,0**
 - $q = 1 \cdot 0{,}5 \cdot \min(6{,}5;\ 13{,}44) =$ **3,25** Einheiten pro Tick (nur diese eine Route)
 
 Gleichgewicht nach Einschwingen (alle Routen aller Städte gleichzeitig, kein Spieler):
 
 | | $k = 0$ | $k = 1$ |
 |---|---:|---:|
-| Bestand Containerdam | **936,0** | **663,3** |
-| Bestand Protzingen | **691,2** | **1 161,9** |
-| Preis Containerdam | **5 059,64 ct** | **6 010,53 ct** |
-| Preis Protzingen | **15 413,63 ct** | **11 888,32 ct** |
-| Preisverhältnis | **3,0464** | **1,9779** |
+| Bestand Containerdam | **936,0** | **747,3** |
+| Bestand Protzingen | **691,2** | **1 003,2** |
+| Preis Containerdam | **5 059,64 ct** | **5 662,62 ct** |
+| Preis Protzingen | **15 413,63 ct** | **12 794,23 ct** |
+| Preisverhältnis | **3,0464** | **2,2594** |
 
-Die NPCs halbieren die Marge der besten Route etwa (+205 % → +98 %), die Route bleibt aber deutlich profitabel
-(INV-14: ≈ 10 000 € pro Transporter-Fahrt statt ≈ 28 500 €).
+Die NPCs dämpfen die Marge der besten Route spürbar (+205 % → +126 %), die Route bleibt aber deutlich profitabel
+(INV-14: ≈ 14 800 € pro Transporter-Fahrt statt ≈ 28 500 €). Mit der Mindestmarge 0,45 (P-12, Agent 5) greifen NPCs
+nur noch bei hohen Margen ein; mittlere Margen (40–80 %), von denen vorsichtige Spieler leben, bleiben unangetastet.
+Simulation (ADR-023-Werte, k = 1, 90 Tage): vorsichtige Spieler 4 %, Durchschnittsspieler 7 % unter Startkapital
+(mit θ₀ = 0,15 waren es 38 % / 20 %).
 
 **EX-NPC-02 – Kurierstufen**
 

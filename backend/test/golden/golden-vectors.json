@@ -146,27 +146,62 @@
     },
     "EX-ML-03": {
       "accepted": 1000000,
-      "credit": 700000
+      "credit": 880000
     },
     "EX-ML-04": {
       "confiscated": 786240,
       "fine": 393120
     },
+    "EX-ML-05": {
+      "U": 0.969025,
+      "accepted_L5": 700000,
+      "cap_L0": 200000,
+      "cap_L5": 700000,
+      "credit": 148606,
+      "rate": 0.990707,
+      "rate_max": 1.0,
+      "rate_min": 0.7
+    },
+    "EX-ML-06": {
+      "L0": "gambling",
+      "L10": "gambling,strawman,shell",
+      "L15": "gambling,strawman,shell,foundation",
+      "L2": "gambling,strawman",
+      "foundation_5m": 475000000,
+      "foundation_L12": "Level zu niedrig",
+      "shell_1m": 92000000,
+      "shell_50k": "unter Mindestbetrag"
+    },
+    "EX-ML-07": {
+      "confiscated": 237500000,
+      "p_day": 0.002,
+      "p_year": 0.5184
+    },
+    "EX-ML-08": {
+      "amount": 100000,
+      "eligible_2_vehicles": false,
+      "eligible_ok": true,
+      "eligible_rich": false,
+      "eligible_weapon": false,
+      "outstanding": 50000,
+      "repay": 50000,
+      "to_player": 50000
+    },
     "EX-NPC-01": {
       "P_mue_k0": 15413.63,
-      "P_mue_k1": 11888.32,
+      "P_mue_k1": 12794.23,
       "P_rot_k0": 5059.64,
-      "P_rot_k1": 6010.53,
+      "P_rot_k1": 5662.62,
       "S_mue_k0": 691.2,
-      "S_mue_k1": 1161.9,
+      "S_mue_k1": 1003.2,
       "S_rot_k0": 936.0,
-      "S_rot_k1": 663.3,
+      "S_rot_k1": 747.3,
       "f_start": 1.0,
       "m_start": 1.7563,
       "q_start": 3.25,
       "ratio_k0": 3.0464,
-      "ratio_k1": 1.9779,
-      "theta": 0.314
+      "ratio_k1": 2.2594,
+      "theta": 0.614
     },
     "EX-NPC-02": {
       "K_1": 40.0,
@@ -207,7 +242,7 @@
       "XP_L20": 40000
     },
     "EX-PRF-02": {
-      "finanzen": 8,
+      "finanzen": 86,
       "handel": 112,
       "schmuggel": 106
     },
@@ -324,11 +359,14 @@
     "EX-TRV-03": {
       "bribe_chance": 0.3475,
       "bribe_cost": 1300000,
+      "bribe_possible_2m": true,
+      "bribe_possible_500k": false,
       "cargo_base_value": 1600000,
-      "fine": 320000
+      "cash_after_bribe_2m": 700000,
+      "confiscated_cash_500k": 500000
     },
     "EX-TRV-04": {
-      "EV": 1176831,
+      "EV": 1179594,
       "T": 58,
       "fuel": 16400,
       "profit_no_bust": 1600069
@@ -18352,6 +18390,10 @@
         0.0,
         0.5
       ],
+      "combat.weapon_resale_rate": [
+        0.2,
+        0.8
+      ],
       "economy.elasticity": [
         0.2,
         1.0
@@ -18384,9 +18426,25 @@
         0.0,
         0.01
       ],
-      "laundering.strawman_fee": [
-        0.1,
-        0.5
+      "laundering.tiers.foundation.papers_probability_per_day": [
+        0.0,
+        0.01
+      ],
+      "laundering.tiers.gambling.rate_min": [
+        0.5,
+        0.9
+      ],
+      "laundering.tiers.strawman.rate": [
+        0.75,
+        0.95
+      ],
+      "loan_shark.amount": [
+        50000,
+        500000
+      ],
+      "loan_shark.repay_factor": [
+        1.0,
+        1.5
       ],
       "npc.gang_attack_base": [
         0.0,
@@ -18697,6 +18755,7 @@
       "newbie_protection_ticks": 1008,
       "target_cooldown_ticks": 36,
       "weapon_defense_weight": 0.5,
+      "weapon_resale_rate": 0.5,
       "win_chance_max": 0.95,
       "win_chance_min": 0.05
     },
@@ -18948,8 +19007,54 @@
       "risk_base": 0.001,
       "risk_exponent": 2.0,
       "risk_max_per_tick": 0.5,
-      "strawman_daily_cap": 1000000,
-      "strawman_fee": 0.3
+      "tiers": {
+        "foundation": {
+          "daily_cap": 1000000000,
+          "min_amount": 100000000,
+          "min_level": 15,
+          "name": "Stiftung Sonnenschein (Insel Diskretistan)",
+          "papers_confiscation_rate": 0.25,
+          "papers_heat": 40.0,
+          "papers_lookback_ticks": 4320,
+          "papers_name": "Diskretistan-Papers",
+          "papers_probability_per_day": 0.002,
+          "rate": 0.95,
+          "tier": 4
+        },
+        "gambling": {
+          "daily_cap_base": 200000,
+          "daily_cap_per_level": 100000,
+          "min_level": 0,
+          "name": "Spielhölle Zum Goldenen Zufall",
+          "rate_max": 1.0,
+          "rate_min": 0.7,
+          "tier": 0
+        },
+        "shell": {
+          "daily_cap": 100000000,
+          "min_amount": 10000000,
+          "min_level": 10,
+          "name": "Briefkasten-GmbH auf dem Steuerfrei-Atoll",
+          "rate": 0.92,
+          "tier": 3
+        },
+        "strawman": {
+          "daily_cap": 1000000,
+          "min_level": 2,
+          "name": "Cousin Kalle",
+          "rate": 0.88,
+          "tier": 1
+        }
+      }
+    },
+    "loan_shark": {
+      "amount": 100000,
+      "max_assets": 20000,
+      "max_vehicles": 1,
+      "max_weapons": 0,
+      "name": "Onkel Kredit-Klaus",
+      "repay_factor": 1.0,
+      "repayment_rate": 0.5
     },
     "meta": {
       "currency": "EUR",
@@ -18982,7 +19087,7 @@
       "k_min": 0.0,
       "k_start": 1.0,
       "trader_intensity": 0.5,
-      "trader_threshold_base": 0.15,
+      "trader_threshold_base": 0.45,
       "trader_threshold_per_km": 0.0002,
       "trader_threshold_scale": 0.5
     },
@@ -19004,7 +19109,7 @@
       "finanzen_fee_reduction_cap": 0.4,
       "finanzen_risk_reduction": 0.02,
       "finanzen_risk_reduction_cap": 0.4,
-      "finanzen_xp_per_eur": 0.001,
+      "finanzen_xp_per_eur": 0.01,
       "gewalt_strength_bonus": 0.03,
       "gewalt_strength_bonus_cap": 0.6,
       "gewalt_xp_loss": 10,
@@ -19171,7 +19276,6 @@
       "control_decision_timeout_ticks": 3,
       "control_segment_max": 0.5,
       "debt_repayment_rate": 0.5,
-      "fine_rate": 0.2,
       "heat_on_bust": 30.0,
       "segment_km": 100,
       "train_price_per_km": 15,
@@ -19866,7 +19970,7 @@
     }
   ],
   "sources": {
-    "parameters.toml": "f9966c1202e3c21d2cf19b3de480d5a4a7d0dad3700d1850da8425fc7a951526",
-    "verify.py": "e740c453d8773108a527ce12ee216073d5a38b8f1838aac08fa1afd5b3c81f5f"
+    "parameters.toml": "419bc2ed397c419a1cc77877a3319043bdf62d5d360f7b7bbf62538f0656ada9",
+    "verify.py": "199c64b258d8dec9a5938edae622dc306470af6cd77b4e703e7683ae1b41c77a"
   }
 }

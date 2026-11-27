@@ -37,7 +37,8 @@ des Preises über den abgebauten Bestand plus halber Spread:
 C(q) = \Big\lceil \big(1 + \tfrac{s}{2}\big) \int_{S-q}^{S} P(\sigma)\, d\sigma \Big\rceil, \qquad S \leftarrow S - q
 ```
 
-Mit $P(\sigma) = \operatorname{clamp}(K\sigma^{-\varepsilon}, P_{min}, P_{max})$ (F-ECO-06) ist das Integral stückweise
+Mit $P(\sigma) = \operatorname{clamp}(K\sigma^{-\varepsilon}, P_{min}, P_{max})$ (F-ECO-06; $K$ enthält das aktuelle
+Rauschen $N = e^{x}$ und während eines Marktereignisses den Nachfragemultiplikator $M_d$ über $S_{ref}$) ist das Integral stückweise
 geschlossen lösbar. Seien $\sigma_{hi} = (K/P_{max})^{1/\varepsilon}$ und $\sigma_{lo} = (K/P_{min})^{1/\varepsilon}$:
 
 ```math
