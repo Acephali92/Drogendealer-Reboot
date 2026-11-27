@@ -17,7 +17,7 @@
 | T-002 | Steuerungsdokumente Revision 2 | A1 | done (Basis von `main`) | – |
 | T-003 | Game-Design-Grundlagen (Regeln, Parameterdatei, Prüfskript) | A2 | done ([PR #4](https://github.com/Acephali92/Drogendealer-Reboot/pull/4)) | – |
 | T-004 | Backend-Fundament: Setup, Prisma-Schema, Auth, `/players/me` | A3 | done ([PR #2](https://github.com/Acephali92/Drogendealer-Reboot/pull/2), 81 Tests grün) | – |
-| T-005 | Datenmodell-Review des bestehenden Schemas + Nachvollziehbarkeitskonzept (`docs/database/`) | A3 | todo | T-004 |
+| T-005 | Datenmodell-Review des bestehenden Schemas + Nachvollziehbarkeitskonzept (`docs/database/`) | A3 | done ([#33](https://github.com/Acephali92/Drogendealer-Reboot/pull/33), `docs/database/DATA_MODEL.md`; Lückenreview [#40](https://github.com/Acephali92/Drogendealer-Reboot/pull/40) als Input, siehe T-123) | T-004 |
 | T-006 | Frontend-Gerüst, API-Vertragsentwurf, UI-Richtlinien | A4 | done ([PR #3](https://github.com/Acephali92/Drogendealer-Reboot/pull/3)); Nacharbeiten in T-110 | – |
 | T-007 | Root-README konsolidieren, Backend-Schnellstart nach `backend/README.md` | A1 + A3 | done | T-004 |
 | T-008 | Branches integrieren | A1 | done (alle Agenten-Branches gemergt; Datenbank-Rolle entfallen, ADR-022) | T-002 – T-007, T-009 |
@@ -29,7 +29,7 @@
 |----|-------|-----------|--------|--------------|
 | T-101 | Parameterdatei im Backend laden und beim Start validieren | A3 | todo | T-003, T-004 |
 | T-102 | Seed-Daten: Städte, Verbindungen, Waren aus Parametern | A3 | todo | T-101 |
-| T-103 | Preisformeln als reine Funktionen + Tests gegen Prüfskript | A3 (Review A2) | todo | T-003 |
+| T-103 | Preisformeln als reine Funktionen + Tests gegen Prüfskript | A3 (Review A2) | done ([#39](https://github.com/Acephali92/Drogendealer-Reboot/pull/39), 547 Tests); Nachtrag: Golden-Fälle mit `ev_d` (TD-021) | T-003 |
 | T-104 | Markt-Tick-Job (idempotent, Tick-Nummer) | A3 | todo | T-103, T-105 |
 | T-105 | Preisänderungsjournal `MarketPriceChange` mit Ursache, per DB-Trigger auf `MarketPrice` | A3 (gemergt) | review | T-005 |
 | T-106 | Handels-Endpunkte Kaufen/Verkaufen inkl. Journale | A3 | todo | T-102, T-105 |
@@ -44,8 +44,9 @@
 | T-115 | `GameImage`-Komponente mit Fallback-Kette, Kategorie-Platzhalter `_fallback.svg`, Mocks aus `parameters.toml` (ADR-020) | A4 | done ([PR #15](https://github.com/Acephali92/Drogendealer-Reboot/pull/15), 46 Tests) | – |
 | T-117 | Clan-Ränge im Game Design auf technische Werte `GODFATHER…ASSOCIATE` umstellen (ADR-021) | A2 + A3 | done ([#27](https://github.com/Acephali92/Drogendealer-Reboot/pull/27), [#29](https://github.com/Acephali92/Drogendealer-Reboot/pull/29), [#30](https://github.com/Acephali92/Drogendealer-Reboot/pull/30)) | – |
 | T-118 | Offene Fragen von A4 aus PR #13 (Laderaum, Kapazität ohne Fahrzeug, Reisedauer/-kosten, Clan-Rechte) | A2 | done (PO-Entscheidung, siehe T-119) | – |
-| T-120 | Geldwäsche-Progression und Totalbeschlagnahme (ADR-023): Waschmethoden je Level (Glücksspiel mit schwankendem Kurs → Geschäfte → Offshore/Scheinfirmen/Stiftungen), Kontrollregel, Parameter; Simulationsnachweis „keine Sackgassen“ | A2 + A5 gemeinsam | todo | – |
-| T-121 | Datenmodell und API: Bargeld (schwarz) und Bankkonto (weiß) getrennt, Journal für Wäsche und Beschlagnahme (ADR-023, B-9) | A3 | todo | T-120 (Regeln), T-005 |
+| T-120 | Geldwäsche-Progression und Totalbeschlagnahme (ADR-023) inkl. B-11-Wert `npc.trader_threshold_base` = 0,45 | A2 + A5 | done ([#34](https://github.com/Acephali92/Drogendealer-Reboot/pull/34); Sim: 9 % der Durchschnittsspieler nach 90 Tagen unter Startkapital, Ziel ≤ 10 %) | – |
+| T-121 | Datenmodell und API: Bargeld (schwarz) und Bankkonto (weiß) getrennt, Journal für Wäsche und Beschlagnahme (ADR-023, B-9) | A3 | in progress: Trennung erledigt (#33); Wäsche-/Kontrolljournal und Logik nach T-120 offen (vgl. G-4 aus #40) | T-120 |
+| T-123 | Lücken aus dem DB-Review #40 bewerten und umsetzen: Tick an allen Journalen (G-1), `correlationId` (G-2), Marktjournal fail-closed mit Version (G-3), Reihenfolge `seq` (G-3b), Wäsche-/Kontrolljournal (G-4), Wahl und Kassensperre (G-5) | A3 | todo | T-120 |
 | T-122 | UI: Schwarz- und Weißgeld getrennt anzeigen, Kontrollrisiko sichtbar machen, Wäsche-Aktionen (ADR-023) | A4 | todo | T-121 |
 | T-119 | Umsetzung der T-118-Antworten: Laderaum in Volumeneinheiten (`goods.<id>.volume`, Rucksack `player.backpack_capacity` = 60 VE + `vehicles.<id>.capacity`; API-Felder `unitVolume`/`capacity` statt `unitWeightG`/`capacityG`); Reisedauer/-kosten aus Formeln F-TRV-01..03 statt fester Werte pro Verbindung; Clan-Rechte-Matrix laut `docs/game-design/clans.md` §3.1 | A3 (API, Vertrag) → A4 (UI) | todo | T-101 |
 | T-116 | Bilder für Waren, Fahrzeuge, Waffen usw. einstellen (`frontend/public/images/`) | Product Owner | jederzeit | – |
