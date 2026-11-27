@@ -100,24 +100,29 @@ model Player {
   user        User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   currentCity City? @relation(fields: [currentCityId], references: [id], onDelete: SetNull)
 
-  heat               PlayerCityHeat[]
-  inventoryLots      InventoryLot[]
-  inventoryMovements InventoryMovement[]
-  tradeTransactions  TradeTransaction[]
-  moneyTransactions  MoneyTransaction[]
-  vehicles           Vehicle[]
-  travels            Travel[]
-  equipment          PlayerEquipment[]
-  attacks            Combat[]                  @relation("CombatAttacker")
-  defenses           Combat[]                  @relation("CombatDefender")
-  combatsWon         Combat[]                  @relation("CombatWinner")
-  clanMembership     ClanMember?
-  clanInvites        ClanInvite[]              @relation("ClanInviteInvitee")
-  sentClanInvites    ClanInvite[]              @relation("ClanInviteInviter")
-  clanTreasuryTxs    ClanTreasuryTransaction[]
-  sentMessages       Message[]                 @relation("MessageSender")
-  receivedMessages   Message[]                 @relation("MessageRecipient")
-  notifications      Notification[]
+  heat                 PlayerCityHeat[]
+  inventoryLots        InventoryLot[]
+  inventoryMovements   InventoryMovement[]       @relation("InventoryMovementPlayer")
+  tradeTransactions    TradeTransaction[]        @relation("TradeTransactionPlayer")
+  moneyTransactions    MoneyTransaction[]        @relation("MoneyTransactionPlayer")
+  vehicles             Vehicle[]
+  travels              Travel[]
+  equipment            PlayerEquipment[]
+  attacks              Combat[]                  @relation("CombatAttacker")
+  defenses             Combat[]                  @relation("CombatDefender")
+  combatsWon           Combat[]                  @relation("CombatWinner")
+  clanMembership       ClanMember?
+  clanInvites          ClanInvite[]              @relation("ClanInviteInvitee")
+  sentClanInvites      ClanInvite[]              @relation("ClanInviteInviter")
+  clanTreasuryTxs      ClanTreasuryTransaction[] @relation("ClanTreasuryTransactionPlayer")
+  /// Journalzeilen, die dieser Spieler als Akteur ausgelöst hat (TD-022).
+  actedMoneyTxs        MoneyTransaction[]        @relation("MoneyTransactionActor")
+  actedInventoryMoves  InventoryMovement[]       @relation("InventoryMovementActor")
+  actedTrades          TradeTransaction[]        @relation("TradeTransactionActor")
+  actedClanTreasuryTxs ClanTreasuryTransaction[] @relation("ClanTreasuryTransactionActor")
+  sentMessages         Message[]                 @relation("MessageSender")
+  receivedMessages     Message[]                 @relation("MessageRecipient")
+  notifications        Notification[]
 
   @@index([currentCityId])
   @@index([status, statusUntil])
@@ -204,6 +209,8 @@ model MarketState {
   /// Aktives Ereignis (Schlüssel aus [events.*]) oder null.
   activeEvent    String?
   eventTicksLeft Int      @default(0)
+  /// Fortlaufende Version, zählt bei jeder echten Änderung hoch (Trigger, TD-022).
+  version        Int      @default(0)
   updatedAt      DateTime @updatedAt
 
   city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
@@ -227,30 +234,49 @@ enum MarketChangeCause {
 /// Wird per DB-Trigger auf "MarketState" geschrieben. Ursache, Referenz und Tick setzt die
 /// Anwendung pro Transaktion über setMarketChangeContext() (src/modules/world/market-journal.ts).
 model MarketStateChange {
-  id          String            @id @default(cuid())
-  cityId      String
-  commodityId String
-  oldStock    Float?
-  newStock    Float
-  oldNoise    Float?
-  newNoise    Float
-  oldEvent    String?
-  newEvent    String?
-  cause       MarketChangeCause
-  /// Referenz auf den Auslöser, z. B. TradeTransaction-ID.
-  refId       String?
-  tick        Int?
-  createdAt   DateTime          @default(now())
+  id                String            @id @default(cuid())
+  cityId            String
+  commodityId       String
+  oldStock          Float?
+  newStock          Float
+  oldNoise          Float?
+  newNoise          Float
+  oldEvent          String?
+  newEvent          String?
+  /// Restdauer des Ereignisses nach der Änderung.
+  newEventTicksLeft Int
+  cause             MarketChangeCause
+  /// Referenz auf den Auslöser, z. B. TradeTransaction-ID (Pflicht bei TRADE).
+  refId             String?
+  tick              Int
+  /// Version des Marktes nach der Änderung (lückenlos je Markt).
+  version           Int
+  /// Zwischenwerte der Formel, Pflichtschlüssel je Ursache (DATA_MODELS.md).
+  detail            Json?
+  correlationId     String            @db.Uuid
+  seq               BigInt            @unique @default(autoincrement())
+  createdAt         DateTime          @default(now())
 
   city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
   commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
 
+  @@unique([cityId, commodityId, version])
   @@index([cityId, commodityId, createdAt])
   @@index([commodityId, createdAt])
   @@index([cause, createdAt])
+  @@index([correlationId])
+  @@index([refId])
 }
 
 // ───────────────────────────────── Geld ─────────────────────────────────
+
+/// Wer eine Journalbuchung ausgelöst hat (G-6, TD-022).
+enum ActorType {
+  PLAYER
+  NPC
+  SYSTEM
+  ADMIN
+}
 
 enum MoneyAccount {
   /// Bargeld (Schwarzgeld)
@@ -290,20 +316,30 @@ enum MoneyTransactionReason {
 /// Append-only Kontobuch aller Geldbewegungen eines Spielers, getrennt nach Konto.
 /// Invariante: Σ amount je (Spieler, Konto) = Player.cash bzw. Player.bank.
 model MoneyTransaction {
-  id           String                 @id @default(cuid())
-  playerId     String
-  account      MoneyAccount
-  amount       BigInt
-  balanceAfter BigInt
-  reason       MoneyTransactionReason
-  refId        String?
-  createdAt    DateTime               @default(now())
+  id            String                 @id @default(cuid())
+  playerId      String
+  account       MoneyAccount
+  amount        BigInt
+  balanceAfter  BigInt
+  reason        MoneyTransactionReason
+  refId         String?
+  createdAt     DateTime               @default(now())
+  /// Journalkopf (TD-022): fortlaufende Reihenfolge, Tick, Aktion und Akteur aus dem Journalkontext
+  /// der Transaktion (set_journal_context). Ohne Kontext lehnt die DB die Zeile ab.
+  seq           BigInt                 @unique @default(autoincrement())
+  tick          Int                    @default(dbgenerated("(journal_context('app.tick'::text))::integer"))
+  correlationId String                 @default(dbgenerated("(journal_context('app.correlation_id'::text))::uuid")) @db.Uuid
+  actorType     ActorType              @default(dbgenerated("(journal_context('app.actor_type'::text))::\"ActorType\""))
+  actorPlayerId String? // per Trigger aus app.actor_player_id (TD-022)
 
-  player Player @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  player Player  @relation("MoneyTransactionPlayer", fields: [playerId], references: [id], onDelete: Restrict)
+  actor  Player? @relation("MoneyTransactionActor", fields: [actorPlayerId], references: [id], onDelete: Restrict)
 
   @@index([playerId, createdAt])
   @@index([playerId, account])
   @@index([reason, createdAt])
+  @@index([correlationId])
+  @@index([tick])
 }
 
 // ─────────────────────────── Handel & Inventar ───────────────────────────
@@ -348,13 +384,23 @@ model InventoryMovement {
   reason        InventoryMovementReason
   refId         String?
   createdAt     DateTime                @default(now())
+  /// Journalkopf (TD-022): fortlaufende Reihenfolge, Tick, Aktion und Akteur aus dem Journalkontext
+  /// der Transaktion (set_journal_context). Ohne Kontext lehnt die DB die Zeile ab.
+  seq           BigInt                  @unique @default(autoincrement())
+  tick          Int                     @default(dbgenerated("(journal_context('app.tick'::text))::integer"))
+  correlationId String                  @default(dbgenerated("(journal_context('app.correlation_id'::text))::uuid")) @db.Uuid
+  actorType     ActorType               @default(dbgenerated("(journal_context('app.actor_type'::text))::\"ActorType\""))
+  actorPlayerId String? // per Trigger aus app.actor_player_id (TD-022)
 
-  player    Player    @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  player    Player    @relation("InventoryMovementPlayer", fields: [playerId], references: [id], onDelete: Restrict)
+  actor     Player?   @relation("InventoryMovementActor", fields: [actorPlayerId], references: [id], onDelete: Restrict)
   commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
 
   @@index([playerId, createdAt])
   @@index([playerId, commodityId])
   @@index([commodityId])
+  @@index([correlationId])
+  @@index([tick])
 }
 
 enum TradeSide {
@@ -364,23 +410,33 @@ enum TradeSide {
 
 /// Append-only Journal aller Handelsvorgänge.
 model TradeTransaction {
-  id          String    @id @default(cuid())
-  playerId    String
-  cityId      String
-  commodityId String
-  side        TradeSide
-  quantity    Int
-  unitPrice   BigInt
-  total       BigInt
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  playerId      String
+  cityId        String
+  commodityId   String
+  side          TradeSide
+  quantity      Int
+  unitPrice     BigInt
+  total         BigInt
+  createdAt     DateTime  @default(now())
+  /// Journalkopf (TD-022): fortlaufende Reihenfolge, Tick, Aktion und Akteur aus dem Journalkontext
+  /// der Transaktion (set_journal_context). Ohne Kontext lehnt die DB die Zeile ab.
+  seq           BigInt    @unique @default(autoincrement())
+  tick          Int       @default(dbgenerated("(journal_context('app.tick'::text))::integer"))
+  correlationId String    @default(dbgenerated("(journal_context('app.correlation_id'::text))::uuid")) @db.Uuid
+  actorType     ActorType @default(dbgenerated("(journal_context('app.actor_type'::text))::\"ActorType\""))
+  actorPlayerId String? // per Trigger aus app.actor_player_id (TD-022)
 
-  player    Player    @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  player    Player    @relation("TradeTransactionPlayer", fields: [playerId], references: [id], onDelete: Restrict)
+  actor     Player?   @relation("TradeTransactionActor", fields: [actorPlayerId], references: [id], onDelete: Restrict)
   city      City      @relation(fields: [cityId], references: [id], onDelete: Restrict)
   commodity Commodity @relation(fields: [commodityId], references: [id], onDelete: Restrict)
 
   @@index([playerId, createdAt])
   @@index([cityId, commodityId, createdAt])
   @@index([commodityId])
+  @@index([correlationId])
+  @@index([tick])
 }
 
 // ─────────────────────────── Reisen & Fahrzeuge ───────────────────────────
@@ -531,22 +587,32 @@ enum ClanTreasuryReason {
 /// Append-only Journal der Clan-Kasse (ADR-018). Endpunkte folgen mit T-309.
 /// Invariante: Σ amount je (Clan, Konto) = Clan.treasuryCash bzw. treasuryBank.
 model ClanTreasuryTransaction {
-  id           String             @id @default(cuid())
-  clanId       String
+  id            String             @id @default(cuid())
+  clanId        String
   /// Auslösender Spieler (Einzahlung, Auszahlung …) oder null (Systembuchung).
-  playerId     String?
-  account      MoneyAccount
-  amount       BigInt
-  balanceAfter BigInt
-  reason       ClanTreasuryReason
-  refId        String?
-  createdAt    DateTime           @default(now())
+  playerId      String?
+  account       MoneyAccount
+  amount        BigInt
+  balanceAfter  BigInt
+  reason        ClanTreasuryReason
+  refId         String?
+  createdAt     DateTime           @default(now())
+  /// Journalkopf (TD-022): fortlaufende Reihenfolge, Tick, Aktion und Akteur aus dem Journalkontext
+  /// der Transaktion (set_journal_context). Ohne Kontext lehnt die DB die Zeile ab.
+  seq           BigInt             @unique @default(autoincrement())
+  tick          Int                @default(dbgenerated("(journal_context('app.tick'::text))::integer"))
+  correlationId String             @default(dbgenerated("(journal_context('app.correlation_id'::text))::uuid")) @db.Uuid
+  actorType     ActorType          @default(dbgenerated("(journal_context('app.actor_type'::text))::\"ActorType\""))
+  actorPlayerId String? // per Trigger aus app.actor_player_id (TD-022)
 
   clan   Clan    @relation(fields: [clanId], references: [id], onDelete: Restrict)
-  player Player? @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  player Player? @relation("ClanTreasuryTransactionPlayer", fields: [playerId], references: [id], onDelete: Restrict)
+  actor  Player? @relation("ClanTreasuryTransactionActor", fields: [actorPlayerId], references: [id], onDelete: Restrict)
 
   @@index([clanId, createdAt])
   @@index([playerId])
+  @@index([correlationId])
+  @@index([tick])
 }
 
 enum ClanInviteStatus {

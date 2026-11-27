@@ -26,7 +26,11 @@ export async function truncateAll(app: FastifyInstance): Promise<void> {
     WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'`;
   if (tables.length === 0) return;
   const list = tables.map((t) => `"public"."${t.tablename}"`).join(', ');
-  await app.prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
+  // Journals refuse TRUNCATE unless app.allow_truncate is set (G-3c); transaction-local, same connection.
+  await app.prisma.$transaction([
+    app.prisma.$executeRaw`SELECT set_config('app.allow_truncate', 'on', true)`,
+    app.prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`),
+  ]);
 }
 
 export const validUser = {

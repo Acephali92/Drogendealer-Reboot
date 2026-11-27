@@ -5,6 +5,7 @@ import { generateRefreshToken, hashRefreshToken } from '../../lib/tokens.js';
 import type { GameParameters } from '../../domain/index.js';
 import type { AccessTokenPayload } from '../../plugins/auth.js';
 import { createPlayerForUser } from '../player/player.service.js';
+import { currentTick, setJournalContext } from '../journal/context.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
 
 export interface ClientMeta {
@@ -119,6 +120,8 @@ export function createAuthService({
               ageConfirmedAt: new Date(),
             },
           });
+          // One action: the start capital is granted by the system (TD-022).
+          await setJournalContext(tx, { tick: currentTick(), actor: { type: 'SYSTEM' } });
           const player = await createPlayerForUser(tx, user.id, input.username, gameParams);
           return issueTokens(tx, { ...user, player }, meta);
         });

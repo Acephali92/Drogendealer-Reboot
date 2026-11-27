@@ -21,6 +21,7 @@ export function experienceForNextLevel(_level: number): number | null {
  * Creates the player of a new account with values from parameters.toml [player] and books the
  * start capital in the money journal (START_CAPITAL), so that projection = Σ journal from the
  * first moment on (ADR-010, ADR-023: cash = black money, bank = laundered money).
+ * The caller sets the journal context of the transaction first (setJournalContext, TD-022).
  */
 export async function createPlayerForUser(
   tx: Prisma.TransactionClient,
@@ -89,7 +90,8 @@ export async function listMoneyTransactions(prisma: PrismaClient, playerId: stri
   const [items, total] = await prisma.$transaction([
     prisma.moneyTransaction.findMany({
       where: { playerId },
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      // seq breaks ties within one transaction (same createdAt, TD-022).
+      orderBy: [{ createdAt: 'desc' }, { seq: 'desc' }],
       skip: page.offset,
       take: page.limit,
       select: {

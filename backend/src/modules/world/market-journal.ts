@@ -1,24 +1,32 @@
 import type { MarketChangeCause, Prisma } from '@prisma/client';
 
+/** Formula intermediate values of a market change; required keys per cause, see DATA_MODELS.md. */
+export type MarketChangeDetail = Readonly<Record<string, string | number | boolean | null>>;
+
+export interface MarketChangeContext {
+  readonly cause: MarketChangeCause;
+  /** Reference to the trigger, e.g. the TradeTransaction id (required for TRADE). */
+  readonly refId?: string;
+  /** Required keys per cause (DB CHECK): TICK, EVENT, NPC, TRADE – names as in verify.py. */
+  readonly detail?: MarketChangeDetail;
+}
+
 /**
- * Sets cause, reference and tick for every MarketState change made in the CURRENT transaction.
- * The DB trigger "MarketState_journal" writes them into the append-only MarketStateChange journal
- * (T-105, GAME_ECONOMY.md §7 T-2/T-6).
+ * Sets cause, reference and formula details for every MarketState change made in the CURRENT
+ * transaction. The DB trigger "MarketState_journal" writes them, together with tick and
+ * correlationId from the journal context (setJournalContext, TD-022), into the append-only
+ * MarketStateChange journal. Without a cause an UPDATE is rejected (fail-closed).
  *
- * Must be called inside `prisma.$transaction(async (tx) => …)` before touching MarketState –
- * the settings are transaction-local (set_config(..., true)) and vanish on commit/rollback.
+ * Must be called inside `prisma.$transaction(async (tx) => …)` after setJournalContext and before
+ * touching MarketState – the settings are transaction-local.
  */
 export async function setMarketChangeContext(
   tx: Prisma.TransactionClient,
-  cause: MarketChangeCause,
-  refId?: string,
-  tick?: number,
+  ctx: MarketChangeContext,
 ): Promise<void> {
-  if (tick !== undefined && (!Number.isSafeInteger(tick) || tick < 0)) {
-    throw new RangeError(`invalid tick ${tick}`);
-  }
+  const detail = ctx.detail === undefined ? '' : JSON.stringify(ctx.detail);
   await tx.$queryRaw`
-    SELECT set_config('app.market_change_cause', ${cause}, true),
-           set_config('app.market_change_ref', ${refId ?? ''}, true),
-           set_config('app.market_change_tick', ${tick === undefined ? '' : String(tick)}, true)`;
+    SELECT set_config('app.market_change_cause', ${ctx.cause}, true),
+           set_config('app.market_change_ref', ${ctx.refId ?? ''}, true),
+           set_config('app.market_change_detail', ${detail}, true)`;
 }
