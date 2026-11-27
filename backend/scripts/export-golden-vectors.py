@@ -119,12 +119,20 @@ def formulas(v) -> dict:
                 continue
             for L, x in ((0, 0.0), (7, 0.2)):
                 cost, s_after = v.buy_cost(cid, g, st, q, L, x)
-                buys.append({"S": st, "q": q, "L": L, "x": x, "cost": cost, "S_after": s_after})
+                buys.append({"S": st, "q": q, "L": L, "x": x, "ev_d": 1.0, "cost": cost, "S_after": s_after})
         sells = []
         for q in (1, 50, 1_000):
             for L, x in ((0, 0.0), (20, -0.2)):
                 rev, s_after = v.sell_revenue(cid, g, st, q, L, x)
-                sells.append({"S": st, "q": q, "L": L, "x": x, "revenue": rev, "S_after": s_after})
+                sells.append({"S": st, "q": q, "L": L, "x": x, "ev_d": 1.0, "revenue": rev, "S_after": s_after})
+        # Trade during a market event: the price contains M_d (F-ECO-06 inside F-TRD-01/02, TD-021).
+        for ev_d in sorted({ev["demand_mult"] for ev in v.EVENTS.values()} - {1.0}):
+            q = max(1, mo // 2)
+            if q <= mo:
+                cost, s_after = v.buy_cost(cid, g, st, q, 3, 0.1, ev_d)
+                buys.append({"S": st, "q": q, "L": 3, "x": 0.1, "ev_d": ev_d, "cost": cost, "S_after": s_after})
+            rev, s_after = v.sell_revenue(cid, g, st, 50, 3, 0.1, ev_d)
+            sells.append({"S": st, "q": 50, "L": 3, "x": 0.1, "ev_d": ev_d, "revenue": rev, "S_after": s_after})
         markets.append({
             "city": cid, "good": g,
             "demand": v.demand(cid, g), "supply_level": v.supply_level(cid, g),

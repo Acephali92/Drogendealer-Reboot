@@ -77,16 +77,16 @@ describe('trade examples (EX-TRD-01…06, verify.py)', () => {
 
 describe('trade formulas against unrounded verify.py values', () => {
   it.each(formulas.markets.map((m) => [`${m.city}/${m.good}`, m] as const))(
-    '%s: buy and sell, exact cents',
+    '%s: buy and sell, exact cents (also during an event with M_d)',
     (_id, m) => {
       expect(maxOrder(p, m.target_stock)).toBe(m.max_order);
       for (const b of m.buy) {
-        const r = buyCost(p, m.city, m.good, { S: b.S, x: b.x }, b.q, b.L);
+        const r = buyCost(p, m.city, m.good, { S: b.S, x: b.x, mods: { demand: b.ev_d } }, b.q, b.L);
         expect(r.cost).toBe(BigInt(b.cost));
         expect(close(r.S, b.S_after)).toBe(true);
       }
       for (const s of m.sell) {
-        const r = sellRevenue(p, m.city, m.good, { S: s.S, x: s.x }, s.q, s.L);
+        const r = sellRevenue(p, m.city, m.good, { S: s.S, x: s.x, mods: { demand: s.ev_d } }, s.q, s.L);
         expect(r.revenue).toBe(BigInt(s.revenue));
         expect(close(r.S, s.S_after)).toBe(true);
       }
