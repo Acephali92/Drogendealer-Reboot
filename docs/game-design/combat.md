@@ -61,6 +61,8 @@ Kämpfe werden **sofort aufgelöst** (eine Aktion, ein Ergebnis); es gibt keine 
 | Herr Meier vom Inkasso (`profi`, Gewalt L8) | 20 | 5 000 € | 400 ct (576 €) |
 
 Schlüssel z. B. `weapons.pistole.strength`, `armor.weste.strength`, `crew.schlaeger.upkeep`.
+Waffen lassen sich für `combat.weapon_resale_rate` = 50 % des Kaufpreises zurückverkaufen (abgerundet, Schwarzgeld);
+wichtig für die Kredithai-Bedingung „keine Waffe mehr“ (F-ML-10).
 Kann der Crew-Unterhalt nicht bezahlt werden, verlässt pro Tick eine Person (die teuerste) die Crew.
 
 ## 4. Formeln

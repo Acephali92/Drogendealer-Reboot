@@ -165,7 +165,6 @@ const travel = z
     control_base: unit,
     control_segment_max: unit,
     cargo_heat_half: nonNegReal,
-    fine_rate: nonNegReal,
     heat_on_bust: nonNegReal,
     bribe_cost_rate: nonNegReal,
     bribe_base_success: unit,
@@ -265,6 +264,7 @@ const combat = z
     target_cooldown_ticks: nonNegInt,
     attack_cooldown_ticks: nonNegInt,
     heat_attack: nonNegReal,
+    weapon_resale_rate: unit,
   })
   .strict();
 
@@ -325,6 +325,51 @@ const clans = z
   })
   .strict();
 
+/** [laundering.tiers.*]: direct laundering tiers W0, W1, W3, W4 (ADR-023, F-ML-05/07/08/09). */
+const launderingTiers = z
+  .object({
+    gambling: z
+      .object({
+        name,
+        tier: nonNegInt,
+        min_level: nonNegInt,
+        rate_min: unit,
+        rate_max: unit,
+        daily_cap_base: money,
+        daily_cap_per_level: money,
+      })
+      .strict(),
+    strawman: z
+      .object({ name, tier: nonNegInt, min_level: nonNegInt, rate: unit, daily_cap: money })
+      .strict(),
+    shell: z
+      .object({
+        name,
+        tier: nonNegInt,
+        min_level: nonNegInt,
+        rate: unit,
+        min_amount: money,
+        daily_cap: money,
+      })
+      .strict(),
+    foundation: z
+      .object({
+        name,
+        tier: nonNegInt,
+        min_level: nonNegInt,
+        rate: unit,
+        min_amount: money,
+        daily_cap: money,
+        papers_name: name,
+        papers_probability_per_day: unit,
+        papers_lookback_ticks: posInt,
+        papers_confiscation_rate: unit,
+        papers_heat: nonNegReal,
+      })
+      .strict(),
+  })
+  .strict();
+
 const laundering = z
   .object({
     fee_min: unit,
@@ -336,8 +381,20 @@ const laundering = z
     penalty_fine_rate: nonNegReal,
     closure_ticks: nonNegInt,
     heat_on_detection: nonNegReal,
-    strawman_fee: unit,
-    strawman_daily_cap: money,
+    tiers: launderingTiers,
+  })
+  .strict();
+
+/** [loan_shark]: emergency loan (ADR-023, F-ML-10). */
+const loanShark = z
+  .object({
+    name,
+    amount: money,
+    max_assets: money,
+    max_vehicles: nonNegInt,
+    max_weapons: nonNegInt,
+    repayment_rate: unit,
+    repay_factor: nonNegReal,
   })
   .strict();
 
@@ -507,6 +564,7 @@ export const gameParametersSchema = z
     crew: catalog(crewMember),
     clans,
     laundering,
+    loan_shark: loanShark,
     real_estate: realEstate,
     businesses: catalog(business),
     space,

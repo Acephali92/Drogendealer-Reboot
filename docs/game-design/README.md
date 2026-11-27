@@ -178,6 +178,7 @@ flowchart LR
 | Herkunft | Warenverkauf, Beute, Schutzgeld | legale Betriebserträge, Geldwäsche |
 | Aufbewahrung | Bargeld beim Spieler | Bankkonto |
 | Plünderbar | ja (F-CMB-05) | nein |
+| Bei Polizeikontrolle (ADR-023) | **vollständig beschlagnahmt** (F-TRV-06) | sicher |
 | Verwendbar für | Waren, Waffen, Crew, Fahrzeuge, Bestechung, Treibstoff | alles; **exklusiv**: Immobilien, Clan-Gründung/-Ausbau, Raumschiffe |
 
 Details in [money-laundering.md](money-laundering.md).
