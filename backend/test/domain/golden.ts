@@ -49,8 +49,8 @@ export interface GoldenMarket {
   max_order: number;
   events: Record<string, { ref_stock: number; target_stock: number; shocked: number }>;
   prices: Array<{ S: number; x: number; ev_d: number; price: number }>;
-  buy: Array<{ S: number; q: number; L: number; x: number; cost: number; S_after: number }>;
-  sell: Array<{ S: number; q: number; L: number; x: number; revenue: number; S_after: number }>;
+  buy: Array<{ S: number; q: number; L: number; x: number; ev_d: number; cost: number; S_after: number }>;
+  sell: Array<{ S: number; q: number; L: number; x: number; ev_d: number; revenue: number; S_after: number }>;
 }
 
 export interface GoldenTickSnapshot {

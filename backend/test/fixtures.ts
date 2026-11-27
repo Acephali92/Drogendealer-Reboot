@@ -5,7 +5,8 @@
  * truncateAll removes them between tests.
  */
 import type { FastifyInstance } from 'fastify';
-import type { ClanRole, EquipmentSlot } from '@prisma/client';
+import type { ClanRole, EquipmentSlot, Prisma } from '@prisma/client';
+import { type JournalActor, setJournalContext } from '../src/modules/journal/context.js';
 import { register } from './helpers.js';
 
 let seq = 0;
@@ -23,6 +24,25 @@ export async function createUser(app: FastifyInstance, name = `player_${next()}`
   if (res.statusCode !== 201) throw new Error(`register failed: ${res.body}`);
   const body = res.json<{ accessToken: string; user: { id: string; playerId: string } }>();
   return { token: body.accessToken, userId: body.user.id, playerId: body.user.playerId, name };
+}
+
+/**
+ * Runs `fn` in a transaction with a journal context (TD-022), as every writing service does.
+ * Defaults: tick 0, actor SYSTEM, a fresh correlationId.
+ */
+export function inJournal<T>(
+  app: FastifyInstance,
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  ctx: { tick?: number; actor?: JournalActor; correlationId?: string } = {},
+): Promise<T> {
+  return app.prisma.$transaction(async (tx) => {
+    await setJournalContext(tx, {
+      tick: ctx.tick ?? 0,
+      actor: ctx.actor ?? { type: 'SYSTEM' },
+      ...(ctx.correlationId === undefined ? {} : { correlationId: ctx.correlationId }),
+    });
+    return fn(tx);
+  });
 }
 
 const upsertSlug = <T>(find: () => Promise<T | null>, create: () => Promise<T>) =>
@@ -60,9 +80,9 @@ export function createEquipmentType(app: FastifyInstance, slug: string, slot: Eq
   );
 }
 
-/** Market state of a good in a city. */
+/** Market state of a good in a city (journalled as INITIAL). */
 export function setMarket(app: FastifyInstance, cityId: string, commodityId: string, stock = 500) {
-  return app.prisma.marketState.create({ data: { cityId, commodityId, stock } });
+  return inJournal(app, (tx) => tx.marketState.create({ data: { cityId, commodityId, stock } }));
 }
 
 /** Adds a lot to a player's inventory together with its movement journal entry. */
@@ -77,16 +97,22 @@ export async function addLot(
     where: { playerId, commodityId },
     _sum: { quantity: true },
   });
-  await app.prisma.inventoryLot.create({ data: { playerId, commodityId, quantity, costBasis } });
-  await app.prisma.inventoryMovement.create({
-    data: {
-      playerId,
-      commodityId,
-      delta: quantity,
-      quantityAfter: (before._sum.quantity ?? 0) + quantity,
-      reason: 'ADMIN',
+  await inJournal(
+    app,
+    async (tx) => {
+      await tx.inventoryLot.create({ data: { playerId, commodityId, quantity, costBasis } });
+      await tx.inventoryMovement.create({
+        data: {
+          playerId,
+          commodityId,
+          delta: quantity,
+          quantityAfter: (before._sum.quantity ?? 0) + quantity,
+          reason: 'ADMIN',
+        },
+      });
     },
-  });
+    { actor: { type: 'ADMIN' } },
+  );
 }
 
 export async function createClan(

@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { DELETED_MESSAGE_TEXT, pseudonymFor } from '../src/modules/account/account.service.js';
+import { bookMoney } from '../src/modules/money/ledger.js';
 import { createTestApp, truncateAll } from './helpers.js';
 import {
   addLot,
@@ -10,6 +11,7 @@ import {
   createCommodity,
   createUser,
   createVehicleType,
+  inJournal,
   TEST_PASSWORD as PASSWORD,
 } from './fixtures.js';
 
@@ -82,7 +84,7 @@ describe('GET /api/v1/players/me/export', () => {
     expect(res.headers['cache-control']).toBe('no-store');
 
     const body = res.json();
-    expect(body.formatVersion).toBe(2);
+    expect(body.formatVersion).toBe(3);
     expect(body.account).toMatchObject({
       email: 'exporter@example.com',
       username: 'exporter',
@@ -96,7 +98,15 @@ describe('GET /api/v1/players/me/export', () => {
       commodity: { slug: 'gras' },
     });
     expect(body.player.inventoryMovements[0]).toMatchObject({ delta: 3, commodity: { slug: 'gras' } });
-    expect(body.player.moneyTransactions[0]).toMatchObject({ account: 'CASH', reason: 'START_CAPITAL' });
+    expect(body.player.moneyTransactions[0]).toMatchObject({
+      account: 'CASH',
+      reason: 'START_CAPITAL',
+      seq: expect.any(String),
+      tick: 0,
+      correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      actorType: 'SYSTEM',
+      actorPlayerId: null,
+    });
     expect(body.player.notifications).toHaveLength(1);
 
     expect(res.body).not.toContain('passwordHash');
@@ -171,7 +181,7 @@ describe('DELETE /api/v1/players/me (ADR-017: pseudonymise, keep journals)', () 
     // Journals are complete: start capital and forfeiture are both booked, Σ journal = projection.
     const money = await app.prisma.moneyTransaction.findMany({
       where: { playerId: me.playerId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { seq: 'asc' },
     });
     expect(money.map((m) => [m.account, m.reason, m.amount])).toEqual([
       ['CASH', 'START_CAPITAL', startCash],
@@ -179,13 +189,21 @@ describe('DELETE /api/v1/players/me (ADR-017: pseudonymise, keep journals)', () 
     ]);
     const goods = await app.prisma.inventoryMovement.findMany({
       where: { playerId: me.playerId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { seq: 'asc' },
     });
     expect(goods.map((g) => [g.delta, g.quantityAfter, g.reason])).toEqual([
       [7, 7, 'ADMIN'],
       [-7, 0, 'ACCOUNT_DELETION'],
     ]);
     await expectJournalsConsistent(me.playerId);
+
+    // The deletion is one action of the player: one correlationId across all journals (TD-022).
+    const deletionRows = [money.at(-1)!, goods.at(-1)!];
+    expect(new Set(deletionRows.map((r) => r.correlationId)).size).toBe(1);
+    for (const r of deletionRows) {
+      expect(r).toMatchObject({ tick: 0, actorType: 'PLAYER', actorPlayerId: me.playerId });
+    }
+    expect(money[0]!.correlationId).not.toBe(money.at(-1)!.correlationId);
 
     // Sessions and the access token are useless now.
     const refresh = await app.inject({
@@ -223,12 +241,30 @@ describe('DELETE /api/v1/players/me (ADR-017: pseudonymise, keep journals)', () 
     const boss = await createUser(app);
     const soldier = await createUser(app);
     const soloClan = await createClan(app, 'SOL', [{ playerId: solo.playerId, role: 'GODFATHER' }]);
-    await app.prisma.$transaction([
-      app.prisma.clanTreasuryTransaction.create({
-        data: { clanId: soloClan.id, account: 'CASH', amount: 500n, balanceAfter: 500n, reason: 'DEPOSIT' },
-      }),
-      app.prisma.clan.update({ where: { id: soloClan.id }, data: { treasuryCash: 500n } }),
-    ]);
+    // A deposit is one action of the player with both sides (X-04: Σ per correlationId = 0).
+    await inJournal(
+      app,
+      async (tx) => {
+        await bookMoney(tx, {
+          playerId: solo.playerId,
+          account: 'CASH',
+          amount: -500n,
+          reason: 'CLAN_DEPOSIT',
+        });
+        await tx.clanTreasuryTransaction.create({
+          data: {
+            clanId: soloClan.id,
+            playerId: solo.playerId,
+            account: 'CASH',
+            amount: 500n,
+            balanceAfter: 500n,
+            reason: 'DEPOSIT',
+          },
+        });
+        await tx.clan.update({ where: { id: soloClan.id }, data: { treasuryCash: 500n } });
+      },
+      { actor: { type: 'PLAYER', playerId: solo.playerId } },
+    );
     const bigClan = await createClan(app, 'BIG', [
       { playerId: boss.playerId, role: 'GODFATHER' },
       { playerId: soldier.playerId, role: 'SOLDIER' },

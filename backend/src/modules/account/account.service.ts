@@ -3,6 +3,7 @@ import { sha256Hex } from '../../domain/index.js';
 import { AppError, notFound } from '../../lib/errors.js';
 import { verifyPassword } from '../../lib/password.js';
 import { serialize } from '../../lib/serialize.js';
+import { currentTick, setJournalContext } from '../journal/context.js';
 import { bookMoney } from '../money/ledger.js';
 
 const slug = { select: { slug: true } } as const;
@@ -33,9 +34,9 @@ export async function exportAccountData(prisma: PrismaClient, userId: string) {
           currentCity: slug,
           heat: { include: { city: slug } },
           inventoryLots: { include: { commodity: slug }, orderBy: { acquiredAt: 'asc' } },
-          inventoryMovements: { include: { commodity: slug }, orderBy: { createdAt: 'asc' } },
-          tradeTransactions: { orderBy: { createdAt: 'asc' } },
-          moneyTransactions: { orderBy: { createdAt: 'asc' } },
+          inventoryMovements: { include: { commodity: slug }, orderBy: { seq: 'asc' } },
+          tradeTransactions: { orderBy: { seq: 'asc' } },
+          moneyTransactions: { orderBy: { seq: 'asc' } },
           vehicles: { include: { vehicleType: slug } },
           travels: { orderBy: { departedAt: 'asc' } },
           equipment: { include: { equipmentType: { select: { slug: true, slot: true } } } },
@@ -44,7 +45,7 @@ export async function exportAccountData(prisma: PrismaClient, userId: string) {
           clanMembership: { include: { clan: { select: { id: true, name: true, tag: true } } } },
           clanInvites: { orderBy: { createdAt: 'asc' } },
           sentClanInvites: { orderBy: { createdAt: 'asc' } },
-          clanTreasuryTxs: { orderBy: { createdAt: 'asc' } },
+          clanTreasuryTxs: { orderBy: { seq: 'asc' } },
           sentMessages: { orderBy: { createdAt: 'asc' } },
           receivedMessages: { orderBy: { createdAt: 'asc' } },
           notifications: { orderBy: { createdAt: 'asc' } },
@@ -57,7 +58,8 @@ export async function exportAccountData(prisma: PrismaClient, userId: string) {
   const { refreshTokens, player, ...account } = user;
   return serialize({
     exportedAt: new Date(),
-    formatVersion: 2,
+    // 3: journal rows carry seq, tick, correlationId, actorType, actorPlayerId (TD-022).
+    formatVersion: 3,
     account,
     sessions: refreshTokens,
     player,
@@ -95,8 +97,15 @@ export async function deleteAccount(prisma: PrismaClient, userId: string, passwo
   }
 
   await prisma.$transaction(async (tx) => {
-    if (user.player) await forfeitPlayer(tx, user.player.id);
-    await tx.user.delete({ where: { id: userId } }); // sessions cascade, Player.userId → null
+    if (user.player) {
+      // One action, initiated by the player: all journal rows share one correlationId (TD-022).
+      await setJournalContext(tx, {
+        tick: currentTick(),
+        actor: { type: 'PLAYER', playerId: user.player.id },
+      });
+      await forfeitPlayer(tx, user.player.id);
+    }
+    await tx.user.delete({ where: { id: userId } }); // sessions cascade; Player.userId is already null
   });
 }
 
@@ -155,6 +164,8 @@ async function forfeitPlayer(tx: Prisma.TransactionClient, playerId: string) {
       name: pseudonymFor(playerId),
       status: 'DELETED',
       deletedAt: new Date(),
+      // Separate from the login in the same update: CHECK DELETED ⇔ userId IS NULL (G-10a).
+      userId: null,
       currentCityId: null,
       lastSeenAt: null,
       statusUntil: null,

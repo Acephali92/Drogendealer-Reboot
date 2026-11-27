@@ -202,9 +202,27 @@
   - `domain/economy.ts` (F-ECO-01…09, `marketTick` nach economy.md §5) und `domain/trade.ts` (F-TRD-01…06, F-PRF-03) übernehmen `verify.py` Formel für Formel, **auch in der Reihenfolge der Multiplikationen**, damit die Floats identisch bleiben. Die Namen entsprechen der Übergangsschicht in `sim/src/model/`.
   - Zwischenwerte sind float64 wie in `verify.py`. Gerundet wird nur am Ende: `buyCost` und `sellRevenue` geben `bigint`-Cent zurück, mit `ceilCt` für Kosten und `floorCt` für Erlöse (ADR-019).
   - `marketTick` folgt den Schritten aus `inv_monte_carlo`. Das Ereignis wird mit `U(seed, t, "<stadt>/<ware>", 0)` gewürfelt, das Rauschen mit `Z(…, 1)`. Im letzten Ereignistick gelten noch dessen Multiplikatoren.
-  - **Ereignisse im Handelspreis:** F-TRD-01/02 integrieren P(σ) aus F-ECO-06, also mit M_d. `buyCost` und `sellRevenue` nehmen deshalb optional `mods` an, wie die Simulation. In `verify.py` fehlt dieser Parameter bisher; die Frage liegt bei Agent 2. Ohne Ereignis ist das Ergebnis identisch mit `verify.py`.
+  - **Ereignisse im Handelspreis:** F-TRD-01/02 integrieren P(σ) aus F-ECO-06, also mit M_d. `buyCost` und `sellRevenue` nehmen deshalb optional `mods` an, wie die Simulation. **Bestätigt von Agent 2:** `verify.py` hat seit T-120 (PR #34) das optionale `ev_d` in `buy_cost` und `sell_revenue`. Die Golden Vectors prüfen Kauf und Verkauf während eines Ereignisses für alle Märkte centgenau. M_s wirkt nur auf S_target (F-ECO-04), nicht auf den Handelspreis.
   - `MarketMods` enthält nur die beschlossenen Ereignis-Multiplikatoren. Die Erweiterungen der Simulation ab F-ECO-10 sind Vorschläge und bleiben im Sim.
 - **Konsequenzen:**
   - Die Golden Vectors bekommen den Abschnitt `formulas` mit ungerundeten Werten (BACKEND_TESTING §5). Cent-Beträge werden exakt geprüft.
   - T-104 (Tick-Job) und T-106 (Kauf und Verkauf) rufen nur noch diese Funktionen auf.
   - Die Simulation kann ihre Übergangsschicht durch Importe ersetzen. Unterschiede: Geld ist `bigint`, und `p` ist `GameParameters`.
+
+## TD-022 – Journalkontext je Transaktion per DB-Default, fail-closed (Review #40)
+
+- **Kontext:** Das Review von Datenmodell v2 (PR #40, `docs/database/REVIEW-v2.md`) zeigt, was für die Rekonstruktion nach ADR-010 fehlt: Journalzeilen haben keinen Tick, keinen Zusammenhang je Aktion und keine verlässliche Reihenfolge, und das Marktjournal schrieb Änderungen ohne Ursache als `UNSPECIFIED`. T-104 und T-106 würden ohne Korrektur solche Zeilen in großer Zahl erzeugen. Nach ADR-016 gibt es später keinen Reset.
+- **Entscheidung** (Vorschlag aus `proposals/p1.sql`, angepasst):
+  - Jede schreibende Transaktion setzt einmal `setJournalContext(tx, { tick, actor, correlationId? })`. Die Journale holen `tick`, `correlationId` und `actorType` per **DB-Default** aus diesem Kontext, `actorPlayerId` per Trigger.
+  - `bookMoney()` und die übrigen `create()`-Aufrufe bleiben unverändert. Fehlt der Kontext, lehnt die DB die Zeile ab (`JOURNAL_CONTEXT_MISSING`, SQLSTATE P0001, damit Prisma die Meldung durchreicht).
+  - Ein Kontext entspricht einer fachlichen Aktion: Registrierung (Akteur SYSTEM, Startkapital), Kontolöschung (Akteur PLAYER), später Handel, Tick oder Wäsche.
+  - `seq` (Sequenz) ist die Reihenfolge in allen Journalen, `version` die je Markt.
+  - Das Marktjournal ist fail-closed: Ursache, Tick und `correlationId` sind Pflicht, `detail` mit Pflichtschlüsseln je Ursache.
+  - `currentTick()` (`src/modules/journal/context.ts`) liefert bis T-104 immer 0. T-104 ersetzt die Funktion durch `WorldTick` und fügt den FK hinzu.
+  - Akteur (G-6) ist gleich mit dabei, weil er denselben Kontext nutzt und Agent 5 ihn für die Kalibrierung braucht.
+- **Konsequenzen:**
+  - Neue Schreibwege müssen `setJournalContext()` aufrufen; ein vergessener Aufruf fällt sofort im Test auf, nicht erst bei der Auswertung.
+  - Test-Fixtures schreiben über `inJournal()`.
+  - `truncateAll()` braucht `app.allow_truncate`.
+  - Der Export (`formatVersion` 3) enthält den Journalkopf.
+  - Für G-8 (Projektionsprüfung) ist entschieden: Kette plus aufgeschobene Prüfung, nicht Journal-first (DATA_MODEL.md §7). Umsetzung mit T-106.

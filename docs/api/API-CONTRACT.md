@@ -87,7 +87,9 @@ Grundsatz: Katalogwerte (Waren, Orte, Fahrzeuge, Ausrüstung) kommen ausschließ
 ### GET `/players/me/export`
 
 Liefert alle zum Konto gespeicherten Daten als JSON-Download (`Content-Disposition: attachment`, `Cache-Control: no-store`):
-`{ exportedAt, formatVersion: 2, account: { id, email, username, role, createdAt, updatedAt, lastLoginAt, ageConfirmedAt }, sessions: [{ createdAt, expiresAt, revokedAt, ip, userAgent }], player: { …alle Spielerfelder, currentCity, heat, inventoryLots, inventoryMovements, tradeTransactions, moneyTransactions, vehicles, travels, equipment, attacks, defenses, clanMembership, clanInvites, sentClanInvites, clanTreasuryTxs, sentMessages, receivedMessages, notifications } }`.
+`{ exportedAt, formatVersion: 3, account: { id, email, username, role, createdAt, updatedAt, lastLoginAt, ageConfirmedAt }, sessions: [{ createdAt, expiresAt, revokedAt, ip, userAgent }], player: { …alle Spielerfelder, currentCity, heat, inventoryLots, inventoryMovements, tradeTransactions, moneyTransactions, vehicles, travels, equipment, attacks, defenses, clanMembership, clanInvites, sentClanInvites, clanTreasuryTxs, sentMessages, receivedMessages, notifications } }`.
+
+`formatVersion` 3 (Datenmodell-Nachtrag „Journalkontext“, additiv): Jede Zeile in `moneyTransactions`, `inventoryMovements`, `tradeTransactions` und `clanTreasuryTxs` enthält zusätzlich `seq` (String), `tick`, `correlationId`, `actorType` und `actorPlayerId`. Die Listen sind nach `seq` sortiert.
 
 - Katalogeinträge erscheinen mit ihrem technischen Schlüssel (`slug`).
 - Passwort-Hash und Token-Hashes sind nie enthalten.

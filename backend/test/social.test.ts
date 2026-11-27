@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createTestApp, truncateAll } from './helpers.js';
-import { auth, createClan, createUser } from './fixtures.js';
+import { auth, createClan, createUser, inJournal } from './fixtures.js';
 
 let app: FastifyInstance;
 
@@ -78,16 +78,21 @@ describe('player profile & presence', () => {
   it('pages the money ledger newest first', async () => {
     const u = await createUser(app);
     for (let i = 1; i <= 3; i++) {
-      await app.prisma.moneyTransaction.create({
-        data: {
-          playerId: u.playerId,
-          account: 'CASH',
-          amount: BigInt(i * 100),
-          balanceAfter: BigInt(i * 100),
-          reason: 'ADMIN',
-          createdAt: new Date(Date.now() + i * 1000),
-        },
-      });
+      await inJournal(
+        app,
+        (tx) =>
+          tx.moneyTransaction.create({
+            data: {
+              playerId: u.playerId,
+              account: 'CASH',
+              amount: BigInt(i * 100),
+              balanceAfter: BigInt(i * 100),
+              reason: 'ADMIN',
+              createdAt: new Date(Date.now() + i * 1000),
+            },
+          }),
+        { actor: { type: 'ADMIN' } },
+      );
     }
     const body = (await request('GET', '/players/me/transactions?limit=2', u.token)).json();
     // 3 entries plus the START_CAPITAL booking from registration

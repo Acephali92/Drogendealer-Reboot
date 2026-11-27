@@ -22,11 +22,15 @@
 | Katalog          | `City`, `Commodity`, `VehicleType`, `EquipmentType`                                                                               | **nur `id` + `slug`** (+ `slot`); Werte aus `parameters.toml`, synchronisiert beim Start (`syncCatalog`, `src/modules/catalog/catalog.ts`) |
 | Markt            | `MarketState`                                                                                                                     | `stock`/`noise` als Float, `activeEvent`, `eventTicksLeft`; Preise werden berechnet, nicht gespeichert                                     |
 | Besitz           | `InventoryLot`, `Vehicle`, `PlayerEquipment`                                                                                      | Lose je Kaufzeitpunkt mit `costBasis`                                                                                                      |
-| Journale         | `MoneyTransaction` (`account` CASH/BANK), `InventoryMovement`, `TradeTransaction`, `MarketStateChange`, `ClanTreasuryTransaction` | append-only, Restrict-FKs                                                                                                                  |
+| Journale         | `MoneyTransaction` (`account` CASH/BANK), `InventoryMovement`, `TradeTransaction`, `MarketStateChange`, `ClanTreasuryTransaction` | append-only, Restrict-FKs; Journalkopf `seq`, `tick`, `correlationId`, Akteur (TD-022, §3.2)                                               |
 | Historie         | `Travel`, `Combat`                                                                                                                | Restrict zum Spieler                                                                                                                       |
 | Clans & Soziales | `Clan` (`treasuryCash`/`treasuryBank`, `dissolvedAt`), `ClanMember`, `ClanInvite`, `Message`, `Notification`, `TickerEvent`       | 5 Clan-Rollen (ADR-021)                                                                                                                    |
 
-Schreibwege mit Invarianten: Geld nur über `bookMoney()` (`src/modules/money/ledger.ts`), Marktzustand nur in Transaktionen mit `setMarketChangeContext()` (`src/modules/world/market-journal.ts`).
+Schreibwege mit Invarianten:
+
+- Jede schreibende Transaktion setzt zuerst `setJournalContext()` (`src/modules/journal/context.ts`).
+- Geld nur über `bookMoney()` (`src/modules/money/ledger.ts`).
+- Marktzustand nur nach `setMarketChangeContext()` (`src/modules/world/market-journal.ts`).
 
 ## 3. Handgeschriebenes SQL in Migrationen
 
@@ -41,25 +45,60 @@ Prisma kann diese Elemente nicht ausdrücken. Sie stehen deshalb nur in den Migr
 | `…_data_model_v2`          | Trigger `MarketState_journal` → `market_state_journal()`                                                                                                                                                                                                                                                                                                                                                 | jede Änderung von Bestand, Rauschen oder Ereignis wird journalisiert |
 | `…_data_model_v2`          | Funktion `journal_append_only()` + Trigger auf `MarketStateChange`, `MoneyTransaction`, `TradeTransaction`, `InventoryMovement`, `ClanTreasuryTransaction`                                                                                                                                                                                                                                               | Journale sind unveränderlich                                         |
 | `…_data_model_v2`          | `DROP FUNCTION market_price_journal / market_price_change_append_only`                                                                                                                                                                                                                                                                                                                                   | Aufräumen des alten Preisjournals (T-105 v1)                         |
+| `…_journal_context`        | Funktionen `set_journal_context()`, `journal_context()`; Defaults von `tick`, `correlationId`, `actorType`; Trigger `*_actor_player` → `journal_actor_player()`; CHECKs `*_tick_check`, `*_actor_check`                                                                                                                                                                                                  | Journalkopf fail-closed (TD-022, §3.2)                               |
+| `…_journal_context`        | Trigger `MarketState_version` → `market_state_version()`; `market_state_journal()` fail-closed ersetzt; CHECKs `MarketStateChange_no_unspecified`, `…_trade_ref`, `…_detail_keys` (NOT VALID für Altzeilen)                                                                                                                                                                                              | Marktjournal mit Version und Formel-Details (§3.1)                   |
+| `…_journal_context`        | Funktion `journal_no_truncate()` + Statement-Trigger `*_no_truncate` auf allen Journalen                                                                                                                                                                                                                                                                                                                 | TRUNCATE nur mit `app.allow_truncate` (G-3c)                         |
+| `…_journal_context`        | `Player_user_iff_not_deleted`, `Player_deletedAt_iff_deleted`                                                                                                                                                                                                                                                                                                                                            | Löschstatus als Constraint (G-10a)                                   |
 
-### Marktzustands-Journal (T-105 v2)
+### 3.1 Marktzustands-Journal (T-105, seit `…_journal_context` fail-closed)
 
-- **Auslöser:** `AFTER INSERT OR UPDATE` auf `MarketState`. Eine Zeile entsteht, wenn sich `stock`, `noise`, `activeEvent`, Stadt oder Ware ändert. Ein reiner Countdown von `eventTicksLeft` erzeugt keine Zeile.
-- **Kontext:** `setMarketChangeContext(tx, cause, refId?, tick?)` setzt `app.market_change_cause`, `…_ref` und `…_tick` transaktionslokal. Ohne Kontext gilt `INITIAL` beim INSERT und `UNSPECIFIED` beim UPDATE.
-- **Ursachen:** `INITIAL | TRADE | TICK | EVENT | NPC | ADMIN | UNSPECIFIED`. `NPC` und der Tick-Bezug sind Anforderungen aus GAME_ECONOMY.md §7 T-6.
-- **Schreibschutz:** `UPDATE`/`DELETE` werfen `restrict_violation`. `TRUNCATE` bleibt erlaubt (Tests).
+- **Auslöser:** `AFTER INSERT OR UPDATE` auf `MarketState`. Eine Zeile entsteht, wenn sich `stock`, `noise`, `activeEvent`, Stadt oder Ware ändert. Dann zählt `MarketState.version` hoch (Trigger `MarketState_version`). Ein reiner Countdown von `eventTicksLeft` erzeugt weder eine Zeile noch eine neue Version.
+- **Kontext:** `setMarketChangeContext(tx, { cause, refId?, detail? })` setzt `app.market_change_cause`, `…_ref` und `…_detail` transaktionslokal. Tick und `correlationId` kommen aus dem Journalkontext.
+- **fail-closed:**
+  - Ein UPDATE ohne Ursache bricht mit `MARKET_CONTEXT_MISSING` ab; ein INSERT gilt als `INITIAL`.
+  - Ohne Journalkontext bricht die Änderung mit `JOURNAL_CONTEXT_MISSING` ab.
+  - `UNSPECIFIED` ist per CHECK verboten. Der Enum-Wert bleibt nur für Altzeilen, die bei der Migration zu `ADMIN` wurden.
+- **Ursachen:** `INITIAL | TRADE | TICK | EVENT | NPC | ADMIN`.
+- **Spalten je Zeile:**
+  - `version`: lückenlos je Markt, unique.
+  - `seq`: global fortlaufend.
+  - `newEventTicksLeft`: Restdauer des Ereignisses.
+  - `detail`: Zwischenwerte der Formel.
+- **Pflichtschlüssel in `detail`** (CHECK `MarketStateChange_detail_keys`, Wunsch von Agent 5, REVIEW-v2 §5, Namen wie in `verify.py`):
+
+  | Ursache | Pflichtschlüssel                                   | zusätzlich              |
+  | ------- | -------------------------------------------------- | ----------------------- |
+  | `TICK`  | `S_before`, `S_target`, `x_before`, `z`, `x_after` |                         |
+  | `EVENT` | `event`, `u`, `shock`, `duration`                  |                         |
+  | `NPC`   | `from`, `to`, `q`, `margin`, `theta`, `f`, `k`     |                         |
+  | `TRADE` | `q`, `l_handel`, `spread`                          | `refId` Pflicht (CHECK) |
+
+- **Schreibschutz:**
+  - `UPDATE`/`DELETE` werfen `restrict_violation`.
+  - `TRUNCATE` braucht `app.allow_truncate = 'on'`. Das setzt nur `truncateAll()` in den Tests, transaktionslokal.
+
+### 3.2 Journalkontext (TD-022)
+
+- **Aufruf:** `setJournalContext(tx, { tick, actor, correlationId? })` ruft `set_journal_context()` auf. Die Funktion setzt `app.tick`, `app.correlation_id`, `app.actor_type` und `app.actor_player_id` transaktionslokal.
+- **Journalkopf:** Die Buchungsjournale (`MoneyTransaction`, `InventoryMovement`, `TradeTransaction`, `ClanTreasuryTransaction`) holen ihre Werte per DB-Default aus diesem Kontext:
+  - `tick`, `correlationId` (UUID) und `actorType` per Default über `journal_context()`. Fehlt ein Wert, bricht die Anweisung mit `JOURNAL_CONTEXT_MISSING` ab.
+  - `actorPlayerId` per BEFORE-INSERT-Trigger. Prisma introspektiert einen Default auf einer nullable Spalte nicht stabil, sonst gäbe es Drift.
+  - CHECK `PLAYER ⇔ actorPlayerId`; FK `Restrict`.
+- **`seq`** (BIGSERIAL, unique) ist die verlässliche Reihenfolge. `createdAt` ist innerhalb einer Transaktion gleich (G-3b). Lesende Abfragen nutzen `seq` als Tiebreaker.
+- **Tick:** `currentTick()` liefert bis T-104 immer 0. CHECK `tick ≥ 0`; der FK auf `WorldTick` folgt mit T-104.
+- **Altzeilen** (vor der Migration): `tick = 0`, je eine eigene `correlationId`, `actorType = SYSTEM`. Die Version der Marktzeilen ist nach `createdAt, seq` nummeriert.
 
 ## 4. Löschverhalten
 
-| Von → nach                                                                                                                                               | onDelete     | Grund                                                                                               |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------- |
-| `User` → `RefreshToken`                                                                                                                                  | Cascade      | Sitzungen sind personenbezogen                                                                      |
-| `User` → `Player`                                                                                                                                        | **SetNull**  | Spieler bleibt pseudonymisiert erhalten (ADR-017)                                                   |
-| `Player` → `MoneyTransaction`, `TradeTransaction`, `InventoryMovement`, `Travel`, `Combat` (attacker/defender), `ClanTreasuryTransaction`                | **Restrict** | Journale und Historie bleiben vollständig                                                           |
-| `Player` → `InventoryLot`, `Vehicle`, `PlayerEquipment`, `PlayerCityHeat`, `ClanMember`, `ClanInvite` (Empfänger), `Message` (Empfänger), `Notification` | Cascade      | Zustand ohne Journalpflicht; die Kontolöschung entfernt ihn ohnehin explizit (`account.service.ts`) |
-| `Combat.winner`, `Message.sender`, `ClanInvite.invitedBy`, `Player.currentCity`, `Travel.vehicle`                                                        | SetNull      | –                                                                                                   |
-| Katalog → Markt, Journale, Historie                                                                                                                      | Restrict     | Historie bleibt                                                                                     |
-| `Clan` → `ClanTreasuryTransaction`                                                                                                                       | Restrict     | Clans werden aufgelöst (`dissolvedAt`), nicht gelöscht                                              |
+| Von → nach                                                                                                                                                                | onDelete     | Grund                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------- |
+| `User` → `RefreshToken`                                                                                                                                                   | Cascade      | Sitzungen sind personenbezogen                                                                      |
+| `User` → `Player`                                                                                                                                                         | **SetNull**  | Spieler bleibt pseudonymisiert erhalten (ADR-017)                                                   |
+| `Player` → `MoneyTransaction`, `TradeTransaction`, `InventoryMovement`, `Travel`, `Combat` (attacker/defender), `ClanTreasuryTransaction`, `actorPlayerId` aller Journale | **Restrict** | Journale und Historie bleiben vollständig                                                           |
+| `Player` → `InventoryLot`, `Vehicle`, `PlayerEquipment`, `PlayerCityHeat`, `ClanMember`, `ClanInvite` (Empfänger), `Message` (Empfänger), `Notification`                  | Cascade      | Zustand ohne Journalpflicht; die Kontolöschung entfernt ihn ohnehin explizit (`account.service.ts`) |
+| `Combat.winner`, `Message.sender`, `ClanInvite.invitedBy`, `Player.currentCity`, `Travel.vehicle`                                                                         | SetNull      | –                                                                                                   |
+| Katalog → Markt, Journale, Historie                                                                                                                                       | Restrict     | Historie bleibt                                                                                     |
+| `Clan` → `ClanTreasuryTransaction`                                                                                                                                        | Restrict     | Clans werden aufgelöst (`dissolvedAt`), nicht gelöscht                                              |
 
 ## 5. Migrationen erstellen (Arbeitsablauf)
 
@@ -87,16 +126,18 @@ Prisma kann diese Elemente nicht ausdrücken. Sie stehen deshalb nur in den Migr
 
 Seit ADR-022 entscheidet Agent 3 selbst über das Datenmodell (Review durch Agent 1).
 
-| Vorschlag                                                                    | Stand                                                                                      |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Pseudonymisierte Kontolöschung, Journale auf Restrict (ADR-017, D-1)         | ✅ v2                                                                                      |
-| Append-only für alle Journale (D-2)                                          | ✅ v2                                                                                      |
-| `InventoryMovement` + Lose (C-6)                                             | ✅ v2                                                                                      |
-| `MoneyTransaction.account`, Gründe nach Quellen/Senken (B-5)                 | ✅ v2                                                                                      |
-| Schwarz-/Weißgeld (B-9)                                                      | ✅ entschieden per ADR-023: `cash`/`bank`; Wäsche- und Beschlagnahme-Logik mit T-120/T-121 |
-| Heat pro Stadt, Volumen, Float-Bestand, Katalog aus Parametern (B-11 … B-14) | ✅ v2                                                                                      |
-| Clan-Kasse mit Journal (ADR-018)                                             | ✅ Schema v2; Endpunkte mit T-309                                                          |
-| `WorldTick` (idempotente Ticks, T-104)                                       | offen                                                                                      |
-| `CommandLog` (Idempotenz-Schlüssel, C-5)                                     | offen, vor den ersten Schreib-Endpunkten (T-106)                                           |
-| `Npc`/`WorldState` mit Journal für die NPC-Intensität k (T-506)              | offen                                                                                      |
-| Partitionierung/Archivierung der Journale (T-507)                            | Konzept in `docs/database/DATA_MODEL.md` §6                                                |
+| Vorschlag                                                                                              | Stand                                                                                      |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Pseudonymisierte Kontolöschung, Journale auf Restrict (ADR-017, D-1)                                   | ✅ v2                                                                                      |
+| Append-only für alle Journale (D-2)                                                                    | ✅ v2                                                                                      |
+| `InventoryMovement` + Lose (C-6)                                                                       | ✅ v2                                                                                      |
+| `MoneyTransaction.account`, Gründe nach Quellen/Senken (B-5)                                           | ✅ v2                                                                                      |
+| Schwarz-/Weißgeld (B-9)                                                                                | ✅ entschieden per ADR-023: `cash`/`bank`; Wäsche- und Beschlagnahme-Logik mit T-120/T-121 |
+| Heat pro Stadt, Volumen, Float-Bestand, Katalog aus Parametern (B-11 … B-14)                           | ✅ v2                                                                                      |
+| Clan-Kasse mit Journal (ADR-018)                                                                       | ✅ Schema v2; Endpunkte mit T-309                                                          |
+| Journalkopf: Tick, `correlationId`, Akteur, `seq`; Marktjournal fail-closed (Review #40, G-1/2/3/3b/6) | ✅ `…_journal_context` (TD-022)                                                            |
+| TRUNCATE-Schutz (G-3c), Löschstatus als CHECK (G-10a)                                                  | ✅ `…_journal_context`                                                                     |
+| `WorldTick`, `ParameterSet` (idempotente Ticks, G-1/G-7, T-104)                                        | offen, mit T-104; dann FK `tick` → `WorldTick`                                             |
+| `CommandLog` (Idempotenz-Schlüssel, C-5)                                                               | offen, vor den ersten Schreib-Endpunkten (T-106)                                           |
+| `Npc`/`WorldState` mit Journal für die NPC-Intensität k (T-506)                                        | offen                                                                                      |
+| Partitionierung/Archivierung der Journale (T-507)                                                      | Konzept in `docs/database/DATA_MODEL.md` §6                                                |
