@@ -166,9 +166,27 @@ Formal, mit Kandidatenmenge $\mathcal{K}$ und Stimmen $v(c)$:
 
 (lexikografischer Vergleich, Rangindex 0 = GODFATHER … 4 = ASSOCIATE). Das Ergebnis ist immer eindeutig (INV-13).
 
-**Während der Wahl:** Auszahlungen aus der Clankasse gesperrt, Einzahlungen erlaubt, Steuern und Schutzgeld
-laufen weiter. Keine Kriegserklärung, kein Friedensschluss, keine Rangänderungen, keine Ausschlüsse. Laufende
-Kriege gehen weiter. Aufnahmen neuer Mitglieder sind möglich; sie sind in dieser Wahl nicht wahlberechtigt.
+**Während der Wahl** (abschließende Liste der Sperren):
+
+| Aktion | Während der Wahl |
+|---|---|
+| Auszahlung aus der Clankasse (`PAYOUT`) | gesperrt |
+| Clan ausbauen (`UPGRADE`) | gesperrt |
+| Viertel beanspruchen (`DISTRICT`) | gesperrt |
+| Krieg erklären, Frieden schließen (`WAR`) | gesperrt |
+| Steuersatz ändern (`TAX`) | gesperrt |
+| Ränge vergeben (`RANK`) | gesperrt |
+| Mitglieder ausschließen (`KICK`) | gesperrt |
+| Auflösung durch den Paten | entfällt (kein Pate) |
+| Einzahlungen, Steuern, Schutzgeld, laufende Kriege, Kämpfe | laufen weiter |
+| Neue Mitglieder aufnehmen | erlaubt; sie sind in dieser Wahl nicht wahlberechtigt |
+
+**Mitgliedschaft während der Wahl:** Gezählt werden nur Stimmen von Wahlberechtigten, die **bei Wahlende** noch
+Mitglied sind. Wer während der Wahl austritt, ausgeschlossen wird (nicht möglich, s. o.) oder sein Konto löscht,
+dessen Stimme verfällt. Ein Kandidat, der den Clan verlässt oder sein Konto löscht, scheidet aus; auf ihn
+abgegebene Stimmen verfallen ebenfalls. Bleibt nur ein Mitglied übrig, wird es sofort Pate. Verlässt das letzte
+Mitglied den Clan, wird er aufgelöst (Kasse verfällt). Das gilt gleichermaßen für das Misstrauensvotum (F-CLN-09):
+$n$ und die Ja-Stimmen werden bei Abstimmungsende aus den dann noch vorhandenen Mitgliedern bestimmt.
 
 **F-CLN-09 – Misstrauensvotum**
 
